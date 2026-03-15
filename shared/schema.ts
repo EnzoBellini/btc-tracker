@@ -2,6 +2,17 @@ import { pgTable, text, integer, real, boolean, serial, timestamp } from "drizzl
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({ id: true });
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
 // ── Trades ────────────────────────────────────────────────────────────────────
 export const trades = pgTable("trades", {
   id: serial("id").primaryKey(),
@@ -99,15 +110,3 @@ export const insertGoalSchema = createInsertSchema(goals).omit({ id: true });
 export type InsertGoal = z.infer<typeof insertGoalSchema>;
 export type Goal = typeof goals.$inferSelect;
 
-// ── Users (auth) ──────────────────────────────────────────────────────────────
-// In-memory only for now — no pgTable needed, just TypeScript types
-export interface User {
-  id: number;
-  email: string;
-  passwordHash: string;
-}
-
-export interface InsertUser {
-  email: string;
-  passwordHash: string;
-}

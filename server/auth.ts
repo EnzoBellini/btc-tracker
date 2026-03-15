@@ -48,11 +48,12 @@ export function registerAuthRoutes(app: Express) {
       if (!email || !password) return res.status(400).json({ error: "Email e senha obrigatórios" });
       if (password.length < 6) return res.status(400).json({ error: "Senha muito curta (mín. 6 caracteres)" });
 
-      const existing = await storage.getUserByEmail(email);
+      const normalizedEmail = email.toLowerCase().trim();
+      const existing = await storage.getUserByEmail(normalizedEmail);
       if (existing) return res.status(409).json({ error: "Email já cadastrado" });
 
       const passwordHash = await bcrypt.hash(password, 12);
-      const user = await storage.createUser({ email: email.toLowerCase().trim(), passwordHash });
+      const user = await storage.createUser({ email: normalizedEmail, passwordHash });
 
       req.session.userId    = user.id;
       req.session.userEmail = user.email;
