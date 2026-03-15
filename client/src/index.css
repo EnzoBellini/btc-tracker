@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Bitcoin dark theme — orange accent on deep dark */
+    --background: 220 13% 8%;
+    --foreground: 220 10% 92%;
+
+    --card: 220 13% 11%;
+    --card-foreground: 220 10% 92%;
+
+    --popover: 220 13% 11%;
+    --popover-foreground: 220 10% 92%;
+
+    --primary: 27 100% 55%;        /* Bitcoin orange */
+    --primary-foreground: 0 0% 5%;
+
+    --secondary: 220 12% 17%;
+    --secondary-foreground: 220 10% 80%;
+
+    --muted: 220 12% 15%;
+    --muted-foreground: 220 8% 50%;
+
+    --accent: 27 100% 55%;
+    --accent-foreground: 0 0% 5%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 12% 18%;
+    --input: 220 12% 18%;
+    --ring: 27 100% 55%;
+
+    --radius: 0.5rem;
+
+    /* Custom profit/loss colors */
+    --profit: 142 71% 45%;
+    --loss: 0 72% 51%;
+    --neutral: 220 8% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    margin: 0;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  #root {
+    height: 100%;
+  }
+
+  /* Tabular numbers for data */
+  .tabular {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+}
+
+/* Profit / Loss text helpers */
+.text-profit { color: hsl(var(--profit)); }
+.text-loss { color: hsl(var(--loss)); }
+.text-neutral-val { color: hsl(var(--neutral)); }
