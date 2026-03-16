@@ -1,6 +1,8 @@
-import { neon } from '@neondatabase/serverless'
-import { drizzle } from 'drizzle-orm/neon-http'
-import * as schema from '@shared/schema'
+import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
+import * as schema from "@shared/schema";
 
-const sql = neon(process.env.DATABASE_URL!)
-export const db = drizzle(sql, { schema })
+/** Banco de dados. null quando DATABASE_URL não está definida (modo local sem banco). */
+export const db = process.env.DATABASE_URL
+  ? drizzle(new Pool({ connectionString: process.env.DATABASE_URL }), { schema })
+  : null;

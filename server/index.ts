@@ -1,8 +1,10 @@
+import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { setupSession, registerAuthRoutes } from "./auth";
+import { db } from "./db";
 
 const app = express();
 const httpServer = createServer(app);
@@ -103,6 +105,7 @@ app.use((req, res, next) => {
     },
     () => {
       log(`serving on port ${port}`);
+      if (!db) log("Modo local: sem DATABASE_URL, usando armazenamento em memória", "storage");
     },
   );
 })();

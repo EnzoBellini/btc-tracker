@@ -59,7 +59,13 @@ export function registerAuthRoutes(app: Express) {
       req.session.userEmail = user.email;
       res.status(201).json({ id: user.id, email: user.email });
     } catch (err: any) {
-      res.status(500).json({ error: "Erro interno" });
+      const msg = err?.message ?? String(err);
+      console.error("[auth/register] Erro:", msg);
+      if (process.env.NODE_ENV !== "production") console.error(err);
+      res.status(500).json({
+        error: "Erro interno",
+        ...(process.env.NODE_ENV !== "production" && { debug: msg }),
+      });
     }
   });
 
@@ -79,7 +85,13 @@ export function registerAuthRoutes(app: Express) {
       req.session.userEmail = user.email;
       res.json({ id: user.id, email: user.email });
     } catch (err: any) {
-      res.status(500).json({ error: "Erro interno" });
+      const msg = err?.message ?? String(err);
+      console.error("[auth/login] Erro:", msg);
+      if (process.env.NODE_ENV !== "production") console.error(err);
+      res.status(500).json({
+        error: "Erro interno",
+        ...(process.env.NODE_ENV !== "production" && { debug: msg }),
+      });
     }
   });
 

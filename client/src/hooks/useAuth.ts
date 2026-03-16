@@ -40,7 +40,10 @@ export function useLogin() {
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Erro ao fazer login");
+      if (!res.ok) {
+        const msg = data.debug ? `${data.error}: ${data.debug}` : (data.error ?? "Erro ao fazer login");
+        throw new Error(msg);
+      }
       return data as AuthUser;
     },
     onSuccess: (user) => {
@@ -61,7 +64,10 @@ export function useRegister() {
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Erro ao criar conta");
+      if (!res.ok) {
+        const msg = data.debug ? `${data.error}: ${data.debug}` : (data.error ?? "Erro ao criar conta");
+        throw new Error(msg);
+      }
       return data as AuthUser;
     },
     onSuccess: (user) => {
