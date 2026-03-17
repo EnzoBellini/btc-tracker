@@ -63,7 +63,7 @@ export function registerAuthRoutes(app: Express) {
       console.error("[auth/register] Erro:", msg);
       res.status(500).json({
         error: "Erro interno",
-        ...(process.env.NODE_ENV !== "production" && { debug: msg }),
+        debug: msg, // TODO: remover após resolver
       });
     }
   });
@@ -88,7 +88,7 @@ export function registerAuthRoutes(app: Express) {
       console.error("[auth/login] Erro:", msg);
       res.status(500).json({
         error: "Erro interno",
-        ...(process.env.NODE_ENV !== "production" && { debug: msg }),
+        debug: msg, // TODO: remover após resolver
       });
     }
   });
