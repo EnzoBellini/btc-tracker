@@ -64,7 +64,7 @@ export function registerAuthRoutes(app: Express) {
       if (process.env.NODE_ENV !== "production") console.error(err);
       res.status(500).json({
         error: "Erro interno",
-        ...(process.env.NODE_ENV !== "production" && { debug: msg }),
+        debug: msg, // TODO: remover após descobrir o problema
       });
     }
   });
@@ -90,7 +90,7 @@ export function registerAuthRoutes(app: Express) {
       if (process.env.NODE_ENV !== "production") console.error(err);
       res.status(500).json({
         error: "Erro interno",
-        ...(process.env.NODE_ENV !== "production" && { debug: msg }),
+        debug: msg, // TODO: remover após descobrir o problema
       });
     }
   });
