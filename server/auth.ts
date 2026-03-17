@@ -57,14 +57,19 @@ export function registerAuthRoutes(app: Express) {
 
       req.session.userId    = user.id;
       req.session.userEmail = user.email;
-      res.status(201).json({ id: user.id, email: user.email });
+      req.session.save((err) => {
+        if (err) {
+          console.error("[auth/register] Session save error:", err);
+          return res.status(500).json({ error: "Erro interno", debug: String(err?.message || err) });
+        }
+        res.status(201).json({ id: user.id, email: user.email });
+      });
     } catch (err: any) {
-      const msg = err?.message ?? String(err);
-      console.error("[auth/register] Erro:", msg);
-      if (process.env.NODE_ENV !== "production") console.error(err);
+      const msg = (err?.message ?? err?.cause?.message ?? err?.code ?? String(err)) || (err ? JSON.stringify(err, Object.getOwnPropertyNames(err)) : "unknown");
+      console.error("[auth/register] Erro:", msg, err);
       res.status(500).json({
         error: "Erro interno",
-        debug: msg, // TODO: remover após descobrir o problema
+        debug: (msg || "erro sem mensagem"), // TODO: remover após descobrir o problema
       });
     }
   });
@@ -83,14 +88,19 @@ export function registerAuthRoutes(app: Express) {
 
       req.session.userId    = user.id;
       req.session.userEmail = user.email;
-      res.json({ id: user.id, email: user.email });
+      req.session.save((err) => {
+        if (err) {
+          console.error("[auth/login] Session save error:", err);
+          return res.status(500).json({ error: "Erro interno", debug: String(err?.message || err) });
+        }
+        res.json({ id: user.id, email: user.email });
+      });
     } catch (err: any) {
-      const msg = err?.message ?? String(err);
-      console.error("[auth/login] Erro:", msg);
-      if (process.env.NODE_ENV !== "production") console.error(err);
+      const msg = (err?.message ?? err?.cause?.message ?? err?.code ?? String(err)) || (err ? JSON.stringify(err, Object.getOwnPropertyNames(err)) : "unknown");
+      console.error("[auth/login] Erro:", msg, err);
       res.status(500).json({
         error: "Erro interno",
-        debug: msg, // TODO: remover após descobrir o problema
+        debug: (msg || "erro sem mensagem"), // TODO: remover após descobrir o problema
       });
     }
   });
