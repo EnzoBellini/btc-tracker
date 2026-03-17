@@ -57,19 +57,13 @@ export function registerAuthRoutes(app: Express) {
 
       req.session.userId    = user.id;
       req.session.userEmail = user.email;
-      req.session.save((err) => {
-        if (err) {
-          console.error("[auth/register] Session save error:", err);
-          return res.status(500).json({ error: "Erro interno", debug: String(err?.message || err) });
-        }
-        res.status(201).json({ id: user.id, email: user.email });
-      });
+      res.status(201).json({ id: user.id, email: user.email });
     } catch (err: any) {
-      const msg = (err?.message ?? err?.cause?.message ?? err?.code ?? String(err)) || (err ? JSON.stringify(err, Object.getOwnPropertyNames(err)) : "unknown");
-      console.error("[auth/register] Erro:", msg, err);
+      const msg = err?.message ?? String(err);
+      console.error("[auth/register] Erro:", msg);
       res.status(500).json({
         error: "Erro interno",
-        debug: (msg || "erro sem mensagem"), // TODO: remover após descobrir o problema
+        ...(process.env.NODE_ENV !== "production" && { debug: msg }),
       });
     }
   });
@@ -88,19 +82,13 @@ export function registerAuthRoutes(app: Express) {
 
       req.session.userId    = user.id;
       req.session.userEmail = user.email;
-      req.session.save((err) => {
-        if (err) {
-          console.error("[auth/login] Session save error:", err);
-          return res.status(500).json({ error: "Erro interno", debug: String(err?.message || err) });
-        }
-        res.json({ id: user.id, email: user.email });
-      });
+      res.json({ id: user.id, email: user.email });
     } catch (err: any) {
-      const msg = (err?.message ?? err?.cause?.message ?? err?.code ?? String(err)) || (err ? JSON.stringify(err, Object.getOwnPropertyNames(err)) : "unknown");
-      console.error("[auth/login] Erro:", msg, err);
+      const msg = err?.message ?? String(err);
+      console.error("[auth/login] Erro:", msg);
       res.status(500).json({
         error: "Erro interno",
-        debug: (msg || "erro sem mensagem"), // TODO: remover após descobrir o problema
+        ...(process.env.NODE_ENV !== "production" && { debug: msg }),
       });
     }
   });
