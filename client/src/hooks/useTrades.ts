@@ -49,3 +49,21 @@ export function useDeleteTrade() {
     onError: () => toast.error("Erro ao remover trade"),
   });
 }
+
+export function useSyncTradesFromMexc() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/trades/sync-from-mexc", { method: "POST", credentials: "include" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? "Erro ao sincronizar");
+      return data;
+    },
+    onSuccess: (data: { success?: boolean; imported?: number; message?: string }) => {
+      qc.invalidateQueries({ queryKey: ["/api/trades"] });
+      qc.invalidateQueries({ queryKey: ["/api/stats"] });
+      toast.success(data.message ?? "Trades sincronizados");
+    },
+    onError: (err: any) => toast.error(err?.message ?? "Erro ao sincronizar trades"),
+  });
+}

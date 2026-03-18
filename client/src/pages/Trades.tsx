@@ -11,8 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, Edit2, Search, X } from "lucide-react";
-import { useTrades, useCreateTrade, useUpdateTrade, useDeleteTrade } from "@/hooks/useTrades";
+import { Plus, Trash2, Edit2, Search, X, RefreshCw } from "lucide-react";
+import { useTrades, useCreateTrade, useUpdateTrade, useDeleteTrade, useSyncTradesFromMexc } from "@/hooks/useTrades";
 import { useUIStore } from "@/store/ui";
 import { fmtUsdt, fmtDate, pnlColor } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -187,6 +187,7 @@ export default function Trades() {
 
   const { data: trades = [], isLoading } = useTrades();
   const deleteTrade = useDeleteTrade();
+  const syncFromMexc = useSyncTradesFromMexc();
 
   // Filtered trades (client-side)
   const filtered = trades.filter(t => {
@@ -207,6 +208,16 @@ export default function Trades() {
           <h1 className="text-xl font-bold">Trades</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Registro de operações de futuros</p>
         </div>
+        <Button
+          variant="outline"
+          onClick={() => syncFromMexc.mutate()}
+          disabled={syncFromMexc.isPending}
+          className="gap-2"
+          title="Buscar trades de futuros da MEXC"
+        >
+          <RefreshCw className={cn("w-4 h-4", syncFromMexc.isPending && "animate-spin")} />
+          {syncFromMexc.isPending ? "Sincronizando..." : "Sincronizar MEXC"}
+        </Button>
         <Dialog open={open || !!editTrade} onOpenChange={v => { setOpen(v); if (!v) setEditTrade(null); }}>
           <DialogTrigger asChild>
             <Button onClick={() => setOpen(true)} data-testid="button-add-trade" className="gap-2">

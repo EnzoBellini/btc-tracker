@@ -71,6 +71,61 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.status(204).end();
   });
 
+  // ── Sync Trades from MEXC Futures ──────────────────────────────────────────
+  app.post("/api/trades/sync-from-mexc", async (_req, res) => {
+    const creds = await storage.getMexcCredentials();
+    if (!creds.apiKey || !creds.secretKey) {
+      return res.status(400).json({ error: "API Key e Secret Key não configurados. Configure em API MEXC." });
+    }
+    try {
+      const existingTrades = await storage.getTrades();
+      const existingIds = new Set(existingTrades.map(t => t.notes));
+      let totalImported = 0;
+
+      for (let page = 1; page <= 5; page++) {
+        const posRes = await mexcFuturesRequest(
+          "/api/v1/private/position/list/history_positions",
+          creds.apiKey.trim(),
+          creds.secretKey.trim(),
+          { symbol: "BTC_USDT", page_num: page, page_size: 50 }
+        );
+        if (!posRes.success || !posRes.data?.resultList?.length) break;
+
+        for (const pos of posRes.data.resultList) {
+          const posIdKey = `mexc_pos_${pos.positionId}`;
+          if (existingIds.has(posIdKey)) continue;
+
+          const date = new Date(pos.updateTime || pos.createTime).toISOString().split("T")[0];
+          const direction = pos.positionType === 1 ? "LONG" : "SHORT";
+          const pnl = parseFloat((pos.realised ?? 0).toFixed(4));
+          const status = pnl > 0 ? "WIN" : pnl < 0 ? "LOSS" : "BREAKEVEN";
+
+          await storage.createTrade({
+            date,
+            pair: (pos.symbol || "BTCUSDT").replace("_", ""),
+            direction,
+            entryPrice: pos.openAvgPrice || pos.holdAvgPrice || 0,
+            stopPrice: pos.liquidatePrice || 0,
+            targetPrice: pos.closeAvgPrice || 0,
+            exitPrice: pos.closeAvgPrice || undefined,
+            positionSize: pos.im || 0,
+            leverage: pos.leverage || 3,
+            pnl,
+            status,
+            notes: posIdKey,
+          });
+          existingIds.add(posIdKey);
+          totalImported++;
+        }
+      }
+
+      res.json({ success: true, imported: totalImported, message: `${totalImported} trade(s) importado(s) da MEXC Futuros` });
+    } catch (err: any) {
+      console.error("[trades/sync-from-mexc]", err.message);
+      res.status(400).json({ error: err.message });
+    }
+  });
+
   // ── Transfers ─────────────────────────────────────────────────────────────
   app.get("/api/transfers", async (_req, res) => res.json(await storage.getTransfers()));
   app.post("/api/transfers", async (req, res) => {
