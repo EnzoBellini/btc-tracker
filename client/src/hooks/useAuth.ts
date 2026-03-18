@@ -48,7 +48,7 @@ export function useLogin() {
     },
     onSuccess: (user) => {
       queryClient.setQueryData(["/api/auth/me"], user);
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      // Não invalidar aqui — evita refetch antes do cookie ser salvo no navegador
     },
   });
 }
@@ -72,7 +72,7 @@ export function useRegister() {
     },
     onSuccess: (user) => {
       queryClient.setQueryData(["/api/auth/me"], user);
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      // Não invalidar aqui — evita refetch antes do cookie ser salvo no navegador
     },
   });
 }
