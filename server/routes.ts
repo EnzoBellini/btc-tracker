@@ -14,15 +14,30 @@ function mexcSign(queryString: string, secretKey: string): string {
 }
 
 async function mexcFuturesRequest(path: string, apiKey: string, secretKey: string, params: Record<string, string | number> = {}) {
+  const key = apiKey.trim();
+  const secret = secretKey.trim();
   const timestamp = Date.now();
-  const paramStr = Object.entries({ ...params, timestamp }).map(([k, v]) => `${k}=${v}`).join("&");
-  const signature = mexcSign(paramStr, secretKey);
-  const url = `https://contract.mexc.com${path}?${paramStr}&signature=${signature}`;
+  const paramStr = Object.entries({ ...params, timestamp })
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}=${v}`)
+    .join("&");
+  const targetStr = key + timestamp + paramStr;
+  const signature = mexcSign(targetStr, secret);
+  const url = `https://contract.mexc.com${path}?${paramStr}`;
   const res = await fetch(url, {
-    headers: { "ApiKey": apiKey, "Request-Time": String(timestamp), "Content-Type": "application/json" },
+    headers: {
+      "ApiKey": key,
+      "Request-Time": String(timestamp),
+      "Signature": signature,
+      "Content-Type": "application/json",
+    },
   });
-  if (!res.ok) throw new Error(`MEXC Futures HTTP ${res.status}`);
-  return res.json();
+  const data = await res.json();
+  if (!res.ok) {
+    const msg = data?.message ?? data?.msg ?? data?.code ?? `HTTP ${res.status}`;
+    throw new Error(`MEXC Futures ${res.status}: ${msg}`);
+  }
+  return data;
 }
 
 async function mexcSpotRequest(path: string, apiKey: string, secretKey: string, params: Record<string, string | number> = {}) {
@@ -89,9 +104,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           creds.secretKey.trim(),
           { symbol: "BTC_USDT", page_num: page, page_size: 50 }
         );
-        if (!posRes.success || !posRes.data?.resultList?.length) break;
+        const resultList = Array.isArray(posRes.data) ? posRes.data : posRes.data?.resultList;
+        if (!posRes.success || !resultList?.length) break;
 
-        for (const pos of posRes.data.resultList) {
+        for (const pos of resultList) {
           const posIdKey = `mexc_pos_${pos.positionId}`;
           if (existingIds.has(posIdKey)) continue;
 
@@ -198,11 +214,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           creds.apiKey, creds.secretKey,
           { symbol: "BTC_USDT", page_num: 1, page_size: 50 }
         );
-        if (posRes.success && posRes.data?.resultList) {
+        const futuresList = Array.isArray(posRes.data) ? posRes.data : posRes.data?.resultList;
+        if (posRes.success && futuresList?.length) {
           const existingTrades = await storage.getTrades();
           const existingIds = new Set(existingTrades.map(t => t.notes));
 
-          for (const pos of posRes.data.resultList) {
+          for (const pos of futuresList) {
             const posIdKey = `mexc_pos_${pos.positionId}`;
             if (existingIds.has(posIdKey)) continue; // skip already imported
 
@@ -226,7 +243,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
               notes: posIdKey,
             });
           }
-          synced.push(`${posRes.data.resultList.length} posições de futuros importadas`);
+          synced.push(`${futuresList.length} posições de futuros importadas`);
         }
       } catch (e: any) {
         console.error("Futures sync error:", e.message);
