@@ -98,14 +98,19 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       let totalImported = 0;
 
       for (let page = 1; page <= 5; page++) {
+        // symbol opcional — busca todos os contratos (BTC_USDT, etc.)
         const posRes = await mexcFuturesRequest(
           "/api/v1/private/position/list/history_positions",
           creds.apiKey.trim(),
           creds.secretKey.trim(),
-          { symbol: "BTC_USDT", page_num: page, page_size: 50 }
+          { page_num: page, page_size: 100 }
         );
         const resultList = Array.isArray(posRes.data) ? posRes.data : posRes.data?.resultList;
-        if (!posRes.success || !resultList?.length) break;
+        if (!posRes.success) {
+          const errMsg = posRes.message ?? posRes.msg ?? posRes.code ?? "Resposta inválida";
+          throw new Error(String(errMsg));
+        }
+        if (!resultList?.length) break;
 
         for (const pos of resultList) {
           const posIdKey = `mexc_pos_${pos.positionId}`;
@@ -135,10 +140,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         }
       }
 
-      res.json({ success: true, imported: totalImported, message: `${totalImported} trade(s) importado(s) da MEXC Futuros` });
+      let message = `${totalImported} trade(s) importado(s) da MEXC Futuros`;
+      if (totalImported === 0) {
+        message += " Dica: Se a API retornou vazio, adicione o IP do Railway na whitelist da API Key (MEXC > API Management > Vincular IP). O Railway usa um IP diferente do seu.";
+      }
+      res.json({ success: true, imported: totalImported, message });
     } catch (err: any) {
       console.error("[trades/sync-from-mexc]", err.message);
-      res.status(400).json({ error: err.message });
+      const hint = err.message?.includes("700006") || err.message?.includes("IP")
+        ? " IP não autorizado — adicione o IP do Railway na whitelist da API Key (MEXC > API Management > Alterar > Vincular IP)."
+        : "";
+      res.status(400).json({ error: err.message + hint });
     }
   });
 
@@ -174,6 +186,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const result = insertSettingsSchema.partial().safeParse(req.body);
     if (!result.success) return res.status(400).json({ error: result.error.format() });
     res.json(await storage.updateSettings(result.data));
+  });
+
+  // ── Server IP (para whitelist MEXC) ────────────────────────────────────────
+  app.get("/api/mexc/server-ip", async (_req, res) => {
+    try {
+      const r = await fetch("https://api.ipify.org?format=json");
+      const data = await r.json();
+      res.json({ ip: data.ip });
+    } catch {
+      res.json({ ip: null, error: "Não foi possível obter o IP" });
+    }
   });
 
   // ── MEXC Credentials ──────────────────────────────────────────────────────

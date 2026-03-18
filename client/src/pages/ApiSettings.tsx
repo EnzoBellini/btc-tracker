@@ -8,7 +8,28 @@ import {
   CheckCircle2, XCircle, RefreshCw, Eye, EyeOff, Wifi, WifiOff,
   ShieldCheck, AlertTriangle, Key, Download, Clock,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useMexcCredentials, useTestMexc, useSyncMexc } from "@/hooks/useMexc";
+
+function ServerIpHint() {
+  const { data } = useQuery({
+    queryKey: ["/api/mexc/server-ip"],
+    queryFn: () => fetch("/api/mexc/server-ip").then(r => r.json()),
+    staleTime: 60_000,
+  });
+  if (!data?.ip) return null;
+  return (
+    <div className="rounded-md bg-muted/50 border border-border p-3 text-xs">
+      <p className="font-medium text-muted-foreground mb-1">IP do servidor (para whitelist MEXC)</p>
+      <p className="font-mono text-foreground break-all">
+        {data.ip}
+      </p>
+      <p className="text-muted-foreground mt-1">
+        Se a API tem IP vinculado, adicione este IP em MEXC → API Management → Alterar → Vincular endereço de IP.
+      </p>
+    </div>
+  );
+}
 
 function fmtDate(s: string | null | undefined) {
   if (!s) return "—";
@@ -138,6 +159,8 @@ export default function ApiSettings() {
               </Button>
             )}
           </div>
+
+          <ServerIpHint />
         </CardContent>
       </Card>
 
@@ -161,8 +184,8 @@ export default function ApiSettings() {
               },
               {
                 icon: AlertTriangle, color: "text-yellow-400",
-                title: "Futuros API — acesso institucional",
-                desc: "A MEXC restringe a API de futuros a usuários institucionais. Trades de spot e posições visíveis via painel web funcionam normalmente.",
+                title: "Whitelist de IP (Futuros)",
+                desc: "Se a API tem IP vinculado, o servidor (Railway) precisa estar na lista. Veja o IP acima e adicione em MEXC → API Management.",
               },
             ].map(({ icon: Icon, color, title, desc }) => (
               <div key={title} className="flex items-start gap-3">
