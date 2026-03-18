@@ -26,15 +26,23 @@ async function mexcFuturesRequest(path: string, apiKey: string, secretKey: strin
 }
 
 async function mexcSpotRequest(path: string, apiKey: string, secretKey: string, params: Record<string, string | number> = {}) {
+  const key = apiKey.trim();
+  const secret = secretKey.trim();
   const timestamp = Date.now();
-  const paramStr = Object.entries({ ...params, timestamp }).map(([k, v]) => `${k}=${v}`).join("&");
-  const signature = mexcSign(paramStr, secretKey);
+  const recvWindow = 10000;
+  const allParams = { ...params, recvWindow, timestamp };
+  const paramStr = Object.entries(allParams).map(([k, v]) => `${k}=${v}`).join("&");
+  const signature = mexcSign(paramStr, secret);
   const url = `https://api.mexc.com${path}?${paramStr}&signature=${signature}`;
   const res = await fetch(url, {
-    headers: { "X-MEXC-APIKEY": apiKey, "Content-Type": "application/json" },
+    headers: { "X-MEXC-APIKEY": key, "Content-Type": "application/json" },
   });
-  if (!res.ok) throw new Error(`MEXC Spot HTTP ${res.status}`);
-  return res.json();
+  const data = await res.json();
+  if (!res.ok) {
+    const msg = data?.msg ?? data?.code ?? `HTTP ${res.status}`;
+    throw new Error(`MEXC Spot ${res.status}: ${msg}`);
+  }
+  return data;
 }
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
