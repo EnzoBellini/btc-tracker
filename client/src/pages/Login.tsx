@@ -166,17 +166,6 @@ export default function LoginPage() {
           </ul>
         </div>
 
-        {/* Bottom attribution */}
-        <div className="relative z-10">
-          <a
-            href="https://www.perplexity.ai/computer"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-muted-foreground hover:text-primary transition-colors"
-          >
-            Created with Perplexity Computer
-          </a>
-        </div>
       </div>
 
       {/* ── Right panel — form ── */}

@@ -4,7 +4,6 @@ import { useHashLocation } from "wouter/use-hash-location";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Toaster } from "react-hot-toast";
-import { PerplexityAttribution } from "@/components/PerplexityAttribution";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   LayoutDashboard, ArrowLeftRight, TrendingUp, Bitcoin, BarChart2, BookOpen, Plug, LogOut, Menu,
@@ -163,14 +162,6 @@ function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
             </button>
           </div>
         )}
-        <a
-          href="https://www.perplexity.ai/computer"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-muted-foreground hover:text-primary transition-colors block"
-        >
-          Created with Perplexity Computer
-        </a>
       </div>
     </aside>
   );
