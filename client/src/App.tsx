@@ -34,17 +34,14 @@ const navItems = [
   { href: "/api-settings", label: "API MEXC",       icon: Plug },
 ];
 
-// ── BTC SVG logo ──────────────────────────────────────────────────────────────
-function BTCLogo() {
+// ── Trackion logo ──────────────────────────────────────────────────────────────
+function TrackionLogo() {
   return (
-    <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" aria-label="BTC Tracker">
-      <rect width="36" height="36" rx="8" fill="hsl(27,100%,55%)" />
-      <path d="M24.5 16.8c.6-.8.9-1.8.7-2.9-.5-2.4-2.7-3.3-5.5-3.3H13v14h7.2c3.1 0 5.5-1.2 5.5-4.1 0-1.5-.7-2.8-1.2-3.7zm-7.7-3.6h3.2c1.1 0 2 .4 2 1.6s-.9 1.7-2 1.7h-3.2v-3.3zm3.6 9.2H16.8v-3.5h3.6c1.3 0 2.2.5 2.2 1.8 0 1.2-.9 1.7-2.2 1.7z" fill="white"/>
-      <rect x="16" y="8" width="1.5" height="3" rx=".75" fill="white"/>
-      <rect x="20" y="8" width="1.5" height="3" rx=".75" fill="white"/>
-      <rect x="16" y="25" width="1.5" height="3" rx=".75" fill="white"/>
-      <rect x="20" y="25" width="1.5" height="3" rx=".75" fill="white"/>
-    </svg>
+    <img
+      src="/icon.png"
+      alt="Trackion"
+      className="w-8 h-8 rounded-lg object-contain"
+    />
   );
 }
 
@@ -64,21 +61,34 @@ function PageSkeleton() {
 // ── ErrorBoundary ─────────────────────────────────────────────────────────────
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
+const isChunkLoadError = (err?: Error) => {
+  const msg = err?.message ?? "";
+  return (
+    msg.includes("Failed to fetch dynamically imported module") ||
+    msg.includes("Loading chunk") ||
+    msg.includes("ChunkLoadError") ||
+    (msg.includes("Failed to fetch") && msg.includes("imported"))
+  );
+};
+
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error?: Error }> {
   state = { hasError: false, error: undefined };
   static getDerivedStateFromError(error: Error) { return { hasError: true, error }; }
   componentDidCatch(error: Error, info: ErrorInfo) { console.error("[ErrorBoundary]", error, info); }
   render() {
     if (this.state.hasError) {
+      const needsReload = isChunkLoadError(this.state.error);
       return (
         <div className="p-8 text-center space-y-3">
           <p className="text-loss font-semibold">Algo deu errado nesta página</p>
           <p className="text-xs text-muted-foreground">{this.state.error?.message}</p>
           <button
             className="text-xs text-primary underline"
-            onClick={() => this.setState({ hasError: false })}
+            onClick={() =>
+              needsReload ? window.location.reload() : this.setState({ hasError: false })
+            }
           >
-            Tentar novamente
+            {needsReload ? "Recarregar página" : "Tentar novamente"}
           </button>
         </div>
       );
@@ -98,15 +108,16 @@ function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
       className={cn(
         "flex flex-col w-56 bg-card border-r border-border h-full overflow-y-auto shrink-0",
         "transition-transform duration-200 ease-out",
-        "fixed left-0 top-0 z-50 md:static md:z-auto md:translate-x-0",
-        open ? "translate-x-0" : "-translate-x-full"
+        "max-md:fixed max-md:left-0 max-md:top-0 max-md:z-50",
+        "md:relative md:translate-x-0",
+        open ? "max-md:translate-x-0" : "max-md:-translate-x-full"
       )}
     >
       {/* Brand */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-border">
-        <BTCLogo />
+        <TrackionLogo />
         <div>
-          <p className="text-sm font-bold text-foreground leading-tight">BTC Tracker</p>
+          <p className="text-sm font-bold text-foreground leading-tight">Trackion</p>
           <p className="text-xs text-muted-foreground">Trading Strategy</p>
         </div>
       </div>
@@ -206,8 +217,8 @@ function Layout({ children }: { children: React.ReactNode }) {
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex items-center gap-2">
-            <BTCLogo />
-            <span className="text-sm font-bold text-foreground">BTC Tracker</span>
+            <TrackionLogo />
+            <span className="text-sm font-bold text-foreground">Trackion</span>
           </div>
         </header>
 

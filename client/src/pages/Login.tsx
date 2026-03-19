@@ -129,7 +129,7 @@ export default function LoginPage() {
             <Bitcoin className="w-6 h-6 text-primary-foreground" />
           </div>
           <div>
-            <p className="font-bold text-foreground leading-tight">BTC Tracker</p>
+            <p className="font-bold text-foreground leading-tight">Trackion</p>
             <p className="text-xs text-muted-foreground">Trading Strategy</p>
           </div>
         </div>
@@ -188,7 +188,7 @@ export default function LoginPage() {
           <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
             <Bitcoin className="w-5 h-5 text-primary-foreground" />
           </div>
-          <p className="font-bold text-foreground">BTC Tracker</p>
+          <p className="font-bold text-foreground">Trackion</p>
         </div>
 
         <motion.div
