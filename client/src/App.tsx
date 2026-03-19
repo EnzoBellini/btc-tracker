@@ -38,7 +38,7 @@ const navItems = [
 function TrackionLogo() {
   return (
     <img
-      src="/icon.png"
+      src="/logo.png"
       alt="Trackion"
       className="w-8 h-8 rounded-lg object-contain"
     />
