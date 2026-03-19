@@ -125,9 +125,7 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div className="relative flex items-center gap-3 z-10">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-            <Bitcoin className="w-6 h-6 text-primary-foreground" />
-          </div>
+          <img src="/logo.png" alt="Trackion" className="w-10 h-10 rounded-xl object-contain" />
           <div>
             <p className="font-bold text-foreground leading-tight">Trackion</p>
             <p className="text-xs text-muted-foreground">Trading Strategy</p>
@@ -185,9 +183,7 @@ export default function LoginPage() {
       <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10">
         {/* Mobile logo */}
         <div className="lg:hidden flex items-center gap-3 mb-8">
-          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-            <Bitcoin className="w-5 h-5 text-primary-foreground" />
-          </div>
+          <img src="/logo.png" alt="Trackion" className="w-9 h-9 rounded-xl object-contain" />
           <p className="font-bold text-foreground">Trackion</p>
         </div>
 
