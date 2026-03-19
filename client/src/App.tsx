@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { Router, Switch, Route, Link } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -7,7 +7,7 @@ import { Toaster } from "react-hot-toast";
 import { PerplexityAttribution } from "@/components/PerplexityAttribution";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  LayoutDashboard, ArrowLeftRight, TrendingUp, Bitcoin, BarChart2, BookOpen, Plug, LogOut,
+  LayoutDashboard, ArrowLeftRight, TrendingUp, Bitcoin, BarChart2, BookOpen, Plug, LogOut, Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, useLogout } from "@/hooks/useAuth";
@@ -88,13 +88,20 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
-function Sidebar() {
+function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
   const [location] = useHashLocation();
   const { user }   = useAuth();
   const logout     = useLogout();
 
   return (
-    <aside className="flex flex-col w-56 bg-card border-r border-border h-full overflow-y-auto shrink-0">
+    <aside
+      className={cn(
+        "flex flex-col w-56 bg-card border-r border-border h-full overflow-y-auto shrink-0",
+        "transition-transform duration-200 ease-out",
+        "fixed left-0 top-0 z-50 md:static md:z-auto md:translate-x-0",
+        open ? "translate-x-0" : "-translate-x-full"
+      )}
+    >
       {/* Brand */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-border">
         <BTCLogo />
@@ -112,6 +119,7 @@ function Sidebar() {
             <Link key={href} href={href}>
               <a
                 data-testid={`nav-${label.toLowerCase().replace(/\s+/g, "-")}`}
+                onClick={onClose}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors",
                   active
@@ -159,16 +167,58 @@ function Sidebar() {
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 function Layout({ children }: { children: React.ReactNode }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [location] = useHashLocation();
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location]);
+
   return (
-    <div className="flex h-full">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto bg-background min-w-0">
-        <ErrorBoundary>
-          <Suspense fallback={<PageSkeleton />}>
-            {children}
-          </Suspense>
-        </ErrorBoundary>
-      </main>
+    <div className="flex flex-col md:flex-row h-full">
+      {/* Backdrop (mobile) */}
+      <button
+        type="button"
+        aria-label="Fechar menu"
+        className={cn(
+          "fixed inset-0 z-40 bg-black/50 md:hidden transition-opacity",
+          sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+        onClick={() => setSidebarOpen(false)}
+      />
+
+      {/* Sidebar */}
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+
+      {/* Mobile header + main */}
+      <div className="flex flex-col flex-1 min-w-0 min-h-0">
+        {/* Hamburger header (mobile only) */}
+        <header className="md:hidden shrink-0 h-14 flex items-center gap-3 px-4 bg-card border-b border-border">
+          <button
+            type="button"
+            aria-label="Abrir menu"
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 -ml-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+          <div className="flex items-center gap-2">
+            <BTCLogo />
+            <span className="text-sm font-bold text-foreground">BTC Tracker</span>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto bg-background min-w-0">
+          <ErrorBoundary>
+            <Suspense fallback={<PageSkeleton />}>
+              {children}
+            </Suspense>
+          </ErrorBoundary>
+        </main>
+      </div>
     </div>
   );
 }
