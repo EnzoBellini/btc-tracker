@@ -9,6 +9,10 @@ import {
 
 // ─── MEXC API helpers ─────────────────────────────────────────────────────────
 
+const MEXC_PROXY = process.env.MEXC_PROXY_URL?.replace(/\/$/, "");
+const MEXC_CONTRACT_BASE = MEXC_PROXY ? `${MEXC_PROXY}/mexc/contract` : "https://contract.mexc.com";
+const MEXC_SPOT_BASE = MEXC_PROXY ? `${MEXC_PROXY}/mexc/spot` : "https://api.mexc.com";
+
 function mexcSign(queryString: string, secretKey: string): string {
   return crypto.createHmac("sha256", secretKey).update(queryString).digest("hex");
 }
@@ -23,7 +27,7 @@ async function mexcFuturesRequest(path: string, apiKey: string, secretKey: strin
     .join("&");
   const targetStr = key + timestamp + paramStr;
   const signature = mexcSign(targetStr, secret);
-  const url = `https://contract.mexc.com${path}?${paramStr}`;
+  const url = `${MEXC_CONTRACT_BASE}${path}?${paramStr}`;
   const res = await fetch(url, {
     headers: {
       "ApiKey": key,
@@ -48,7 +52,7 @@ async function mexcSpotRequest(path: string, apiKey: string, secretKey: string, 
   const allParams = { ...params, recvWindow, timestamp };
   const paramStr = Object.entries(allParams).map(([k, v]) => `${k}=${v}`).join("&");
   const signature = mexcSign(paramStr, secret);
-  const url = `https://api.mexc.com${path}?${paramStr}&signature=${signature}`;
+  const url = `${MEXC_SPOT_BASE}${path}?${paramStr}&signature=${signature}`;
   const res = await fetch(url, {
     headers: { "X-MEXC-APIKEY": key, "Content-Type": "application/json" },
   });
@@ -191,6 +195,15 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // ── Server IP (para whitelist MEXC) ────────────────────────────────────────
   app.get("/api/mexc/server-ip", async (_req, res) => {
     try {
+      if (MEXC_PROXY) {
+        const r = await fetch(`${MEXC_PROXY}/ip`);
+        const data = await r.json();
+        return res.json({
+          ip: data.ip,
+          proxy: true,
+          hint: "IP do proxy Fly.io. Adicione na whitelist da MEXC (API Management → Vincular IP).",
+        });
+      }
       const r = await fetch("https://api.ipify.org?format=json");
       const data = await r.json();
       res.json({ ip: data.ip });
@@ -284,7 +297,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
               // Get current BTC price
               let btcPrice = 0;
               try {
-                const ticker = await fetch("https://api.mexc.com/api/v3/ticker/price?symbol=BTCUSDT");
+                const ticker = await fetch(`${MEXC_SPOT_BASE}/api/v3/ticker/price?symbol=BTCUSDT`);
                 const tickerData = await ticker.json();
                 btcPrice = parseFloat(tickerData.price || 0);
               } catch { btcPrice = 0; }

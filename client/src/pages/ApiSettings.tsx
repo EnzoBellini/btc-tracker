@@ -20,12 +20,14 @@ function ServerIpHint() {
   if (!data?.ip) return null;
   return (
     <div className="rounded-md bg-muted/50 border border-border p-3 text-xs">
-      <p className="font-medium text-muted-foreground mb-1">IP do servidor (para whitelist MEXC)</p>
+      <p className="font-medium text-muted-foreground mb-1">
+        {data.proxy ? "IP do proxy (para whitelist MEXC)" : "IP do servidor (para whitelist MEXC)"}
+      </p>
       <p className="font-mono text-foreground break-all">
         {data.ip}
       </p>
       <p className="text-muted-foreground mt-1">
-        Se a API tem IP vinculado, adicione este IP em MEXC → API Management → Alterar → Vincular endereço de IP.
+        {data.hint || "Se a API tem IP vinculado, adicione este IP em MEXC → API Management → Alterar → Vincular endereço de IP."}
       </p>
     </div>
   );

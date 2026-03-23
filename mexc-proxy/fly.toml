@@ -1,0 +1,23 @@
+# Deploy: fly launch (uma vez) e fly deploy
+# Alocar IP de egress: fly ips allocate-egress --region gru
+# Listar IPs: fly ips list
+
+app = "trackion-mexc-proxy"
+
+[build]
+
+[env]
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1
