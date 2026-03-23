@@ -12,6 +12,7 @@ import {
 const MEXC_PROXY = process.env.MEXC_PROXY_URL?.replace(/\/$/, "");
 const MEXC_CONTRACT_BASE = MEXC_PROXY ? `${MEXC_PROXY}/mexc/contract` : "https://contract.mexc.com";
 const MEXC_SPOT_BASE = MEXC_PROXY ? `${MEXC_PROXY}/mexc/spot` : "https://api.mexc.com";
+const MEXC_FETCH_TIMEOUT = Number(process.env.MEXC_FETCH_TIMEOUT) || 20_000;
 
 function mexcSign(queryString: string, secretKey: string): string {
   return crypto.createHmac("sha256", secretKey).update(queryString).digest("hex");
@@ -28,20 +29,38 @@ async function mexcFuturesRequest(path: string, apiKey: string, secretKey: strin
   const targetStr = key + timestamp + paramStr;
   const signature = mexcSign(targetStr, secret);
   const url = `${MEXC_CONTRACT_BASE}${path}?${paramStr}`;
-  const res = await fetch(url, {
-    headers: {
-      "ApiKey": key,
-      "Request-Time": String(timestamp),
-      "Signature": signature,
-      "Content-Type": "application/json",
-    },
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    const msg = data?.message ?? data?.msg ?? data?.code ?? `HTTP ${res.status}`;
-    throw new Error(`MEXC Futures ${res.status}: ${msg}`);
+  const ctrl = new AbortController();
+  const to = setTimeout(() => ctrl.abort(), MEXC_FETCH_TIMEOUT);
+  try {
+    const res = await fetch(url, {
+      signal: ctrl.signal,
+      headers: {
+        "ApiKey": key,
+        "Request-Time": String(timestamp),
+        "Signature": signature,
+        "Content-Type": "application/json",
+      },
+    });
+    clearTimeout(to);
+    const text = await res.text();
+    let data: any;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      throw new Error(`MEXC Futures: resposta inválida (${res.status})`);
+    }
+    if (!res.ok) {
+      const msg = data?.message ?? data?.msg ?? data?.code ?? `HTTP ${res.status}`;
+      throw new Error(`MEXC Futures ${res.status}: ${msg}`);
+    }
+    return data;
+  } catch (e: any) {
+    clearTimeout(to);
+    if (e?.name === "AbortError") {
+      throw new Error(`MEXC Futures: timeout após ${MEXC_FETCH_TIMEOUT / 1000}s. Verifique IP whitelist e proxy.`);
+    }
+    throw e;
   }
-  return data;
 }
 
 async function mexcSpotRequest(path: string, apiKey: string, secretKey: string, params: Record<string, string | number> = {}) {
@@ -53,15 +72,34 @@ async function mexcSpotRequest(path: string, apiKey: string, secretKey: string, 
   const paramStr = Object.entries(allParams).map(([k, v]) => `${k}=${v}`).join("&");
   const signature = mexcSign(paramStr, secret);
   const url = `${MEXC_SPOT_BASE}${path}?${paramStr}&signature=${signature}`;
-  const res = await fetch(url, {
-    headers: { "X-MEXC-APIKEY": key, "Content-Type": "application/json" },
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    const msg = data?.msg ?? data?.code ?? `HTTP ${res.status}`;
-    throw new Error(`MEXC Spot ${res.status}: ${msg}`);
+  const ctrl = new AbortController();
+  let to: ReturnType<typeof setTimeout>;
+  try {
+    to = setTimeout(() => ctrl.abort(), MEXC_FETCH_TIMEOUT);
+    const res = await fetch(url, {
+      signal: ctrl.signal,
+      headers: { "X-MEXC-APIKEY": key, "Content-Type": "application/json" },
+    });
+    clearTimeout(to);
+    const text = await res.text();
+    let data: any;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      throw new Error(`MEXC Spot: resposta inválida (${res.status})`);
+    }
+    if (!res.ok) {
+      const msg = data?.msg ?? data?.code ?? `HTTP ${res.status}`;
+      throw new Error(`MEXC Spot ${res.status}: ${msg}`);
+    }
+    return data;
+  } catch (e: any) {
+    if (typeof to !== "undefined") clearTimeout(to);
+    if (e?.name === "AbortError") {
+      throw new Error(`MEXC Spot: timeout após ${MEXC_FETCH_TIMEOUT / 1000}s. Verifique IP whitelist e proxy.`);
+    }
+    throw e;
   }
-  return data;
 }
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {

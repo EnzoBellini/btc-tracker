@@ -55,7 +55,13 @@ export function useSyncTradesFromMexc() {
   return useMutation({
     mutationFn: async () => {
       const res = await fetch("/api/trades/sync-from-mexc", { method: "POST", credentials: "include" });
-      const data = await res.json();
+      let data: any;
+      try {
+        const text = await res.text();
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error("Resposta inválida do servidor. Pode ser timeout — verifique IP whitelist na MEXC ou use o proxy Fly.io.");
+      }
       if (!res.ok) throw new Error(data?.error ?? "Erro ao sincronizar");
       return data;
     },
