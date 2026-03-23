@@ -189,14 +189,19 @@ export default function Trades() {
   const deleteTrade = useDeleteTrade();
   const syncFromMexc = useSyncTradesFromMexc();
 
-  // Filtered trades (client-side)
-  const filtered = trades.filter(t => {
+  // Filtered trades (client-side), ordenados por data (mais recente primeiro)
+  const filtered = [...trades]
+    .filter(t => {
     if (tradesFilter.status !== "all" && t.status !== tradesFilter.status) return false;
     if (tradesFilter.direction !== "all" && t.direction !== tradesFilter.direction) return false;
     if (tradesFilter.search && !t.pair.toLowerCase().includes(tradesFilter.search.toLowerCase()) &&
         !(t.notes ?? "").toLowerCase().includes(tradesFilter.search.toLowerCase())) return false;
-    return true;
-  });
+      return true;
+    })
+    .sort((a, b) => {
+      const d = b.date.localeCompare(a.date);
+      return d !== 0 ? d : (b.id - a.id);
+    });
 
   const hasActiveFilter = tradesFilter.status !== "all" || tradesFilter.direction !== "all" || tradesFilter.search !== "";
 

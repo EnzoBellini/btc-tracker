@@ -1,23 +1,25 @@
-# Deploy: fly launch (uma vez) e fly deploy
-# Alocar IP de egress: fly ips allocate-egress --region gru
-# Listar IPs: fly ips list
+# fly.toml app configuration file generated for trackion-mexc-proxy on 2026-03-23T13:34:06-03:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-app = "trackion-mexc-proxy"
+app = 'trackion-mexc-proxy'
+primary_region = 'gru'
 
 [build]
 
 [env]
-  PORT = "8080"
+  PORT = '8080'
 
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = true
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
-  processes = ["app"]
+  processes = ['app']
 
 [[vm]]
-  memory = "256mb"
-  cpu_kind = "shared"
+  memory = '256mb'
   cpus = 1
+  memory_mb = 256

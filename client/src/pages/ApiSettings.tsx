@@ -17,18 +17,22 @@ function ServerIpHint() {
     queryFn: () => fetch("/api/mexc/server-ip").then(r => r.json()),
     staleTime: 60_000,
   });
-  if (!data?.ip) return null;
+  if (!data) return null;
   return (
-    <div className="rounded-md bg-muted/50 border border-border p-3 text-xs">
+    <div className={`rounded-md border p-3 text-xs ${data.error ? "bg-destructive/5 border-destructive/30" : "bg-muted/50 border-border"}`}>
       <p className="font-medium text-muted-foreground mb-1">
         {data.proxy ? "IP do proxy (para whitelist MEXC)" : "IP do servidor (para whitelist MEXC)"}
       </p>
-      <p className="font-mono text-foreground break-all">
-        {data.ip}
-      </p>
-      <p className="text-muted-foreground mt-1">
-        {data.hint || "Se a API tem IP vinculado, adicione este IP em MEXC → API Management → Alterar → Vincular endereço de IP."}
-      </p>
+      {data.ip ? (
+        <>
+          <p className="font-mono text-foreground break-all">{data.ip}</p>
+          <p className="text-muted-foreground mt-1">
+            {data.hint || "Se a API tem IP vinculado, adicione este IP em MEXC → API Management → Alterar → Vincular endereço de IP."}
+          </p>
+        </>
+      ) : (
+        <p className="text-destructive mt-1">{data.error || "Não foi possível obter o IP"}</p>
+      )}
     </div>
   );
 }

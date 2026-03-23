@@ -232,21 +232,58 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   // ── Server IP (para whitelist MEXC) ────────────────────────────────────────
   app.get("/api/mexc/server-ip", async (_req, res) => {
+    const fetchWithTimeout = async (url: string, ms = 10_000) => {
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), ms);
+      try {
+        const r = await fetch(url, { signal: ctrl.signal });
+        clearTimeout(to);
+        return r;
+      } catch (e) {
+        clearTimeout(to);
+        throw e;
+      }
+    };
     try {
       if (MEXC_PROXY) {
-        const r = await fetch(`${MEXC_PROXY}/ip`);
-        const data = await r.json();
+        const r = await fetchWithTimeout(`${MEXC_PROXY}/ip`);
+        const text = await r.text();
+        let data: { ip?: string | null; error?: string };
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          console.error("[server-ip] Proxy retornou não-JSON:", text?.slice(0, 100));
+          return res.json({
+            ip: null,
+            error: `Proxy inacessível (${r.status}). Verifique MEXC_PROXY_URL. O app no Fly pode não ter rota /ip.`,
+          });
+        }
+        if (!r.ok) {
+          return res.json({
+            ip: null,
+            error: data.error || `Proxy retornou ${r.status}`,
+          });
+        }
         return res.json({
-          ip: data.ip,
+          ip: data.ip ?? null,
           proxy: true,
           hint: "IP do proxy Fly.io. Adicione na whitelist da MEXC (API Management → Vincular IP).",
+          error: data.ip ? undefined : (data.error || "Proxy não retornou IP"),
         });
       }
-      const r = await fetch("https://api.ipify.org?format=json");
+      const r = await fetchWithTimeout("https://api.ipify.org?format=json");
       const data = await r.json();
       res.json({ ip: data.ip });
-    } catch {
-      res.json({ ip: null, error: "Não foi possível obter o IP" });
+    } catch (e: any) {
+      const msg = e?.message ?? String(e);
+      console.error("[server-ip]", msg);
+      if (e?.name === "AbortError") {
+        return res.json({ ip: null, error: "Timeout ao obter IP (proxy ou ipify)" });
+      }
+      res.json({
+        ip: null,
+        error: MEXC_PROXY ? `Falha ao conectar no proxy (${MEXC_PROXY}). Verifique se está online.` : "Não foi possível obter o IP (ipify.org).",
+      });
     }
   });
 

@@ -58,7 +58,11 @@ export interface IStorage {
 export class DbStorage implements IStorage {
   // ── Trades ──────────────────────────────────────────────────────────────────
   async getTrades(): Promise<Trade[]> {
-    return (await db!.select().from(trades)).sort((a, b) => b.id - a.id);
+    const rows = await db!.select().from(trades);
+    return rows.sort((a, b) => {
+      const d = b.date.localeCompare(a.date);
+      return d !== 0 ? d : b.id - a.id;
+    });
   }
   async getTrade(id: number): Promise<Trade | undefined> {
     const [row] = await db!.select().from(trades).where(eq(trades.id, id));
@@ -225,7 +229,12 @@ class MemStorage implements IStorage {
   private usersMap: Map<number, User> = new Map();
   private nextId = { trades: 1, transfers: 1, btcHoldings: 1, goals: 1, users: 1 };
 
-  async getTrades() { return Array.from(this.trades.values()).sort((a, b) => b.id - a.id); }
+  async getTrades() {
+    return Array.from(this.trades.values()).sort((a, b) => {
+      const d = b.date.localeCompare(a.date);
+      return d !== 0 ? d : b.id - a.id;
+    });
+  }
   async getTrade(id: number) { return this.trades.get(id); }
   async createTrade(t: InsertTrade) {
     const trade = { ...t, id: this.nextId.trades++, exitPrice: t.exitPrice ?? null, pnl: t.pnl ?? null, notes: t.notes ?? null } as Trade;

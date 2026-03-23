@@ -71,12 +71,14 @@ export default function Dashboard() {
 
   const isLoading = statsLoading || tradesLoading;
 
-  // Memoised chart data
+  // Memoised chart data (ordenados por data)
   const { pnlChartData, recentTradesData } = useMemo(() => {
-    const closed = [...trades].filter(t => t.status !== "OPEN").reverse();
-    const pnlChart = closed.reduce<{ trade: number; cumPnl: number; pnl: number }[]>((acc, t, i) => {
+    const closed = [...trades]
+      .filter(t => t.status !== "OPEN")
+      .sort((a, b) => a.date.localeCompare(b.date)); // cronológico para gráfico
+    const pnlChart = closed.reduce<{ trade: number; cumPnl: number; pnl: number; date: string }[]>((acc, t, i) => {
       const prev = acc[i - 1]?.cumPnl ?? 0;
-      acc.push({ trade: i + 1, cumPnl: prev + (t.pnl ?? 0), pnl: t.pnl ?? 0 });
+      acc.push({ trade: i + 1, cumPnl: prev + (t.pnl ?? 0), pnl: t.pnl ?? 0, date: t.date });
       return acc;
     }, []);
     return { pnlChartData: pnlChart, recentTradesData: pnlChart.slice(-10) };
@@ -177,7 +179,7 @@ export default function Dashboard() {
                       <stop offset="95%" stopColor="hsl(27,100%,55%)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="trade" tick={{ fill: "hsl(220,8%,50%)", fontSize: 11 }} axisLine={false} tickLine={false} label={{ value: "Trade #", position: "insideBottom", offset: -2, fill: "hsl(220,8%,50%)", fontSize: 10 }} />
+                  <XAxis dataKey="date" tick={{ fill: "hsl(220,8%,50%)", fontSize: 10 }} axisLine={false} tickLine={false} label={{ value: "Data", position: "insideBottom", offset: -2, fill: "hsl(220,8%,50%)", fontSize: 10 }} />
                   <YAxis tick={{ fill: "hsl(220,8%,50%)", fontSize: 11 }} axisLine={false} tickLine={false} width={50} />
                   <Tooltip content={<CustomTooltip />} />
                   <ReferenceLine y={0} stroke="hsl(220,12%,25%)" strokeDasharray="3 3" />
@@ -201,7 +203,7 @@ export default function Dashboard() {
             ) : (
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={recentTradesData} barSize={14}>
-                  <XAxis dataKey="trade" tick={{ fill: "hsl(220,8%,50%)", fontSize: 11 }} axisLine={false} tickLine={false} label={{ value: "Trade #", position: "insideBottom", offset: -2, fill: "hsl(220,8%,50%)", fontSize: 10 }} />
+                  <XAxis dataKey="date" tick={{ fill: "hsl(220,8%,50%)", fontSize: 10 }} axisLine={false} tickLine={false} label={{ value: "Data", position: "insideBottom", offset: -2, fill: "hsl(220,8%,50%)", fontSize: 10 }} />
                   <YAxis tick={{ fill: "hsl(220,8%,50%)", fontSize: 11 }} axisLine={false} tickLine={false} width={50} />
                   <Tooltip content={<CustomTooltip />} />
                   <ReferenceLine y={0} stroke="hsl(220,12%,25%)" />

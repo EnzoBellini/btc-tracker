@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect, useRef } from "react";
 import { Router, Switch, Route, Link } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -10,7 +10,22 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, useLogout } from "@/hooks/useAuth";
+import { useSyncTradesFromMexc } from "@/hooks/useTrades";
 const LoginPage = lazy(() => import("@/pages/Login"));
+
+// ── Sync MEXC ao abrir o app (após login) ────────────────────────────────────────
+function SyncOnLogin() {
+  const { user } = useAuth();
+  const syncFromMexc = useSyncTradesFromMexc();
+  const hasSynced = useRef(false);
+  useEffect(() => {
+    if (user && !hasSynced.current) {
+      hasSynced.current = true;
+      syncFromMexc.mutate();
+    }
+  }, [user]);
+  return null;
+}
 
 // ── Lazy-loaded pages ─────────────────────────────────────────────────────────
 const Dashboard   = lazy(() => import("@/pages/Dashboard"));
@@ -245,7 +260,12 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       </Suspense>
     );
   }
-  return <>{children}</>;
+  return (
+    <>
+      <SyncOnLogin />
+      {children}
+    </>
+  );
 }
 
 // ── App root ──────────────────────────────────────────────────────────────────
