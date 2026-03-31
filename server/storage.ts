@@ -16,6 +16,7 @@ import {
   users,
 } from "@shared/schema";
 import { db } from "./db";
+import { encrypt, decrypt } from "./crypto";
 
 const defaultSettingsRow = (userId: number): Omit<InsertSettings, never> & { userId: number } => ({
   userId,
@@ -146,18 +147,22 @@ export class DbStorage implements IStorage {
       if (!inserted) throw new Error("Failed to create default MEXC credentials");
       return inserted;
     }
-    return row;
+    return { ...row, secretKey: decrypt(row.secretKey) };
   }
   async updateMexcCredentials(userId: number, c: Partial<InsertMexcCredentials>): Promise<MexcCredentials> {
+    const payload = { ...c };
+    if (payload.secretKey && payload.secretKey !== "••••••••••••••••") {
+      payload.secretKey = encrypt(payload.secretKey);
+    }
     const [existing] = await db!.select().from(mexcCredentials).where(eq(mexcCredentials.userId, userId)).limit(1);
     if (!existing) {
-      const [inserted] = await db!.insert(mexcCredentials).values({ userId, apiKey: "", secretKey: "", isConnected: false, ...c }).returning();
+      const [inserted] = await db!.insert(mexcCredentials).values({ userId, apiKey: "", secretKey: "", isConnected: false, ...payload }).returning();
       if (!inserted) throw new Error("Failed to create MEXC credentials");
-      return inserted;
+      return { ...inserted, secretKey: decrypt(inserted.secretKey) };
     }
-    const [updated] = await db!.update(mexcCredentials).set(c).where(eq(mexcCredentials.userId, userId)).returning();
+    const [updated] = await db!.update(mexcCredentials).set(payload).where(eq(mexcCredentials.userId, userId)).returning();
     if (!updated) throw new Error("Failed to update MEXC credentials");
-    return updated;
+    return { ...updated, secretKey: decrypt(updated.secretKey) };
   }
 
   async getGoals(userId: number): Promise<Goal[]> {
