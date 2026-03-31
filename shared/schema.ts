@@ -1,4 +1,4 @@
-import { pgTable, text, integer, real, boolean, serial, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, real, boolean, serial, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -16,6 +16,7 @@ export type User = typeof users.$inferSelect;
 // ── Trades ────────────────────────────────────────────────────────────────────
 export const trades = pgTable("trades", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   date: text("date").notNull(),               // ISO date string YYYY-MM-DD
   pair: text("pair").notNull().default("BTCUSDT"),
   direction: text("direction").notNull(),     // "LONG" | "SHORT"
@@ -30,13 +31,14 @@ export const trades = pgTable("trades", {
   notes: text("notes"),
 });
 
-export const insertTradeSchema = createInsertSchema(trades).omit({ id: true });
+export const insertTradeSchema = createInsertSchema(trades).omit({ id: true, userId: true });
 export type InsertTrade = z.infer<typeof insertTradeSchema>;
 export type Trade = typeof trades.$inferSelect;
 
 // ── Transfers (futures → spot BTC) ───────────────────────────────────────────
 export const transfers = pgTable("transfers", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   date: text("date").notNull(),
   amountUsdt: real("amount_usdt").notNull(),  // USDT moved
   btcPrice: real("btc_price").notNull(),      // BTC price at transfer time
@@ -44,13 +46,14 @@ export const transfers = pgTable("transfers", {
   notes: text("notes"),
 });
 
-export const insertTransferSchema = createInsertSchema(transfers).omit({ id: true });
+export const insertTransferSchema = createInsertSchema(transfers).omit({ id: true, userId: true });
 export type InsertTransfer = z.infer<typeof insertTransferSchema>;
 export type Transfer = typeof transfers.$inferSelect;
 
 // ── BTC Holdings snapshots ────────────────────────────────────────────────────
 export const btcHoldings = pgTable("btc_holdings", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   date: text("date").notNull(),
   btcAmount: real("btc_amount").notNull(),    // total BTC held
   avgCostUsdt: real("avg_cost_usdt").notNull(), // avg cost per BTC
@@ -58,44 +61,55 @@ export const btcHoldings = pgTable("btc_holdings", {
   notes: text("notes"),
 });
 
-export const insertBtcHoldingSchema = createInsertSchema(btcHoldings).omit({ id: true });
+export const insertBtcHoldingSchema = createInsertSchema(btcHoldings).omit({ id: true, userId: true });
 export type InsertBtcHolding = z.infer<typeof insertBtcHoldingSchema>;
 export type BtcHolding = typeof btcHoldings.$inferSelect;
 
-// ── Account Settings ──────────────────────────────────────────────────────────
-export const settings = pgTable("settings", {
-  id: serial("id").primaryKey(),
-  totalCapital: real("total_capital").notNull().default(200),  // USDT
+// ── Account Settings (uma linha por usuário) ───────────────────────────────────
+export const settings = pgTable(
+  "settings",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    totalCapital: real("total_capital").notNull().default(200),  // USDT
   futuresCapital: real("futures_capital").notNull().default(100),
   spotCapital: real("spot_capital").notNull().default(100),
   riskPerTrade: real("risk_per_trade").notNull().default(2.5), // USDT
   profitTransferThreshold: real("profit_transfer_threshold").notNull().default(10), // every +10 USDT profit → buy BTC
   defaultLeverage: integer("default_leverage").notNull().default(3),
   stopTradingDrawdown: real("stop_trading_drawdown").notNull().default(20), // % drawdown to stop
-});
+  },
+  (t) => [uniqueIndex("settings_user_id_unique").on(t.userId)],
+);
 
-export const insertSettingsSchema = createInsertSchema(settings).omit({ id: true });
+export const insertSettingsSchema = createInsertSchema(settings).omit({ id: true, userId: true });
 export type InsertSettings = z.infer<typeof insertSettingsSchema>;
 export type Settings = typeof settings.$inferSelect;
 
-// ── MEXC API Credentials ──────────────────────────────────────────────────────
-export const mexcCredentials = pgTable("mexc_credentials", {
-  id: serial("id").primaryKey(),
-  apiKey: text("api_key").notNull().default(""),
+// ── MEXC API Credentials (uma linha por usuário) ─────────────────────────────
+export const mexcCredentials = pgTable(
+  "mexc_credentials",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    apiKey: text("api_key").notNull().default(""),
   secretKey: text("secret_key").notNull().default(""),
   isConnected: boolean("is_connected").notNull().default(false),
   lastSyncAt: text("last_sync_at"),  // ISO timestamp
   lastSyncStatus: text("last_sync_status"), // "success" | "error" | null
   lastSyncMessage: text("last_sync_message"),
-});
+  },
+  (t) => [uniqueIndex("mexc_credentials_user_id_unique").on(t.userId)],
+);
 
-export const insertMexcCredentialsSchema = createInsertSchema(mexcCredentials).omit({ id: true });
+export const insertMexcCredentialsSchema = createInsertSchema(mexcCredentials).omit({ id: true, userId: true });
 export type InsertMexcCredentials = z.infer<typeof insertMexcCredentialsSchema>;
 export type MexcCredentials = typeof mexcCredentials.$inferSelect;
 
 // ── Goals / Plan Tracker ──────────────────────────────────────────────────────
 export const goals = pgTable("goals", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   targetAmount: real("target_amount").notNull(),  // USDT target
   currentAmount: real("current_amount").notNull().default(0),
@@ -106,7 +120,7 @@ export const goals = pgTable("goals", {
   notes: text("notes"),
 });
 
-export const insertGoalSchema = createInsertSchema(goals).omit({ id: true });
+export const insertGoalSchema = createInsertSchema(goals).omit({ id: true, userId: true });
 export type InsertGoal = z.infer<typeof insertGoalSchema>;
 export type Goal = typeof goals.$inferSelect;
 

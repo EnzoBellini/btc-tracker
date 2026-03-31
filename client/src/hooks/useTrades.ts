@@ -60,7 +60,7 @@ export function useSyncTradesFromMexc() {
         const text = await res.text();
         data = text ? JSON.parse(text) : {};
       } catch {
-        throw new Error("Resposta inválida do servidor. Pode ser timeout — verifique IP whitelist na MEXC ou use o proxy Fly.io.");
+        throw new Error("Resposta inválida do servidor. Pode ser timeout — verifique se o IP do Railway está na whitelist da MEXC.");
       }
       if (!res.ok) throw new Error(data?.error ?? "Erro ao sincronizar");
       return data;

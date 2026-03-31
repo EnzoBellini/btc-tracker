@@ -95,7 +95,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
       return (
         <div className="p-8 text-center space-y-3">
           <p className="text-loss font-semibold">Algo deu errado nesta página</p>
-          <p className="text-xs text-muted-foreground">{this.state.error?.message}</p>
+          <p className="text-xs text-muted-foreground">{(this.state.error as Error | undefined)?.message}</p>
           <button
             className="text-xs text-primary underline"
             onClick={() =>

@@ -1,7 +1,12 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { type Server } from "http";
 import * as crypto from "crypto";
+import { requireAuth } from "./auth";
 import { storage } from "./storage";
+
+function uid(req: Request): number {
+  return req.session.userId as number;
+}
 import {
   insertTradeSchema, insertTransferSchema, insertBtcHoldingSchema,
   insertSettingsSchema, insertMexcCredentialsSchema, insertGoalSchema,
@@ -9,9 +14,8 @@ import {
 
 // ─── MEXC API helpers ─────────────────────────────────────────────────────────
 
-const MEXC_PROXY = process.env.MEXC_PROXY_URL?.replace(/\/$/, "");
-const MEXC_CONTRACT_BASE = MEXC_PROXY ? `${MEXC_PROXY}/mexc/contract` : "https://contract.mexc.com";
-const MEXC_SPOT_BASE = MEXC_PROXY ? `${MEXC_PROXY}/mexc/spot` : "https://api.mexc.com";
+const MEXC_CONTRACT_BASE = "https://contract.mexc.com";
+const MEXC_SPOT_BASE = "https://api.mexc.com";
 const MEXC_FETCH_TIMEOUT = Number(process.env.MEXC_FETCH_TIMEOUT) || 20_000;
 
 function mexcSign(queryString: string, secretKey: string): string {
@@ -57,7 +61,7 @@ async function mexcFuturesRequest(path: string, apiKey: string, secretKey: strin
   } catch (e: any) {
     clearTimeout(to);
     if (e?.name === "AbortError") {
-      throw new Error(`MEXC Futures: timeout após ${MEXC_FETCH_TIMEOUT / 1000}s. Verifique IP whitelist e proxy.`);
+      throw new Error(`MEXC Futures: timeout após ${MEXC_FETCH_TIMEOUT / 1000}s. Verifique se o IP do Railway está na whitelist da MEXC.`);
     }
     throw e;
   }
@@ -73,7 +77,7 @@ async function mexcSpotRequest(path: string, apiKey: string, secretKey: string, 
   const signature = mexcSign(paramStr, secret);
   const url = `${MEXC_SPOT_BASE}${path}?${paramStr}&signature=${signature}`;
   const ctrl = new AbortController();
-  let to: ReturnType<typeof setTimeout>;
+  let to: ReturnType<typeof setTimeout> | undefined;
   try {
     to = setTimeout(() => ctrl.abort(), MEXC_FETCH_TIMEOUT);
     const res = await fetch(url, {
@@ -94,9 +98,9 @@ async function mexcSpotRequest(path: string, apiKey: string, secretKey: string, 
     }
     return data;
   } catch (e: any) {
-    if (typeof to !== "undefined") clearTimeout(to);
+    if (to) clearTimeout(to);
     if (e?.name === "AbortError") {
-      throw new Error(`MEXC Spot: timeout após ${MEXC_FETCH_TIMEOUT / 1000}s. Verifique IP whitelist e proxy.`);
+      throw new Error(`MEXC Spot: timeout após ${MEXC_FETCH_TIMEOUT / 1000}s. Verifique se o IP do Railway está na whitelist da MEXC.`);
     }
     throw e;
   }
@@ -104,38 +108,46 @@ async function mexcSpotRequest(path: string, apiKey: string, secretKey: string, 
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
 
+  // Protege /api exceto registro, login e GET /api/auth/me
+  app.use((req, res, next) => {
+    if (!req.path.startsWith("/api")) return next();
+    if ((req.path === "/api/auth/register" || req.path === "/api/auth/login") && req.method === "POST") return next();
+    if (req.path === "/api/auth/me") return next();
+    return requireAuth(req, res, next);
+  });
+
   // ── Trades ────────────────────────────────────────────────────────────────
-  app.get("/api/trades", async (_req, res) => {
-    const trades = await storage.getTrades();
+  app.get("/api/trades", async (req, res) => {
+    const trades = await storage.getTrades(uid(req));
     res.json(trades);
   });
   app.post("/api/trades", async (req, res) => {
     const result = insertTradeSchema.safeParse(req.body);
     if (!result.success) return res.status(400).json({ error: result.error.format() });
-    res.status(201).json(await storage.createTrade(result.data));
+    res.status(201).json(await storage.createTrade(uid(req), result.data));
   });
   app.patch("/api/trades/:id", async (req, res) => {
     const id = parseInt(req.params.id);
     const result = insertTradeSchema.partial().safeParse(req.body);
     if (!result.success) return res.status(400).json({ error: result.error.format() });
-    const trade = await storage.updateTrade(id, result.data);
+    const trade = await storage.updateTrade(uid(req), id, result.data);
     if (!trade) return res.status(404).json({ error: "Not found" });
     res.json(trade);
   });
   app.delete("/api/trades/:id", async (req, res) => {
-    const ok = await storage.deleteTrade(parseInt(req.params.id));
+    const ok = await storage.deleteTrade(uid(req), parseInt(req.params.id));
     if (!ok) return res.status(404).json({ error: "Not found" });
     res.status(204).end();
   });
 
   // ── Sync Trades from MEXC Futures ──────────────────────────────────────────
-  app.post("/api/trades/sync-from-mexc", async (_req, res) => {
-    const creds = await storage.getMexcCredentials();
+  app.post("/api/trades/sync-from-mexc", async (req, res) => {
+    const creds = await storage.getMexcCredentials(uid(req));
     if (!creds.apiKey || !creds.secretKey) {
       return res.status(400).json({ error: "API Key e Secret Key não configurados. Configure em API MEXC." });
     }
     try {
-      const existingTrades = await storage.getTrades();
+      const existingTrades = await storage.getTrades(uid(req));
       const existingIds = new Set(existingTrades.map(t => t.notes));
       let totalImported = 0;
 
@@ -163,7 +175,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           const pnl = parseFloat((pos.realised ?? 0).toFixed(4));
           const status = pnl > 0 ? "WIN" : pnl < 0 ? "LOSS" : "BREAKEVEN";
 
-          await storage.createTrade({
+          await storage.createTrade(uid(req), {
             date,
             pair: (pos.symbol || "BTCUSDT").replace("_", ""),
             direction,
@@ -197,99 +209,63 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   // ── Transfers ─────────────────────────────────────────────────────────────
-  app.get("/api/transfers", async (_req, res) => res.json(await storage.getTransfers()));
+  app.get("/api/transfers", async (req, res) => res.json(await storage.getTransfers(uid(req))));
   app.post("/api/transfers", async (req, res) => {
     const result = insertTransferSchema.safeParse(req.body);
     if (!result.success) return res.status(400).json({ error: result.error.format() });
-    res.status(201).json(await storage.createTransfer(result.data));
+    res.status(201).json(await storage.createTransfer(uid(req), result.data));
   });
   app.delete("/api/transfers/:id", async (req, res) => {
-    const ok = await storage.deleteTransfer(parseInt(req.params.id));
+    const ok = await storage.deleteTransfer(uid(req), parseInt(req.params.id));
     if (!ok) return res.status(404).json({ error: "Not found" });
     res.status(204).end();
   });
 
   // ── BTC Holdings ──────────────────────────────────────────────────────────
-  app.get("/api/btc-holdings", async (_req, res) => res.json(await storage.getBtcHoldings()));
+  app.get("/api/btc-holdings", async (req, res) => res.json(await storage.getBtcHoldings(uid(req))));
   app.post("/api/btc-holdings", async (req, res) => {
     const result = insertBtcHoldingSchema.safeParse(req.body);
     if (!result.success) return res.status(400).json({ error: result.error.format() });
-    res.status(201).json(await storage.createBtcHolding(result.data));
+    res.status(201).json(await storage.createBtcHolding(uid(req), result.data));
   });
   app.delete("/api/btc-holdings/:id", async (req, res) => {
-    const ok = await storage.deleteBtcHolding(parseInt(req.params.id));
+    const ok = await storage.deleteBtcHolding(uid(req), parseInt(req.params.id));
     if (!ok) return res.status(404).json({ error: "Not found" });
     res.status(204).end();
   });
 
   // ── Settings ──────────────────────────────────────────────────────────────
-  app.get("/api/settings", async (_req, res) => res.json(await storage.getSettings()));
+  app.get("/api/settings", async (req, res) => res.json(await storage.getSettings(uid(req))));
   app.patch("/api/settings", async (req, res) => {
     const result = insertSettingsSchema.partial().safeParse(req.body);
     if (!result.success) return res.status(400).json({ error: result.error.format() });
-    res.json(await storage.updateSettings(result.data));
+    res.json(await storage.updateSettings(uid(req), result.data));
   });
 
   // ── Server IP (para whitelist MEXC) ────────────────────────────────────────
   app.get("/api/mexc/server-ip", async (_req, res) => {
-    const fetchWithTimeout = async (url: string, ms = 10_000) => {
-      const ctrl = new AbortController();
-      const to = setTimeout(() => ctrl.abort(), ms);
-      try {
-        const r = await fetch(url, { signal: ctrl.signal });
-        clearTimeout(to);
-        return r;
-      } catch (e) {
-        clearTimeout(to);
-        throw e;
-      }
-    };
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 10_000);
     try {
-      if (MEXC_PROXY) {
-        const r = await fetchWithTimeout(`${MEXC_PROXY}/ip`);
-        const text = await r.text();
-        let data: { ip?: string | null; error?: string };
-        try {
-          data = text ? JSON.parse(text) : {};
-        } catch {
-          console.error("[server-ip] Proxy retornou não-JSON:", text?.slice(0, 100));
-          return res.json({
-            ip: null,
-            error: `Proxy inacessível (${r.status}). Verifique MEXC_PROXY_URL. O app no Fly pode não ter rota /ip.`,
-          });
-        }
-        if (!r.ok) {
-          return res.json({
-            ip: null,
-            error: data.error || `Proxy retornou ${r.status}`,
-          });
-        }
-        return res.json({
-          ip: data.ip ?? null,
-          proxy: true,
-          hint: "IP do proxy Fly.io. Adicione na whitelist da MEXC (API Management → Vincular IP).",
-          error: data.ip ? undefined : (data.error || "Proxy não retornou IP"),
-        });
-      }
-      const r = await fetchWithTimeout("https://api.ipify.org?format=json");
+      const r = await fetch("https://api.ipify.org?format=json", { signal: ctrl.signal });
+      clearTimeout(to);
       const data = await r.json();
       res.json({ ip: data.ip });
     } catch (e: any) {
-      const msg = e?.message ?? String(e);
-      console.error("[server-ip]", msg);
-      if (e?.name === "AbortError") {
-        return res.json({ ip: null, error: "Timeout ao obter IP (proxy ou ipify)" });
-      }
+      clearTimeout(to);
+      console.error("[server-ip]", e?.message ?? String(e));
       res.json({
         ip: null,
-        error: MEXC_PROXY ? `Falha ao conectar no proxy (${MEXC_PROXY}). Verifique se está online.` : "Não foi possível obter o IP (ipify.org).",
+        error: e?.name === "AbortError"
+          ? "Timeout ao obter IP do servidor"
+          : "Não foi possível obter o IP (ipify.org).",
       });
     }
   });
 
   // ── MEXC Credentials ──────────────────────────────────────────────────────
-  app.get("/api/mexc/credentials", async (_req, res) => {
-    const creds = await storage.getMexcCredentials();
+  app.get("/api/mexc/credentials", async (req, res) => {
+    const creds = await storage.getMexcCredentials(uid(req));
     // Never return the secret key to the frontend — mask it
     res.json({
       ...creds,
@@ -304,13 +280,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     // Don't overwrite secret with the masked value
     const payload = { ...result.data };
     if (payload.secretKey === "••••••••••••••••") delete payload.secretKey;
-    const creds = await storage.updateMexcCredentials(payload);
+    const creds = await storage.updateMexcCredentials(uid(req), payload);
     res.json({ ...creds, secretKey: creds.secretKey ? "••••••••••••••••" : "", hasSecret: !!creds.secretKey });
   });
 
   // ── MEXC Sync ─────────────────────────────────────────────────────────────
-  app.post("/api/mexc/sync", async (_req, res) => {
-    const creds = await storage.getMexcCredentials();
+  app.post("/api/mexc/sync", async (req, res) => {
+    const creds = await storage.getMexcCredentials(uid(req));
     if (!creds.apiKey || !creds.secretKey) {
       return res.status(400).json({ error: "API Key e Secret Key não configurados" });
     }
@@ -327,7 +303,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         );
         const futuresList = Array.isArray(posRes.data) ? posRes.data : posRes.data?.resultList;
         if (posRes.success && futuresList?.length) {
-          const existingTrades = await storage.getTrades();
+          const existingTrades = await storage.getTrades(uid(req));
           const existingIds = new Set(existingTrades.map(t => t.notes));
 
           for (const pos of futuresList) {
@@ -339,7 +315,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             const pnl = parseFloat((pos.realised || 0).toFixed(4));
             const status = pnl > 0 ? "WIN" : pnl < 0 ? "LOSS" : "BREAKEVEN";
 
-            await storage.createTrade({
+            await storage.createTrade(uid(req), {
               date,
               pair: (pos.symbol || "BTCUSDT").replace("_", ""),
               direction,
@@ -378,12 +354,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
               } catch { btcPrice = 0; }
 
               const today = new Date().toISOString().split("T")[0];
-              const existingHoldings = await storage.getBtcHoldings();
+              const existingHoldings = await storage.getBtcHoldings(uid(req));
               const todayHolding = existingHoldings.find(h => h.date === today);
 
               if (!todayHolding) {
                 const avgCost = btcPrice > 0 ? btcPrice : 1;
-                await storage.createBtcHolding({
+                await storage.createBtcHolding(uid(req), {
                   date: today,
                   btcAmount,
                   avgCostUsdt: avgCost,
@@ -400,7 +376,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         synced.push(`Spot: ${e.message}`);
       }
 
-      await storage.updateMexcCredentials({
+      await storage.updateMexcCredentials(uid(req), {
         isConnected: true,
         lastSyncAt: new Date().toISOString(),
         lastSyncStatus: "success",
@@ -409,7 +385,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       res.json({ success: true, message: synced.join(" | ") });
     } catch (err: any) {
-      await storage.updateMexcCredentials({
+      await storage.updateMexcCredentials(uid(req), {
         isConnected: false,
         lastSyncAt: new Date().toISOString(),
         lastSyncStatus: "error",
@@ -426,7 +402,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     try {
       const data = await mexcSpotRequest("/api/v3/account", apiKey, secretKey);
       if (data.balances) {
-        await storage.updateMexcCredentials({
+        await storage.updateMexcCredentials(uid(req), {
           apiKey,
           secretKey,
           isConnected: true,
@@ -439,7 +415,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         throw new Error(data.msg || "Resposta inválida da MEXC");
       }
     } catch (err: any) {
-      await storage.updateMexcCredentials({
+      await storage.updateMexcCredentials(uid(req), {
         apiKey,
         secretKey,
         isConnected: false,
@@ -451,30 +427,33 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   // ── Goals ─────────────────────────────────────────────────────────────────
-  app.get("/api/goals", async (_req, res) => res.json(await storage.getGoals()));
+  app.get("/api/goals", async (req, res) => res.json(await storage.getGoals(uid(req))));
   app.post("/api/goals", async (req, res) => {
     const result = insertGoalSchema.safeParse(req.body);
     if (!result.success) return res.status(400).json({ error: result.error.format() });
-    res.status(201).json(await storage.createGoal(result.data));
+    res.status(201).json(await storage.createGoal(uid(req), result.data));
   });
   app.patch("/api/goals/:id", async (req, res) => {
     const id = parseInt(req.params.id);
     const result = insertGoalSchema.partial().safeParse(req.body);
     if (!result.success) return res.status(400).json({ error: result.error.format() });
-    const goal = await storage.updateGoal(id, result.data);
+    const goal = await storage.updateGoal(uid(req), id, result.data);
     if (!goal) return res.status(404).json({ error: "Not found" });
     res.json(goal);
   });
   app.delete("/api/goals/:id", async (req, res) => {
-    const ok = await storage.deleteGoal(parseInt(req.params.id));
+    const ok = await storage.deleteGoal(uid(req), parseInt(req.params.id));
     if (!ok) return res.status(404).json({ error: "Not found" });
     res.status(204).end();
   });
 
   // ── Stats (aggregated) ────────────────────────────────────────────────────
-  app.get("/api/stats", async (_req, res) => {
+  app.get("/api/stats", async (req, res) => {
     const [trades, transfers, holdings, settings] = await Promise.all([
-      storage.getTrades(), storage.getTransfers(), storage.getBtcHoldings(), storage.getSettings(),
+      storage.getTrades(uid(req)),
+      storage.getTransfers(uid(req)),
+      storage.getBtcHoldings(uid(req)),
+      storage.getSettings(uid(req)),
     ]);
     const closedTrades = trades.filter(t => t.status !== "OPEN");
     const wins = closedTrades.filter(t => t.status === "WIN");
@@ -482,7 +461,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const winRate = closedTrades.length ? (wins.length / closedTrades.length) * 100 : 0;
     const totalPnl = closedTrades.reduce((s, t) => s + (t.pnl ?? 0), 0);
     const totalBtcBought = transfers.reduce((s, t) => s + t.btcBought, 0);
-    const latestHolding = holdings.length ? holdings[holdings.length - 1] : null;
+    const latestHolding = holdings.length
+      ? [...holdings].sort((a, b) => b.date.localeCompare(a.date))[0]
+      : null;
     const totalUsdtTransferred = transfers.reduce((s, t) => s + t.amountUsdt, 0);
 
     const tradesByMonth: Record<string, { wins: number; losses: number; pnl: number; count: number }> = {};

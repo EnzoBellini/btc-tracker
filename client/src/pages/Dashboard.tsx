@@ -13,6 +13,7 @@ import {
 import { useStats } from "@/hooks/useStats";
 import { useTrades } from "@/hooks/useTrades";
 import { fmtUsdt, fmtPct, pnlColor } from "@/lib/format";
+import PlanTracker from "@/components/PlanTracker";
 
 // ── KPI Card ──────────────────────────────────────────────────────────────────
 function KpiCard({
@@ -157,6 +158,9 @@ export default function Dashboard() {
           />
         </div>
       )}
+
+      {/* Metas e progresso */}
+      <PlanTracker />
 
       {/* Charts row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

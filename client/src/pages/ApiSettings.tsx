@@ -21,13 +21,13 @@ function ServerIpHint() {
   return (
     <div className={`rounded-md border p-3 text-xs ${data.error ? "bg-destructive/5 border-destructive/30" : "bg-muted/50 border-border"}`}>
       <p className="font-medium text-muted-foreground mb-1">
-        {data.proxy ? "IP do proxy (para whitelist MEXC)" : "IP do servidor (para whitelist MEXC)"}
+        IP do servidor Railway (para whitelist MEXC)
       </p>
       {data.ip ? (
         <>
-          <p className="font-mono text-foreground break-all">{data.ip}</p>
+          <p className="font-mono text-lg text-foreground break-all select-all">{data.ip}</p>
           <p className="text-muted-foreground mt-1">
-            {data.hint || "Se a API tem IP vinculado, adicione este IP em MEXC → API Management → Alterar → Vincular endereço de IP."}
+            Copie este IP e adicione em <strong>MEXC → API Management → Alterar → Vincular endereço de IP</strong>.
           </p>
         </>
       ) : (
@@ -191,7 +191,7 @@ export default function ApiSettings() {
               {
                 icon: AlertTriangle, color: "text-yellow-400",
                 title: "Whitelist de IP (Futuros)",
-                desc: "Se a API tem IP vinculado, o servidor (Railway) precisa estar na lista. Veja o IP acima e adicione em MEXC → API Management.",
+                desc: "Se a API tem IP vinculado, adicione o IP fixo do Railway (mostrado acima) em MEXC → API Management → Vincular IP.",
               },
             ].map(({ icon: Icon, color, title, desc }) => (
               <div key={title} className="flex items-start gap-3">

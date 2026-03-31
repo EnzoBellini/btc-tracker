@@ -61,10 +61,7 @@ export function registerAuthRoutes(app: Express) {
     } catch (err: any) {
       const msg = err?.message ?? String(err);
       console.error("[auth/register] Erro:", msg);
-      res.status(500).json({
-        error: "Erro interno",
-        debug: msg, // TODO: remover após resolver
-      });
+      res.status(500).json({ error: "Erro interno" });
     }
   });
 
@@ -86,10 +83,7 @@ export function registerAuthRoutes(app: Express) {
     } catch (err: any) {
       const msg = err?.message ?? String(err);
       console.error("[auth/login] Erro:", msg);
-      res.status(500).json({
-        error: "Erro interno",
-        debug: msg, // TODO: remover após resolver
-      });
+      res.status(500).json({ error: "Erro interno" });
     }
   });
 

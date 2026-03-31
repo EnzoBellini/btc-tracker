@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import {
   Trade, InsertTrade,
   Transfer, InsertTransfer,
@@ -17,134 +17,128 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 
+const defaultSettingsRow = (userId: number): Omit<InsertSettings, never> & { userId: number } => ({
+  userId,
+  totalCapital: 200,
+  futuresCapital: 100,
+  spotCapital: 100,
+  riskPerTrade: 2.5,
+  profitTransferThreshold: 10,
+  defaultLeverage: 3,
+  stopTradingDrawdown: 20,
+});
+
 export interface IStorage {
-  // Trades
-  getTrades(): Promise<Trade[]>;
-  getTrade(id: number): Promise<Trade | undefined>;
-  createTrade(trade: InsertTrade): Promise<Trade>;
-  updateTrade(id: number, trade: Partial<InsertTrade>): Promise<Trade | undefined>;
-  deleteTrade(id: number): Promise<boolean>;
+  getTrades(userId: number): Promise<Trade[]>;
+  getTrade(userId: number, id: number): Promise<Trade | undefined>;
+  createTrade(userId: number, trade: InsertTrade): Promise<Trade>;
+  updateTrade(userId: number, id: number, trade: Partial<InsertTrade>): Promise<Trade | undefined>;
+  deleteTrade(userId: number, id: number): Promise<boolean>;
 
-  // Transfers
-  getTransfers(): Promise<Transfer[]>;
-  createTransfer(transfer: InsertTransfer): Promise<Transfer>;
-  deleteTransfer(id: number): Promise<boolean>;
+  getTransfers(userId: number): Promise<Transfer[]>;
+  createTransfer(userId: number, transfer: InsertTransfer): Promise<Transfer>;
+  deleteTransfer(userId: number, id: number): Promise<boolean>;
 
-  // BTC Holdings
-  getBtcHoldings(): Promise<BtcHolding[]>;
-  createBtcHolding(holding: InsertBtcHolding): Promise<BtcHolding>;
-  deleteBtcHolding(id: number): Promise<boolean>;
+  getBtcHoldings(userId: number): Promise<BtcHolding[]>;
+  createBtcHolding(userId: number, holding: InsertBtcHolding): Promise<BtcHolding>;
+  deleteBtcHolding(userId: number, id: number): Promise<boolean>;
 
-  // Settings
-  getSettings(): Promise<Settings>;
-  updateSettings(s: Partial<InsertSettings>): Promise<Settings>;
+  getSettings(userId: number): Promise<Settings>;
+  updateSettings(userId: number, s: Partial<InsertSettings>): Promise<Settings>;
 
-  // MEXC Credentials
-  getMexcCredentials(): Promise<MexcCredentials>;
-  updateMexcCredentials(c: Partial<InsertMexcCredentials>): Promise<MexcCredentials>;
+  getMexcCredentials(userId: number): Promise<MexcCredentials>;
+  updateMexcCredentials(userId: number, c: Partial<InsertMexcCredentials>): Promise<MexcCredentials>;
 
-  // Goals
-  getGoals(): Promise<Goal[]>;
-  getGoal(id: number): Promise<Goal | undefined>;
-  createGoal(goal: InsertGoal): Promise<Goal>;
-  updateGoal(id: number, goal: Partial<InsertGoal>): Promise<Goal | undefined>;
-  deleteGoal(id: number): Promise<boolean>;
+  getGoals(userId: number): Promise<Goal[]>;
+  getGoal(userId: number, id: number): Promise<Goal | undefined>;
+  createGoal(userId: number, goal: InsertGoal): Promise<Goal>;
+  updateGoal(userId: number, id: number, goal: Partial<InsertGoal>): Promise<Goal | undefined>;
+  deleteGoal(userId: number, id: number): Promise<boolean>;
 
-  // Users (auth)
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
 }
 
 export class DbStorage implements IStorage {
-  // ── Trades ──────────────────────────────────────────────────────────────────
-  async getTrades(): Promise<Trade[]> {
-    const rows = await db!.select().from(trades);
+  async getTrades(userId: number): Promise<Trade[]> {
+    const rows = await db!.select().from(trades).where(eq(trades.userId, userId));
     return rows.sort((a, b) => {
       const d = b.date.localeCompare(a.date);
       return d !== 0 ? d : b.id - a.id;
     });
   }
-  async getTrade(id: number): Promise<Trade | undefined> {
-    const [row] = await db!.select().from(trades).where(eq(trades.id, id));
+  async getTrade(userId: number, id: number): Promise<Trade | undefined> {
+    const [row] = await db!.select().from(trades).where(and(eq(trades.id, id), eq(trades.userId, userId)));
     return row;
   }
-  async createTrade(t: InsertTrade): Promise<Trade> {
-    const [trade] = await db!.insert(trades).values(t).returning();
+  async createTrade(userId: number, t: InsertTrade): Promise<Trade> {
+    const [trade] = await db!.insert(trades).values({ ...t, userId }).returning();
     if (!trade) throw new Error("Failed to create trade");
     return trade;
   }
-  async updateTrade(id: number, t: Partial<InsertTrade>): Promise<Trade | undefined> {
-    const [updated] = await db!.update(trades).set(t).where(eq(trades.id, id)).returning();
+  async updateTrade(userId: number, id: number, t: Partial<InsertTrade>): Promise<Trade | undefined> {
+    const existing = await this.getTrade(userId, id);
+    if (!existing) return undefined;
+    const [updated] = await db!.update(trades).set(t).where(and(eq(trades.id, id), eq(trades.userId, userId))).returning();
     return updated;
   }
-  async deleteTrade(id: number): Promise<boolean> {
-    const result = await db!.delete(trades).where(eq(trades.id, id)).returning();
+  async deleteTrade(userId: number, id: number): Promise<boolean> {
+    const result = await db!.delete(trades).where(and(eq(trades.id, id), eq(trades.userId, userId))).returning();
     return result.length > 0;
   }
 
-  // ── Transfers ───────────────────────────────────────────────────────────────
-  async getTransfers(): Promise<Transfer[]> {
-    return (await db!.select().from(transfers)).sort((a, b) => b.id - a.id);
+  async getTransfers(userId: number): Promise<Transfer[]> {
+    return (await db!.select().from(transfers).where(eq(transfers.userId, userId))).sort((a, b) => b.id - a.id);
   }
-  async createTransfer(t: InsertTransfer): Promise<Transfer> {
-    const [tr] = await db!.insert(transfers).values(t).returning();
+  async createTransfer(userId: number, t: InsertTransfer): Promise<Transfer> {
+    const [tr] = await db!.insert(transfers).values({ ...t, userId }).returning();
     if (!tr) throw new Error("Failed to create transfer");
     return tr;
   }
-  async deleteTransfer(id: number): Promise<boolean> {
-    const result = await db!.delete(transfers).where(eq(transfers.id, id)).returning();
+  async deleteTransfer(userId: number, id: number): Promise<boolean> {
+    const result = await db!.delete(transfers).where(and(eq(transfers.id, id), eq(transfers.userId, userId))).returning();
     return result.length > 0;
   }
 
-  // ── BTC Holdings ────────────────────────────────────────────────────────────
-  async getBtcHoldings(): Promise<BtcHolding[]> {
-    return (await db!.select().from(btcHoldings)).sort((a, b) => a.id - b.id);
+  async getBtcHoldings(userId: number): Promise<BtcHolding[]> {
+    return (await db!.select().from(btcHoldings).where(eq(btcHoldings.userId, userId))).sort((a, b) => a.id - b.id);
   }
-  async createBtcHolding(h: InsertBtcHolding): Promise<BtcHolding> {
-    const [holding] = await db!.insert(btcHoldings).values(h).returning();
+  async createBtcHolding(userId: number, h: InsertBtcHolding): Promise<BtcHolding> {
+    const [holding] = await db!.insert(btcHoldings).values({ ...h, userId }).returning();
     if (!holding) throw new Error("Failed to create BTC holding");
     return holding;
   }
-  async deleteBtcHolding(id: number): Promise<boolean> {
-    const result = await db!.delete(btcHoldings).where(eq(btcHoldings.id, id)).returning();
+  async deleteBtcHolding(userId: number, id: number): Promise<boolean> {
+    const result = await db!.delete(btcHoldings).where(and(eq(btcHoldings.id, id), eq(btcHoldings.userId, userId))).returning();
     return result.length > 0;
   }
 
-  // ── Settings ────────────────────────────────────────────────────────────────
-  async getSettings(): Promise<Settings> {
-    const [row] = await db!.select().from(settings).limit(1);
+  async getSettings(userId: number): Promise<Settings> {
+    const [row] = await db!.select().from(settings).where(eq(settings.userId, userId)).limit(1);
     if (!row) {
-      const [inserted] = await db!.insert(settings).values({
-        totalCapital: 200,
-        futuresCapital: 100,
-        spotCapital: 100,
-        riskPerTrade: 2.5,
-        profitTransferThreshold: 10,
-        defaultLeverage: 3,
-        stopTradingDrawdown: 20,
-      }).returning();
+      const [inserted] = await db!.insert(settings).values(defaultSettingsRow(userId)).returning();
       if (!inserted) throw new Error("Failed to create default settings");
       return inserted;
     }
     return row;
   }
-  async updateSettings(s: Partial<InsertSettings>): Promise<Settings> {
-    const [existing] = await db!.select().from(settings).limit(1);
+  async updateSettings(userId: number, s: Partial<InsertSettings>): Promise<Settings> {
+    const [existing] = await db!.select().from(settings).where(eq(settings.userId, userId)).limit(1);
     if (!existing) {
-      const [inserted] = await db!.insert(settings).values(s).returning();
+      const [inserted] = await db!.insert(settings).values({ ...defaultSettingsRow(userId), ...s }).returning();
       if (!inserted) throw new Error("Failed to create settings");
       return inserted;
     }
-    const [updated] = await db!.update(settings).set(s).where(eq(settings.id, existing.id)).returning();
+    const [updated] = await db!.update(settings).set(s).where(eq(settings.userId, userId)).returning();
     if (!updated) throw new Error("Failed to update settings");
     return updated;
   }
 
-  // ── MEXC Credentials ────────────────────────────────────────────────────────
-  async getMexcCredentials(): Promise<MexcCredentials> {
-    const [row] = await db!.select().from(mexcCredentials).limit(1);
+  async getMexcCredentials(userId: number): Promise<MexcCredentials> {
+    const [row] = await db!.select().from(mexcCredentials).where(eq(mexcCredentials.userId, userId)).limit(1);
     if (!row) {
       const [inserted] = await db!.insert(mexcCredentials).values({
+        userId,
         apiKey: "",
         secretKey: "",
         isConnected: false,
@@ -154,41 +148,41 @@ export class DbStorage implements IStorage {
     }
     return row;
   }
-  async updateMexcCredentials(c: Partial<InsertMexcCredentials>): Promise<MexcCredentials> {
-    const [existing] = await db!.select().from(mexcCredentials).limit(1);
+  async updateMexcCredentials(userId: number, c: Partial<InsertMexcCredentials>): Promise<MexcCredentials> {
+    const [existing] = await db!.select().from(mexcCredentials).where(eq(mexcCredentials.userId, userId)).limit(1);
     if (!existing) {
-      const [inserted] = await db!.insert(mexcCredentials).values(c).returning();
+      const [inserted] = await db!.insert(mexcCredentials).values({ userId, apiKey: "", secretKey: "", isConnected: false, ...c }).returning();
       if (!inserted) throw new Error("Failed to create MEXC credentials");
       return inserted;
     }
-    const [updated] = await db!.update(mexcCredentials).set(c).where(eq(mexcCredentials.id, existing.id)).returning();
+    const [updated] = await db!.update(mexcCredentials).set(c).where(eq(mexcCredentials.userId, userId)).returning();
     if (!updated) throw new Error("Failed to update MEXC credentials");
     return updated;
   }
 
-  // ── Goals ───────────────────────────────────────────────────────────────────
-  async getGoals(): Promise<Goal[]> {
-    return (await db!.select().from(goals)).sort((a, b) => b.id - a.id);
+  async getGoals(userId: number): Promise<Goal[]> {
+    return (await db!.select().from(goals).where(eq(goals.userId, userId))).sort((a, b) => b.id - a.id);
   }
-  async getGoal(id: number): Promise<Goal | undefined> {
-    const [row] = await db!.select().from(goals).where(eq(goals.id, id));
+  async getGoal(userId: number, id: number): Promise<Goal | undefined> {
+    const [row] = await db!.select().from(goals).where(and(eq(goals.id, id), eq(goals.userId, userId)));
     return row;
   }
-  async createGoal(g: InsertGoal): Promise<Goal> {
-    const [goal] = await db!.insert(goals).values(g).returning();
+  async createGoal(userId: number, g: InsertGoal): Promise<Goal> {
+    const [goal] = await db!.insert(goals).values({ ...g, userId }).returning();
     if (!goal) throw new Error("Failed to create goal");
     return goal;
   }
-  async updateGoal(id: number, g: Partial<InsertGoal>): Promise<Goal | undefined> {
-    const [updated] = await db!.update(goals).set(g).where(eq(goals.id, id)).returning();
+  async updateGoal(userId: number, id: number, g: Partial<InsertGoal>): Promise<Goal | undefined> {
+    const existing = await this.getGoal(userId, id);
+    if (!existing) return undefined;
+    const [updated] = await db!.update(goals).set(g).where(and(eq(goals.id, id), eq(goals.userId, userId))).returning();
     return updated;
   }
-  async deleteGoal(id: number): Promise<boolean> {
-    const result = await db!.delete(goals).where(eq(goals.id, id)).returning();
+  async deleteGoal(userId: number, id: number): Promise<boolean> {
+    const result = await db!.delete(goals).where(and(eq(goals.id, id), eq(goals.userId, userId))).returning();
     return result.length > 0;
   }
 
-  // ── Users (auth) ───────────────────────────────────────────────────────────
   async getUserByEmail(email: string): Promise<User | undefined> {
     const normalized = email.toLowerCase().trim();
     const [row] = await db!.select().from(users).where(eq(users.email, normalized));
@@ -201,98 +195,163 @@ export class DbStorage implements IStorage {
   }
 }
 
-/** Storage em memória — usado quando DATABASE_URL não está definida (teste local). */
+/** Storage em memória — um mapa por userId onde necessário */
 class MemStorage implements IStorage {
   private trades: Map<number, Trade> = new Map();
   private transfers: Map<number, Transfer> = new Map();
   private btcHoldings: Map<number, BtcHolding> = new Map();
-  private settings: Settings = {
-    id: 1,
-    totalCapital: 200,
-    futuresCapital: 100,
-    spotCapital: 100,
-    riskPerTrade: 2.5,
-    profitTransferThreshold: 10,
-    defaultLeverage: 3,
-    stopTradingDrawdown: 20,
-  } as Settings;
-  private mexcCreds: MexcCredentials = {
-    id: 1,
-    apiKey: "",
-    secretKey: "",
-    isConnected: false,
-    lastSyncAt: null,
-    lastSyncStatus: null,
-    lastSyncMessage: null,
-  } as MexcCredentials;
+  private settingsByUser: Map<number, Settings> = new Map();
+  private mexcByUser: Map<number, MexcCredentials> = new Map();
   private goalsMap: Map<number, Goal> = new Map();
   private usersMap: Map<number, User> = new Map();
   private nextId = { trades: 1, transfers: 1, btcHoldings: 1, goals: 1, users: 1 };
 
-  async getTrades() {
-    return Array.from(this.trades.values()).sort((a, b) => {
-      const d = b.date.localeCompare(a.date);
-      return d !== 0 ? d : b.id - a.id;
-    });
+  private defaultSettings(userId: number): Settings {
+    return {
+      id: userId,
+      userId,
+      totalCapital: 200,
+      futuresCapital: 100,
+      spotCapital: 100,
+      riskPerTrade: 2.5,
+      profitTransferThreshold: 10,
+      defaultLeverage: 3,
+      stopTradingDrawdown: 20,
+    } as Settings;
   }
-  async getTrade(id: number) { return this.trades.get(id); }
-  async createTrade(t: InsertTrade) {
-    const trade = { ...t, id: this.nextId.trades++, exitPrice: t.exitPrice ?? null, pnl: t.pnl ?? null, notes: t.notes ?? null } as Trade;
+
+  private defaultMexc(userId: number): MexcCredentials {
+    return {
+      id: userId,
+      userId,
+      apiKey: "",
+      secretKey: "",
+      isConnected: false,
+      lastSyncAt: null,
+      lastSyncStatus: null,
+      lastSyncMessage: null,
+    } as MexcCredentials;
+  }
+
+  async getTrades(userId: number) {
+    return Array.from(this.trades.values())
+      .filter(t => t.userId === userId)
+      .sort((a, b) => {
+        const d = b.date.localeCompare(a.date);
+        return d !== 0 ? d : b.id - a.id;
+      });
+  }
+  async getTrade(userId: number, id: number) {
+    const t = this.trades.get(id);
+    return t?.userId === userId ? t : undefined;
+  }
+  async createTrade(userId: number, t: InsertTrade) {
+    const trade = {
+      ...t,
+      id: this.nextId.trades++,
+      userId,
+      exitPrice: t.exitPrice ?? null,
+      pnl: t.pnl ?? null,
+      notes: t.notes ?? null,
+    } as Trade;
     this.trades.set(trade.id, trade);
     return trade;
   }
-  async updateTrade(id: number, t: Partial<InsertTrade>) {
-    const existing = this.trades.get(id);
+  async updateTrade(userId: number, id: number, t: Partial<InsertTrade>) {
+    const existing = await this.getTrade(userId, id);
     if (!existing) return undefined;
     const updated = { ...existing, ...t } as Trade;
     this.trades.set(id, updated);
     return updated;
   }
-  async deleteTrade(id: number) { return this.trades.delete(id); }
+  async deleteTrade(userId: number, id: number) {
+    const t = this.trades.get(id);
+    if (!t || t.userId !== userId) return false;
+    return this.trades.delete(id);
+  }
 
-  async getTransfers() { return Array.from(this.transfers.values()).sort((a, b) => b.id - a.id); }
-  async createTransfer(t: InsertTransfer) {
-    const tr = { ...t, id: this.nextId.transfers++, notes: t.notes ?? null } as Transfer;
+  async getTransfers(userId: number) {
+    return Array.from(this.transfers.values()).filter(t => t.userId === userId).sort((a, b) => b.id - a.id);
+  }
+  async createTransfer(userId: number, t: InsertTransfer) {
+    const tr = { ...t, id: this.nextId.transfers++, userId, notes: t.notes ?? null } as Transfer;
     this.transfers.set(tr.id, tr);
     return tr;
   }
-  async deleteTransfer(id: number) { return this.transfers.delete(id); }
+  async deleteTransfer(userId: number, id: number) {
+    const t = this.transfers.get(id);
+    if (!t || t.userId !== userId) return false;
+    return this.transfers.delete(id);
+  }
 
-  async getBtcHoldings() { return Array.from(this.btcHoldings.values()).sort((a, b) => a.id - b.id); }
-  async createBtcHolding(h: InsertBtcHolding) {
-    const holding = { ...h, id: this.nextId.btcHoldings++, notes: h.notes ?? null } as BtcHolding;
+  async getBtcHoldings(userId: number) {
+    return Array.from(this.btcHoldings.values()).filter(h => h.userId === userId).sort((a, b) => a.id - b.id);
+  }
+  async createBtcHolding(userId: number, h: InsertBtcHolding) {
+    const holding = { ...h, id: this.nextId.btcHoldings++, userId, notes: h.notes ?? null } as BtcHolding;
     this.btcHoldings.set(holding.id, holding);
     return holding;
   }
-  async deleteBtcHolding(id: number) { return this.btcHoldings.delete(id); }
-
-  async getSettings() { return this.settings; }
-  async updateSettings(s: Partial<InsertSettings>) {
-    this.settings = { ...this.settings, ...s } as Settings;
-    return this.settings;
+  async deleteBtcHolding(userId: number, id: number) {
+    const h = this.btcHoldings.get(id);
+    if (!h || h.userId !== userId) return false;
+    return this.btcHoldings.delete(id);
   }
 
-  async getMexcCredentials() { return this.mexcCreds; }
-  async updateMexcCredentials(c: Partial<InsertMexcCredentials>) {
-    this.mexcCreds = { ...this.mexcCreds, ...c } as MexcCredentials;
-    return this.mexcCreds;
+  async getSettings(userId: number) {
+    let s = this.settingsByUser.get(userId);
+    if (!s) {
+      s = this.defaultSettings(userId);
+      this.settingsByUser.set(userId, s);
+    }
+    return s;
+  }
+  async updateSettings(userId: number, s: Partial<InsertSettings>) {
+    const cur = await this.getSettings(userId);
+    const updated = { ...cur, ...s } as Settings;
+    this.settingsByUser.set(userId, updated);
+    return updated;
   }
 
-  async getGoals() { return Array.from(this.goalsMap.values()).sort((a, b) => b.id - a.id); }
-  async getGoal(id: number) { return this.goalsMap.get(id); }
-  async createGoal(g: InsertGoal) {
-    const goal = { ...g, id: this.nextId.goals++, notes: g.notes ?? null } as Goal;
+  async getMexcCredentials(userId: number) {
+    let c = this.mexcByUser.get(userId);
+    if (!c) {
+      c = this.defaultMexc(userId);
+      this.mexcByUser.set(userId, c);
+    }
+    return c;
+  }
+  async updateMexcCredentials(userId: number, c: Partial<InsertMexcCredentials>) {
+    const cur = await this.getMexcCredentials(userId);
+    const updated = { ...cur, ...c } as MexcCredentials;
+    this.mexcByUser.set(userId, updated);
+    return updated;
+  }
+
+  async getGoals(userId: number) {
+    return Array.from(this.goalsMap.values()).filter(g => g.userId === userId).sort((a, b) => b.id - a.id);
+  }
+  async getGoal(userId: number, id: number) {
+    const g = this.goalsMap.get(id);
+    return g?.userId === userId ? g : undefined;
+  }
+  async createGoal(userId: number, g: InsertGoal) {
+    const goal = { ...g, id: this.nextId.goals++, userId, notes: g.notes ?? null } as Goal;
     this.goalsMap.set(goal.id, goal);
     return goal;
   }
-  async updateGoal(id: number, g: Partial<InsertGoal>) {
-    const existing = this.goalsMap.get(id);
+  async updateGoal(userId: number, id: number, g: Partial<InsertGoal>) {
+    const existing = await this.getGoal(userId, id);
     if (!existing) return undefined;
     const updated = { ...existing, ...g } as Goal;
     this.goalsMap.set(id, updated);
     return updated;
   }
-  async deleteGoal(id: number) { return this.goalsMap.delete(id); }
+  async deleteGoal(userId: number, id: number) {
+    const g = this.goalsMap.get(id);
+    if (!g || g.userId !== userId) return false;
+    return this.goalsMap.delete(id);
+  }
 
   async getUserByEmail(email: string) {
     return Array.from(this.usersMap.values()).find(u => u.email === email.toLowerCase().trim());
@@ -304,5 +363,4 @@ class MemStorage implements IStorage {
   }
 }
 
-/** Usa banco quando DATABASE_URL existe; senão MemStorage para teste local. */
 export const storage = db ? new DbStorage() : new MemStorage();
