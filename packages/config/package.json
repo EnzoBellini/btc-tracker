@@ -1,0 +1,10 @@
+{
+  "name": "@trackion/config",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    "./tsconfig/base": "./tsconfig.base.json",
+    "./tsconfig/react": "./tsconfig.react.json"
+  }
+}

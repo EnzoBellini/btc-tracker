@@ -1,0 +1,20 @@
+@import "tailwindcss";
+@source "../**/*.{ts,tsx}";
+
+@theme {
+  --font-sans: "Microgramma D Extended", "Microgramma", "Eurostile Extended", "Eurostile", sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-black font-sans antialiased text-white;
+    margin: 0;
+    overflow-x: hidden;
+  }
+  #root {
+    min-height: 100vh;
+  }
+}

@@ -1,7 +1,31 @@
-node_modules
-dist
+node_modules/
+dist/
 .DS_Store
-server/public
-vite.config.ts.*
-*.tar.gz
-.env*
+*.tsbuildinfo
+
+# Segredos e ambiente local (nunca commitar)
+.env
+.env.*
+!.env.example
+apps/app/.env
+apps/landing/.env
+
+# Relatórios e logs de pentest (podem conter URLs, tokens de teste, dumps)
+security/reports/
+security/*.log
+security/zap.out
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+
+# Build / cache
+apps/app/dist/
+apps/landing/dist/
+.vite/
+coverage/
+
+# ZAP local (dados da máquina, não do projeto)
+ZAP/
