@@ -16,6 +16,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { AnimatedWealthChart } from "./components/AnimatedWealthChart";
 import { HeroWaveCanvas } from "./components/HeroWaveCanvas";
 import { TrialSignupModal } from "./components/TrialSignupModal";
 import { submitTrialSignup } from "./lib/trialSignup";
@@ -99,24 +100,20 @@ const STOP_BETTING_POINTS = [
 ];
 
 type OfferingsContentProps = {
-  device: "desktop" | "mobile";
   onStart: () => void;
 };
 
-function OfferingsContent({ device, onStart }: OfferingsContentProps) {
+function OfferingsContent({ onStart }: OfferingsContentProps) {
   return (
     <div className="space-y-8">
       <div className="space-y-3">
         <p className="text-sm font-semibold uppercase tracking-widest text-[#FF8C42]">O que oferecemos</p>
         <h2 className="text-3xl font-bold leading-tight tracking-wide text-white sm:text-4xl lg:text-[2.5rem]">
-          {device === "desktop"
-            ? "Tudo que você precisa para evoluir como trader"
-            : "Seu trading no bolso, com a mesma clareza"}
+          Tudo que você precisa para evoluir como trader
         </h2>
         <p className="max-w-lg text-base leading-relaxed text-gray-300">
-          {device === "desktop"
-            ? "O Trackion reúne registro, análise e metas em um só lugar — para você parar de adivinhar e passar a operar com clareza sobre os seus números."
-            : "Acompanhe PnL, win rate e últimos trades de qualquer lugar. O app mobile mantém o mesmo foco em dados — sem perder disciplina fora da mesa."}
+          O Trackion reúne registro, análise e metas em um só lugar — para você parar de adivinhar e passar a operar
+          com clareza sobre os seus números.
         </p>
       </div>
 
@@ -325,7 +322,6 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                     transition: "transform 0.2s ease-out",
                   }}
                   decoding="async"
-                  fetchPriority="high"
                 />
                 <img
                   src="/mockup_mobile.png"
@@ -344,40 +340,32 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
         </div>
       </section>
 
-      {/* Ofertas — desktop (PC esq.) + celular embaixo (texto esq. · mockup dir.) */}
+      {/* Ofertas — imagem responsiva: celular em telas pequenas, PC em telas grandes */}
       <section
         id="recursos"
         className="relative z-10 -mt-[min(14vh,128px)] bg-[linear-gradient(to_bottom,transparent_0%,transparent_10%,rgba(0,0,0,0.75)_26%,#000_42%,#000_100%)] px-6 pb-24 pt-[min(20vh,180px)] sm:pb-32 sm:pt-[min(22vh,200px)]"
       >
-        <div className="mx-auto w-full max-w-7xl space-y-20 px-4 sm:space-y-28 xl:max-w-[100rem] xl:px-8">
-          {/* Desktop — PC à esquerda (maior), texto à direita */}
+        <div className="mx-auto w-full max-w-7xl px-4 xl:max-w-[100rem] xl:px-8">
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,0.88fr)] lg:gap-10 xl:gap-12">
-            <div className="relative mx-auto w-full max-w-3xl sm:max-w-4xl lg:mx-0 lg:max-w-none lg:w-[min(100%,100rem)] xl:w-[min(100%,108rem)]">
+            <div className="relative mx-auto w-full max-w-[240px] sm:max-w-[280px] lg:mx-0 lg:max-w-none lg:w-[min(100%,100rem)] xl:w-[min(100%,108rem)]">
               <img
                 src="/mockup_pc.png"
                 alt="Trackion — painel desktop"
-                className="block h-auto w-full drop-shadow-2xl"
+                className="hidden h-auto w-full drop-shadow-2xl lg:block"
                 style={{ transform: `translateY(${scrollY * 0.02}px)` }}
                 decoding="async"
                 loading="lazy"
               />
-            </div>
-            <OfferingsContent device="desktop" onStart={goStart} />
-          </div>
-
-          {/* Celular — texto e mockup mais próximos; celular menor */}
-          <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-6 xl:gap-8">
-            <OfferingsContent device="mobile" onStart={goStart} />
-            <div className="relative mx-auto w-full max-w-[200px] sm:max-w-[220px] lg:mx-0 lg:max-w-[230px] lg:justify-self-start xl:max-w-[240px]">
               <img
                 src="/mockup_mobile.png"
                 alt="Trackion — app no celular"
-                className="block h-auto w-full drop-shadow-2xl"
+                className="block h-auto w-full drop-shadow-2xl lg:hidden"
                 style={{ transform: `translateY(${scrollY * 0.02}px)` }}
                 decoding="async"
                 loading="lazy"
               />
             </div>
+            <OfferingsContent onStart={goStart} />
           </div>
         </div>
       </section>
@@ -389,59 +377,54 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
 
       {/* Integrações com exchanges — sync automático de trades */}
       <section id="integracoes" className="relative z-10 bg-black px-6 py-24 sm:py-32">
-        <div className="mx-auto max-w-5xl px-4 text-center xl:max-w-6xl xl:px-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF8C42]">Integrações via API</p>
-          <h2 className="mt-4 text-3xl font-bold leading-tight tracking-wide text-white sm:text-4xl lg:text-[2.75rem]">
-            Seus trades entram sozinhos.
-            <br className="hidden sm:block" /> Você só analisa.
-          </h2>
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-gray-300 sm:text-lg">
-            Conectamos com as principais exchanges para puxar execuções automaticamente. Sem planilha, sem cadastro
-            manual trade a trade — o Trackion monta seu histórico enquanto você foca no mercado.
-          </p>
+        <div className="mx-auto w-full max-w-7xl space-y-14 px-4 xl:max-w-[100rem] xl:px-8">
+          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.25fr)] lg:gap-14">
+            <div className="space-y-4">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF8C42]">Integrações via API</p>
+              <h2 className="text-3xl font-bold leading-tight tracking-wide text-white sm:text-4xl lg:text-[2.75rem]">
+                Seus trades entram sozinhos.
+                <br /> Você só analisa.
+              </h2>
+              <p className="max-w-xl text-base leading-relaxed text-gray-300 sm:text-lg">
+                Conectamos com as principais exchanges para puxar execuções automaticamente. Sem planilha, sem cadastro
+                manual trade a trade — o Trackion monta seu histórico enquanto você foca no mercado.
+              </p>
 
-          <p className="mt-10 font-mono text-sm tracking-[0.35em] text-gray-500 sm:text-base">
-            {EXCHANGES.map((name, i) => (
-              <span key={name}>
-                {i > 0 && <span className="mx-3 text-[#FF8C42]/50 sm:mx-4">/</span>}
-                <span className="text-white">{name}</span>
-              </span>
-            ))}
-            <span className="mx-3 text-[#FF8C42]/50 sm:mx-4">/</span>
-            <span className="text-gray-500">+ em breve</span>
-          </p>
-        </div>
+              <p className="font-mono text-xs tracking-[0.32em] text-gray-500 sm:text-sm">
+                {EXCHANGES.map((name, i) => (
+                  <span key={name}>
+                    {i > 0 && <span className="mx-2 text-[#FF8C42]/50 sm:mx-3">/</span>}
+                    <span className="text-white">{name}</span>
+                  </span>
+                ))}
+                <span className="mx-2 text-[#FF8C42]/50 sm:mx-3">/</span>
+                <span className="text-gray-500">+ em breve</span>
+              </p>
+            </div>
 
-        <div className="mx-auto mt-14 max-w-3xl px-4 sm:mt-16 xl:max-w-4xl xl:px-8">
-          <ol className="relative space-y-0 border-l border-[#FF8C42]/25 pl-8 sm:pl-10">
+            <div className="relative mx-auto w-full max-w-3xl lg:max-w-none">
+              <AnimatedWealthChart />
+            </div>
+          </div>
+
+          <ol className="grid grid-cols-1 gap-x-8 gap-y-10 border-y border-white/[0.06] py-10 sm:grid-cols-2 xl:grid-cols-4">
             {INTEGRATION_BENEFITS.map(({ icon: Icon, title, description }, i) => (
-              <li
-                key={title}
-                className="relative pb-12 last:pb-0 sm:pb-14"
-              >
-                <span
-                  className="absolute -left-8 top-0 flex h-4 w-4 -translate-x-1/2 items-center justify-center rounded-full border-2 border-[#FF8C42] bg-black sm:-left-10 sm:h-5 sm:w-5"
-                  aria-hidden
-                />
-                <span className="font-mono text-xs font-medium tracking-[0.25em] text-[#FF8C42]/80">
+              <li key={title} className="relative pl-12">
+                <span className="absolute left-0 top-0 font-mono text-xs font-medium tracking-[0.25em] text-[#FF8C42]/80">
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-5">
-                  <Icon className="h-6 w-6 shrink-0 text-[#FF8C42] sm:mt-0.5" aria-hidden />
-                  <div>
-                    <h3 className="text-lg font-bold tracking-wide text-white sm:text-xl">{title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-gray-400 sm:text-base">{description}</p>
-                  </div>
-                </div>
+                <Icon className="mt-8 h-6 w-6 text-[#FF8C42]" aria-hidden />
+                <h3 className="mt-4 text-lg font-bold tracking-wide text-white sm:text-xl">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-400 sm:text-base">{description}</p>
               </li>
             ))}
           </ol>
-        </div>
 
-        <p className="mx-auto mt-12 max-w-xl px-4 text-center text-sm leading-relaxed text-gray-500 sm:text-base">
-          Integração segura via API — você autoriza a leitura das operações; nós cuidamos de organizar, calcular e
-          exibir tudo no dashboard.
-        </p>
+          <p className="max-w-2xl text-sm leading-relaxed text-gray-500 sm:text-base">
+            Integração segura via API — você autoriza a leitura das operações; nós cuidamos de organizar, calcular e
+            exibir tudo no dashboard.
+          </p>
+        </div>
       </section>
 
       {/* Pare de apostar — trading com método, não no achismo */}
@@ -470,7 +453,7 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
               >
                 <div className="flex items-start gap-4 sm:flex-col sm:items-center sm:gap-2">
                   <span
-                    className="text-5xl font-bold leading-none tracking-tighter text-white/[0.07] transition-colors group-hover:text-[#FF8C42]/20 sm:text-6xl"
+                    className="text-5xl font-bold leading-none tracking-tighter text-white/25 transition-colors group-hover:text-[#FF8C42]/55 sm:text-6xl"
                     aria-hidden
                   >
                     {String(i + 1).padStart(2, "0")}
