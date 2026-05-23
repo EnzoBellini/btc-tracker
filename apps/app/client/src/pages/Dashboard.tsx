@@ -1,11 +1,8 @@
 import { useMemo } from "react";
 import {
-  TrendingUp, TrendingDown, Bitcoin, DollarSign, Target, AlertTriangle, CheckCircle2,
-  Activity, ArrowUpRight, ArrowDownRight,
+  Bitcoin, DollarSign, Target, AlertTriangle, CheckCircle2,
+  Activity, ArrowRight,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Cell,
@@ -15,50 +12,18 @@ import { useTrades } from "@/hooks/useTrades";
 import { fmtUsdt, fmtPct, pnlColor } from "@/lib/format";
 import PlanTracker from "@/components/PlanTracker";
 import { useRoadmap } from "@/hooks/useOnboarding";
-
-// ── KPI Card ──────────────────────────────────────────────────────────────────
-function KpiCard({
-  label, value, sub, icon: Icon, color = "text-foreground", trend,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  icon: React.ElementType;
-  color?: string;
-  trend?: "up" | "down" | "neutral";
-}) {
-  return (
-    <Card className="bg-card border-border">
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">{label}</p>
-            <p className={`text-2xl font-bold tabular ${color}`}>{value}</p>
-            {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
-          </div>
-          <div className="p-2.5 rounded-lg bg-primary/10">
-            <Icon className="w-5 h-5 text-primary" />
-          </div>
-        </div>
-        {trend && (
-          <div className="mt-3 flex items-center gap-1">
-            {trend === "up"   && <ArrowUpRight   className="w-3.5 h-3.5 text-profit" />}
-            {trend === "down" && <ArrowDownRight className="w-3.5 h-3.5 text-loss"   />}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
+import {
+  PageHeader, KpiTerminal, TerminalFrame, StatPill, KeyValueRow, Eyebrow,
+} from "@/components/tk";
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-card border border-border rounded-lg p-3 text-xs shadow-xl">
-      <p className="text-muted-foreground mb-1">{label}</p>
+    <div className="border border-border bg-card px-3 py-2 text-xs shadow-2xl">
+      <p className="font-mono-tk text-[10px] uppercase tracking-[0.24em] text-muted-foreground">{label}</p>
       {payload.map((p: any, i: number) => (
-        <p key={i} style={{ color: p.color }} className="tabular">
+        <p key={i} style={{ color: p.color }} className="num font-mono-tk mt-1">
           {p.name}: {typeof p.value === "number" ? fmtUsdt(p.value) : p.value}
         </p>
       ))}
@@ -73,11 +38,10 @@ export default function Dashboard() {
 
   const isLoading = statsLoading || tradesLoading;
 
-  // Memoised chart data (ordenados por data)
   const { pnlChartData, recentTradesData } = useMemo(() => {
     const closed = [...trades]
       .filter(t => t.status !== "OPEN")
-      .sort((a, b) => a.date.localeCompare(b.date)); // cronológico para gráfico
+      .sort((a, b) => a.date.localeCompare(b.date));
     const pnlChart = closed.reduce<{ trade: number; cumPnl: number; pnl: number; date: string }[]>((acc, t, i) => {
       const prev = acc[i - 1]?.cumPnl ?? 0;
       acc.push({ trade: i + 1, cumPnl: prev + (t.pnl ?? 0), pnl: t.pnl ?? 0, date: t.date });
@@ -86,7 +50,6 @@ export default function Dashboard() {
     return { pnlChartData: pnlChart, recentTradesData: pnlChart.slice(-10) };
   }, [trades]);
 
-  // Derived status
   const canTrade = useMemo(() => {
     if (!stats) return true;
     const fc = stats.settings?.futuresCapital ?? 100;
@@ -95,172 +58,206 @@ export default function Dashboard() {
   }, [stats]);
 
   const shouldTransfer = stats ? stats.totalPnl >= (stats.settings?.profitTransferThreshold ?? 10) : false;
+  const totalPnl = stats?.totalPnl ?? 0;
+  const winRate = stats?.winRate ?? 0;
+  const wins = stats?.wins ?? 0;
+  const losses = stats?.losses ?? 0;
+  const btcAcc = stats?.totalBtcBought ?? 0;
+  const openTrades = stats?.openTrades ?? 0;
+  const closedTrades = stats?.closedTrades ?? 0;
+  const totalTrades = stats?.totalTrades ?? 0;
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Visão geral da estratégia BTC</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {canTrade ? (
-            <Badge className="bg-profit/15 text-profit border-0 gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Pode operar
-            </Badge>
-          ) : (
-            <Badge className="bg-loss/15 text-loss border-0 gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5" /> Parar operações
-            </Badge>
-          )}
-          {shouldTransfer && (
-            <Badge className="bg-primary/15 text-primary border-0 gap-1.5">
-              <Bitcoin className="w-3.5 h-3.5" /> Transferir lucro p/ BTC
-            </Badge>
-          )}
-        </div>
-      </div>
+    <div className="relative space-y-10 p-6 md:p-10">
+      <div className="pointer-events-none absolute inset-0 bg-grid-fine opacity-50" aria-hidden />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[400px] bg-ambient-orange" aria-hidden />
 
-      {/* KPI row */}
-      {isLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 rounded-lg" />)}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <KpiCard
-            label="PnL Total"
-            value={`${(stats?.totalPnl ?? 0) >= 0 ? "+" : ""}${fmtUsdt(stats?.totalPnl ?? 0)} USDT`}
-            sub={`${stats?.closedTrades ?? 0} trades fechados`}
-            icon={DollarSign}
-            color={pnlColor(stats?.totalPnl ?? 0)}
-            trend={(stats?.totalPnl ?? 0) >= 0 ? "up" : "down"}
+      <div className="relative space-y-10">
+        {/* HEADER */}
+        <PageHeader
+          index="01"
+          total="08"
+          eyebrow="Dashboard · overview"
+          title="Visão geral da estratégia BTC."
+          subtitle="Performance, regras e plano de execução — tudo num só painel."
+          actions={
+            <>
+              {canTrade ? (
+                <StatPill tone="profit" pulse>
+                  PODE OPERAR
+                </StatPill>
+              ) : (
+                <StatPill tone="loss" pulse>
+                  PARAR OPERAÇÕES
+                </StatPill>
+              )}
+              {shouldTransfer && (
+                <StatPill tone="info">
+                  TRANSFERIR P/ BTC
+                </StatPill>
+              )}
+            </>
+          }
+        />
+
+        {/* KPIs */}
+        <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-px md:bg-border md:[&>*]:bg-background">
+          <KpiTerminal
+            label="PNL TOTAL"
+            index="01"
+            value={`${totalPnl >= 0 ? "+" : ""}${fmtUsdt(totalPnl)}`}
+            tone={totalPnl >= 0 ? "profit" : "loss"}
+            delta={
+              <span className={pnlColor(totalPnl)}>
+                {totalPnl >= 0 ? "▲" : "▼"} {closedTrades} trades
+              </span>
+            }
+            caption="USDT realizado"
+            loading={isLoading}
           />
-          <KpiCard
-            label="Win Rate"
-            value={fmtPct(stats?.winRate ?? 0)}
-            sub={`${stats?.wins ?? 0}W / ${stats?.losses ?? 0}L`}
-            icon={Target}
-            color={(stats?.winRate ?? 0) >= 50 ? "text-profit" : "text-loss"}
+          <KpiTerminal
+            label="WIN RATE"
+            index="02"
+            value={fmtPct(winRate)}
+            tone={winRate >= 50 ? "profit" : "loss"}
+            delta={<span className="text-muted-foreground">{wins}W / {losses}L</span>}
+            caption="taxa de acerto"
+            loading={isLoading}
           />
-          <KpiCard
-            label="BTC Acumulado"
-            value={`${(stats?.totalBtcBought ?? 0).toFixed(6)} BTC`}
-            sub={`${fmtUsdt(stats?.totalUsdtTransferred ?? 0)} USDT transferidos`}
-            icon={Bitcoin}
-            color="text-primary"
+          <KpiTerminal
+            label="BTC ACUMULADO"
+            index="03"
+            value={btcAcc.toFixed(6)}
+            tone="orange"
+            delta={<span className="text-muted-foreground">{fmtUsdt(stats?.totalUsdtTransferred ?? 0)} USDT</span>}
+            caption="spot · convertido"
+            loading={isLoading}
           />
-          <KpiCard
-            label="Trades Abertos"
-            value={String(stats?.openTrades ?? 0)}
-            sub={`${stats?.totalTrades ?? 0} total`}
+          <KpiTerminal
+            label="TRADES ABERTOS"
+            index="04"
+            value={String(openTrades)}
+            tone="neutral"
             icon={Activity}
+            delta={<span className="text-muted-foreground">{totalTrades} total</span>}
+            caption="posições live"
+            loading={isLoading}
           />
-        </div>
-      )}
+        </section>
 
-      {/* Metas e progresso */}
-      <PlanTracker />
+        {/* Goals */}
+        <section className="space-y-4">
+          <Eyebrow>plan tracker · metas ativas</Eyebrow>
+          <PlanTracker />
+        </section>
 
-      {/* Charts row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Cumulative PnL */}
-        <Card className="bg-card border-border">
-          <CardHeader className="pb-2 px-5 pt-5">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">PnL Acumulado</CardTitle>
-          </CardHeader>
-          <CardContent className="px-2 pb-4">
-            {pnlChartData.length === 0 ? (
-              <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">
-                Nenhum trade fechado ainda
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={180}>
-                <AreaChart data={pnlChartData}>
-                  <defs>
-                    <linearGradient id="pnlGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="hsl(27,100%,55%)" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="hsl(27,100%,55%)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="date" tick={{ fill: "hsl(220,8%,50%)", fontSize: 10 }} axisLine={false} tickLine={false} label={{ value: "Data", position: "insideBottom", offset: -2, fill: "hsl(220,8%,50%)", fontSize: 10 }} />
-                  <YAxis tick={{ fill: "hsl(220,8%,50%)", fontSize: 11 }} axisLine={false} tickLine={false} width={50} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <ReferenceLine y={0} stroke="hsl(220,12%,25%)" strokeDasharray="3 3" />
-                  <Area type="monotone" dataKey="cumPnl" name="PnL Acum." stroke="hsl(27,100%,55%)" fill="url(#pnlGrad)" strokeWidth={2} dot={false} />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Recent trades bar */}
-        <Card className="bg-card border-border">
-          <CardHeader className="pb-2 px-5 pt-5">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Últimos 10 Trades</CardTitle>
-          </CardHeader>
-          <CardContent className="px-2 pb-4">
-            {recentTradesData.length === 0 ? (
-              <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">
-                Nenhum trade fechado ainda
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={recentTradesData} barSize={14}>
-                  <XAxis dataKey="date" tick={{ fill: "hsl(220,8%,50%)", fontSize: 10 }} axisLine={false} tickLine={false} label={{ value: "Data", position: "insideBottom", offset: -2, fill: "hsl(220,8%,50%)", fontSize: 10 }} />
-                  <YAxis tick={{ fill: "hsl(220,8%,50%)", fontSize: 11 }} axisLine={false} tickLine={false} width={50} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <ReferenceLine y={0} stroke="hsl(220,12%,25%)" />
-                  <Bar dataKey="pnl" name="PnL (USDT)" radius={[3, 3, 0, 0]}>
-                    {recentTradesData.map((entry, i) => (
-                      <Cell key={i} fill={entry.pnl >= 0 ? "hsl(142,71%,45%)" : "hsl(0,72%,51%)"} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Strategy rules quick ref */}
-      <Card className="bg-card border-border">
-        <CardHeader className="pb-3 px-5 pt-5">
-          <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Regras da Estratégia</CardTitle>
-        </CardHeader>
-        <CardContent className="px-5 pb-5">
-          {isLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-16 rounded-md" />)}
+        {/* Charts */}
+        <section className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <TerminalFrame title="equity_curve · pnl acumulado" status={pnlChartData.length ? "live" : "no data"} statusTone={pnlChartData.length ? "live" : "off"} orangeCorners>
+            <div className="px-2 py-4">
+              {pnlChartData.length === 0 ? (
+                <EmptyChartState message="Nenhum trade fechado ainda" />
+              ) : (
+                <ResponsiveContainer width="100%" height={200}>
+                  <AreaChart data={pnlChartData}>
+                    <defs>
+                      <linearGradient id="pnlGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%"   stopColor="hsl(var(--primary))" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="date" tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10 }} axisLine={false} tickLine={false} width={50} />
+                    <Tooltip content={<CustomTooltip />} cursor={{ stroke: "hsl(var(--primary))", strokeOpacity: 0.3 }} />
+                    <ReferenceLine y={0} stroke="rgba(255,255,255,0.1)" strokeDasharray="3 6" />
+                    <Area type="monotone" dataKey="cumPnl" name="PnL Acum." stroke="hsl(var(--primary))" fill="url(#pnlGrad)" strokeWidth={2} dot={false} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
             </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <div className="flex items-center justify-between border-t border-border px-4 py-2 font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
+              <span>fig.01 — equity</span>
+              <span className={pnlColor(totalPnl)}>
+                {totalPnl >= 0 ? "+" : ""}{fmtUsdt(totalPnl)} USDT
+              </span>
+            </div>
+          </TerminalFrame>
+
+          <TerminalFrame title="last_10 · trades" status={recentTradesData.length ? "live" : "no data"} statusTone={recentTradesData.length ? "live" : "off"} orangeCorners>
+            <div className="px-2 py-4">
+              {recentTradesData.length === 0 ? (
+                <EmptyChartState message="Nenhum trade fechado ainda" />
+              ) : (
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={recentTradesData} barSize={14}>
+                    <XAxis dataKey="date" tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10 }} axisLine={false} tickLine={false} width={50} />
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+                    <ReferenceLine y={0} stroke="rgba(255,255,255,0.12)" />
+                    <Bar dataKey="pnl" name="PnL (USDT)" radius={[0, 0, 0, 0]}>
+                      {recentTradesData.map((entry, i) => (
+                        <Cell key={i} fill={entry.pnl >= 0 ? "hsl(var(--profit))" : "hsl(var(--loss))"} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+            <div className="flex items-center justify-between border-t border-border px-4 py-2 font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
+              <span>fig.02 — last_10</span>
+              <span>{recentTradesData.length} samples</span>
+            </div>
+          </TerminalFrame>
+        </section>
+
+        {/* Strategy rules quick ref */}
+        <section className="border border-border bg-card">
+          <div className="flex items-center justify-between border-b border-border px-5 py-3 font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
+            <span><span className="text-primary">[06]</span> · strategy.config</span>
+            <span>read-only</span>
+          </div>
+          <div className="grid grid-cols-1 divide-y divide-border md:grid-cols-2 md:divide-x">
+            <div className="px-6 py-2">
               {[
-                { label: "Capital Total",      value: `${fmtUsdt(stats?.settings?.totalCapital ?? 200)} USDT` },
-                { label: "Capital Futuros",    value: `${fmtUsdt(stats?.settings?.futuresCapital ?? 100)} USDT` },
-                { label: "Risco / Trade",      value: `${fmtUsdt(stats?.settings?.riskPerTrade ?? 2.5)} USDT` },
-                { label: "Alavancagem",        value: `${stats?.settings?.defaultLeverage ?? 3}x` },
-                { label: "Transferir quando",  value: `+${fmtUsdt(stats?.settings?.profitTransferThreshold ?? 10)} USDT` },
-                { label: "Parar c/ drawdown",  value: `-${stats?.settings?.stopTradingDrawdown ?? 20}%` },
-                { label: "Capital Spot BTC",   value: `${fmtUsdt(stats?.settings?.spotCapital ?? 100)} USDT` },
-                { label: "Total trades",       value: String(stats?.totalTrades ?? 0) },
-              ].map(({ label, value }) => (
-                <div key={label} className="bg-muted rounded-md p-3">
-                  <p className="text-muted-foreground mb-1">{label}</p>
-                  <p className="font-semibold text-foreground tabular">{value}</p>
-                </div>
+                { label: "Capital Total",     value: `${fmtUsdt(stats?.settings?.totalCapital ?? 200)} USDT` },
+                { label: "Capital Futuros",   value: `${fmtUsdt(stats?.settings?.futuresCapital ?? 100)} USDT` },
+                { label: "Capital Spot BTC",  value: `${fmtUsdt(stats?.settings?.spotCapital ?? 100)} USDT` },
+                { label: "Risco / Trade",     value: `${fmtUsdt(stats?.settings?.riskPerTrade ?? 2.5)} USDT` },
+              ].map((r, i) => (
+                <KeyValueRow key={r.label} index={String(i + 1).padStart(2, "0")} label={r.label} value={r.value} />
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div className="px-6 py-2">
+              {[
+                { label: "Alavancagem padrão",     value: `${stats?.settings?.defaultLeverage ?? 3}x` },
+                { label: "Transferir quando",      value: `+${fmtUsdt(stats?.settings?.profitTransferThreshold ?? 10)} USDT`, tone: "orange" as const },
+                { label: "Parar c/ drawdown",      value: `−${stats?.settings?.stopTradingDrawdown ?? 20}%`, tone: "loss" as const },
+                { label: "Total trades",           value: String(totalTrades) },
+              ].map((r, i) => (
+                <KeyValueRow key={r.label} index={String(i + 5).padStart(2, "0")} label={r.label} value={r.value} tone={r.tone} />
+              ))}
+            </div>
+          </div>
+        </section>
 
-      <RoadmapSection />
+        <RoadmapSection />
+      </div>
     </div>
   );
 }
 
+function EmptyChartState({ message }: { message: string }) {
+  return (
+    <div className="flex h-48 flex-col items-center justify-center gap-2">
+      <span className="font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground/50">
+        [no data]
+      </span>
+      <p className="text-sm text-muted-foreground">{message}</p>
+    </div>
+  );
+}
+
+// ── Roadmap section ─────────────────────────────────────────────────────────────
 type RoadmapPhase = {
   id: number;
   title: string;
@@ -274,26 +271,46 @@ function RoadmapSection() {
   if (isLoading || phases.length === 0) return null;
 
   return (
-    <Card className="bg-card border-border">
-      <CardHeader className="pb-3 px-5 pt-5">
-        <CardTitle className="text-sm font-semibold">Seu plano de ação</CardTitle>
-      </CardHeader>
-      <CardContent className="px-5 pb-5 space-y-4">
-        {phases.map((phase) => (
-          <div key={phase.id} className="border border-border rounded-lg p-4">
-            <p className="text-sm font-medium">{phase.title}</p>
-            <p className="text-xs text-muted-foreground mt-1">{phase.description}</p>
-            <ul className="mt-3 space-y-1.5">
-              {phase.checklist.map((c: { task: string; done: boolean }, i: number) => (
-                <li key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <CheckCircle2 className={`w-3.5 h-3.5 ${c.done ? "text-profit" : "text-muted-foreground"}`} />
-                  {c.task}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
+    <section className="space-y-4">
+      <div className="flex items-end justify-between border-b border-border pb-4">
+        <div className="space-y-1">
+          <Eyebrow>seu plano de ação · roadmap</Eyebrow>
+          <h2 className="font-display text-2xl font-bold tracking-tight">Próximas fases.</h2>
+        </div>
+        <span className="font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
+          {phases.length} phases
+        </span>
+      </div>
+
+      <ol className="grid grid-cols-1 gap-px overflow-hidden border border-border bg-border md:grid-cols-2">
+        {phases.map((phase, i) => {
+          const done = phase.checklist.filter((c) => c.done).length;
+          const total = phase.checklist.length;
+          const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+          return (
+            <li key={phase.id} className="bg-card p-5">
+              <div className="flex items-start justify-between gap-3 border-b border-border pb-3">
+                <div>
+                  <p className="font-mono-tk text-[10px] uppercase tracking-[0.28em] text-primary">
+                    Phase {String(i + 1).padStart(2, "0")}
+                  </p>
+                  <p className="font-display mt-1 text-lg font-bold leading-tight">{phase.title}</p>
+                </div>
+                <span className="num font-mono-tk text-xs font-bold text-primary">{pct}%</span>
+              </div>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{phase.description}</p>
+              <ul className="mt-3 space-y-1.5">
+                {phase.checklist.map((c, k) => (
+                  <li key={k} className="flex items-center gap-2 text-xs">
+                    <CheckCircle2 className={`h-3.5 w-3.5 shrink-0 ${c.done ? "text-profit" : "text-muted-foreground/40"}`} />
+                    <span className={c.done ? "text-foreground" : "text-muted-foreground"}>{c.task}</span>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
   );
 }

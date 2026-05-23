@@ -1,152 +1,227 @@
 import {
-  BarChart3,
-  TrendingUp,
-  Target,
-  Zap,
-  ArrowRight,
-  LineChart,
-  ClipboardList,
-  Trophy,
-  PieChart,
-  ShieldCheck,
-  Brain,
+  ArrowDownRight,
+  ArrowUpRight,
   Ban,
-  Link2,
-  RefreshCw,
+  Brain,
+  ClipboardList,
   Clock,
+  Compass,
+  LineChart,
+  Link2,
+  PieChart,
+  Plus,
+  RefreshCw,
+  ShieldCheck,
+  Target,
+  Trophy,
+  Zap,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useEffect, useState, type ComponentType, type SVGProps } from "react";
 import { AnimatedWealthChart } from "./components/AnimatedWealthChart";
 import { HeroWaveCanvas } from "./components/HeroWaveCanvas";
 import { TrialSignupModal } from "./components/TrialSignupModal";
 import { submitTrialSignup } from "./lib/trialSignup";
 
 export type LandingPageProps = {
-  /** Ex.: abrir dashboard / auth — opcional na landing estática */
   onStartClick?: () => void;
 };
 
-const OFFERINGS = [
+type IconType = ComponentType<SVGProps<SVGSVGElement>>;
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// ============================== DATA ==============================
+
+const TICKER_ITEMS: ReadonlyArray<{ symbol: string; price: string; delta: string; up: boolean }> = [
+  { symbol: "BTC/USDT", price: "67,432.10", delta: "+2.34%", up: true },
+  { symbol: "ETH/USDT", price: "3,890.55", delta: "−1.20%", up: false },
+  { symbol: "SOL/USDT", price: "184.20", delta: "+4.81%", up: true },
+  { symbol: "BNB/USDT", price: "612.40", delta: "+0.42%", up: true },
+  { symbol: "XRP/USDT", price: "0.6182", delta: "−0.78%", up: false },
+  { symbol: "TRADERS ONLINE", price: "1,247", delta: "LIVE", up: true },
+  { symbol: "WIN RATE MÉDIO", price: "58.4%", delta: "Trackion", up: true },
+  { symbol: "TRADES IMPORTADOS", price: "1,284,902", delta: "+18.2k 7d", up: true },
+];
+
+const NAV_LINKS = [
+  { href: "#recursos", index: "01", label: "Recursos" },
+  { href: "#integracoes", index: "02", label: "Integrações" },
+  { href: "#metodo", index: "03", label: "Método" },
+  { href: "#precos", index: "04", label: "Preços" },
+] as const;
+
+const BIG_STATS = [
+  { label: "Trades importados", value: "1.28M", caption: "via API · 30d", index: "01" },
+  { label: "Métricas calculadas", value: "27+", caption: "win rate · expectancy · DD · R/R", index: "02" },
+  { label: "Setup inicial", value: "< 2min", caption: "conecte sua exchange", index: "03" },
+  { label: "Dias grátis", value: "14", caption: "sem cartão de crédito", index: "04" },
+] as const;
+
+const OFFERINGS: ReadonlyArray<{ icon: IconType; title: string; description: string; tag: string }> = [
   {
+    tag: "DASHBOARD",
     icon: LineChart,
-    title: "Dashboard de performance",
-    description: "Visualize win rate, expectancy, drawdown e evolução do capital em um painel claro e objetivo.",
+    title: "Performance ao vivo",
+    description:
+      "Win rate, expectancy, drawdown e evolução do capital em um painel claro e objetivo — não em planilhas espalhadas.",
   },
   {
+    tag: "JOURNAL",
     icon: ClipboardList,
     title: "Registro completo de trades",
-    description: "Cadastre entradas, saídas, tags e notas — tudo organizado para revisar o que funciona.",
+    description:
+      "Cadastre entradas, saídas, tags e notas. Anexe screenshots. Revise o que funciona com contexto real.",
   },
   {
+    tag: "GOALS",
     icon: Trophy,
     title: "Metas e disciplina",
-    description: "Defina objetivos diários, semanais e mensais e acompanhe se está no caminho certo.",
+    description:
+      "Defina objetivos diários, semanais e mensais. Receba feedback quando passar do limite de risco do dia.",
   },
   {
+    tag: "REPORTS",
     icon: PieChart,
     title: "Relatórios inteligentes",
-    description: "Filtre por ativo, estratégia ou período e enxergue padrões nos seus resultados.",
+    description:
+      "Filtre por ativo, estratégia, dia da semana ou horário. Enxergue padrões que sua memória esquece.",
   },
 ];
 
-const EXCHANGES = ["MEXC", "Bitget", "Binance"] as const;
+const EXCHANGES: ReadonlyArray<{ name: string; status: "live" | "soon"; pair: string }> = [
+  { name: "MEXC", status: "live", pair: "spot · futures" },
+  { name: "Bitget", status: "live", pair: "spot · futures" },
+  { name: "Binance", status: "live", pair: "spot · futures" },
+  { name: "Bybit", status: "soon", pair: "Q1 2026" },
+  { name: "OKX", status: "soon", pair: "Q1 2026" },
+];
 
-const INTEGRATION_BENEFITS = [
+const INTEGRATION_BENEFITS: ReadonlyArray<{ icon: IconType; title: string; description: string }> = [
   {
     icon: RefreshCw,
-    title: "Trades sincronizados automaticamente",
+    title: "Sync automático",
     description:
-      "Conecte sua exchange e deixe o Trackion importar execuções em tempo real — sem copiar ordem por ordem para uma planilha.",
+      "Conecte a API da exchange uma vez. O Trackion puxa execuções em tempo real, sem copiar ordem por ordem.",
   },
   {
     icon: Clock,
     title: "Histórico sempre atualizado",
     description:
-      "Seu journal reflete o que realmente aconteceu na conta. PnL, win rate e métricas ficam prontos para análise assim que você opera.",
+      "Seu journal reflete o que realmente aconteceu na conta. PnL e métricas prontas no momento que você opera.",
   },
   {
     icon: ShieldCheck,
-    title: "Menos erro, mais confiança nos dados",
+    title: "Read-only · seguro",
     description:
-      "Acabou o risco de esquecer um trade ou errar tamanho de posição na hora de registrar. Você analisa números reais, não memória.",
+      "Pedimos permissão apenas de leitura — sem withdraw, sem trade. Seu capital permanece intocado.",
   },
   {
     icon: Link2,
-    title: "Mais exchanges a caminho",
+    title: "Multi-exchange",
     description:
-      "MEXC, Bitget e Binance já estão no radar — e estamos expandindo integrações para você centralizar tudo em um só lugar.",
+      "Centralize todas as suas contas em um só lugar. PnL consolidado, métricas globais, zero retrabalho.",
   },
 ];
 
-const STOP_BETTING_POINTS = [
+const STOP_BETTING_POINTS: ReadonlyArray<{ icon: IconType; title: string; description: string; tag: string }> = [
   {
+    tag: "PROBLEMA",
     icon: Ban,
-    title: "Operar no feeling é apostar",
+    title: "Operar no feeling é apostar.",
     description:
-      "Entrar sem plano, dobrar mão após loss ou ignorar o histórico transforma o mercado em cassino. Trackion mostra a realidade dos seus números.",
+      "Entrar sem plano, dobrar mão após loss, ignorar o histórico — o mercado vira cassino. O Trackion mostra a realidade dos seus números, não a sua memória seletiva.",
   },
   {
+    tag: "CAUSA",
     icon: Brain,
-    title: "Disciplina nasce de dados",
+    title: "Disciplina nasce de dados.",
     description:
-      "Quando você enxerga win rate, drawdown e expectancy, deixa de repetir os mesmos erros e passa a tomar decisões com método.",
+      "Quando você enxerga win rate, drawdown e expectancy reais, deixa de repetir os mesmos erros. Decisões passam a ter método — não palpite.",
   },
   {
+    tag: "REMÉDIO",
     icon: ShieldCheck,
-    title: "Regras antes da emoção",
+    title: "Regras antes da emoção.",
     description:
-      "Metas, limites e revisão de trades criam um processo — não um palpite. Você opera como profissional, não como apostador.",
+      "Metas, limites de risco e revisão sistemática criam um processo. Você opera como um profissional, não como um apostador esperando sorte.",
   },
 ];
 
-type OfferingsContentProps = {
-  onStart: () => void;
-};
+const HERO_PILLS: ReadonlyArray<{ icon: IconType; text: string }> = [
+  { icon: LineChart, text: "Analytics avançado" },
+  { icon: Target, text: "Metas & risco" },
+  { icon: Zap, text: "Sync em tempo real" },
+  { icon: Compass, text: "Foco em método" },
+];
 
-function OfferingsContent({ onStart }: OfferingsContentProps) {
+// ============================== UI HELPERS ==============================
+
+function TickerBar() {
   return (
-    <div className="space-y-8">
-      <div className="space-y-3">
-        <p className="text-sm font-semibold uppercase tracking-widest text-[#FF8C42]">O que oferecemos</p>
-        <h2 className="text-3xl font-bold leading-tight tracking-wide text-white sm:text-4xl lg:text-[2.5rem]">
-          Tudo que você precisa para evoluir como trader
-        </h2>
-        <p className="max-w-lg text-base leading-relaxed text-gray-300">
-          O Trackion reúne registro, análise e metas em um só lugar — para você parar de adivinhar e passar a operar
-          com clareza sobre os seus números.
-        </p>
-      </div>
-
-      <ul className="space-y-5">
-        {OFFERINGS.map(({ icon: Icon, title, description }) => (
-          <li key={title} className="flex gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#FF8C42]/15">
-              <Icon className="h-5 w-5 text-[#FF8C42]" aria-hidden />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-base font-bold tracking-wide text-white sm:text-lg">{title}</h3>
-              <p className="text-sm leading-relaxed text-gray-400 sm:text-base">{description}</p>
-            </div>
-          </li>
+    <div className="relative z-40 overflow-hidden border-y border-white/[0.08] bg-black/90 backdrop-blur-xl">
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-32 bg-gradient-to-r from-black to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-32 bg-gradient-to-l from-black to-transparent" />
+      <div className="flex w-max tk-marquee">
+        {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
+          <div
+            key={`${item.symbol}-${i}`}
+            className="flex shrink-0 items-center gap-3 border-r border-white/[0.06] px-6 py-2.5 font-mono text-[11px]"
+          >
+            <span className="tracking-[0.18em] text-gray-500">{item.symbol}</span>
+            <span className="num font-semibold text-white">{item.price}</span>
+            <span
+              className={`num inline-flex items-center gap-1 font-semibold ${
+                item.up ? "text-tk-green" : "text-tk-red"
+              }`}
+            >
+              {item.up ? (
+                <ArrowUpRight className="h-3 w-3" aria-hidden />
+              ) : (
+                <ArrowDownRight className="h-3 w-3" aria-hidden />
+              )}
+              {item.delta}
+            </span>
+          </div>
         ))}
-      </ul>
-
-      <button
-        type="button"
-        onClick={onStart}
-        className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#FF8C42] px-6 py-2.5 text-base font-bold text-white transition hover:bg-[#FF7A2E]"
-      >
-        Conhecer o app
-        <ArrowRight className="h-4 w-4" aria-hidden />
-      </button>
+      </div>
     </div>
   );
 }
 
-/**
- * Landing Trackion — faixa halftone contínua na junção hero/ofertas; seção de ofertas com PC.
- */
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function CrossMark({ className = "" }: { className?: string }) {
+  return (
+    <span aria-hidden className={`pointer-events-none absolute h-3 w-3 ${className}`}>
+      <span className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-white/30" />
+      <span className="absolute top-1/2 left-0 h-px w-full -translate-y-1/2 bg-white/30" />
+    </span>
+  );
+}
+
+/** Esquina marcada com linhas (estilo CAD/blueprint) */
+function CornerMarks({ orange = false }: { orange?: boolean }) {
+  const color = orange ? "border-[#FF8C42]" : "border-white/30";
+  return (
+    <>
+      <span aria-hidden className={`absolute -top-px -left-px h-3 w-3 border-t border-l ${color}`} />
+      <span aria-hidden className={`absolute -top-px -right-px h-3 w-3 border-t border-r ${color}`} />
+      <span aria-hidden className={`absolute -bottom-px -left-px h-3 w-3 border-b border-l ${color}`} />
+      <span aria-hidden className={`absolute -bottom-px -right-px h-3 w-3 border-b border-r ${color}`} />
+    </>
+  );
+}
+
+function SectionLabel({ index, label, total = "04" }: { index: string; label: string; total?: string }) {
+  return (
+    <div className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.28em]">
+      <span className="text-[#FF8C42]">[{index}]</span>
+      <span className="h-px w-8 bg-white/20" aria-hidden />
+      <span className="text-white">{label}</span>
+      <span className="text-gray-600">/ {total}</span>
+    </div>
+  );
+}
+
+// ============================== PAGE ==============================
 
 export default function LandingPage({ onStartClick }: LandingPageProps) {
   const [scrollY, setScrollY] = useState(0);
@@ -192,341 +267,682 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const year = new Date().getFullYear();
+
   return (
-    <div className="relative bg-black text-white">
-      {/* Navigation */}
-      <nav className="fixed top-0 z-50 w-full border-b border-white/[0.06] bg-black">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2.5">
+    <div className="relative overflow-hidden bg-black text-white">
+      {/* =================== NAV ===================== */}
+      <nav className="fixed top-0 z-50 w-full border-b border-white/[0.06] bg-black/85 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-3.5">
+          <a href="#" className="group flex items-center gap-2.5">
             <img
               src="/logo-trackion.png"
               alt=""
-              width={32}
-              height={32}
-              className="h-8 w-8 shrink-0 object-contain"
+              width={26}
+              height={26}
+              className="h-6 w-6 shrink-0 object-contain"
               decoding="async"
             />
-            <span className="text-xl font-bold tracking-wide text-white">TRACKION</span>
-          </div>
+            <span className="text-base font-bold tracking-[0.32em] text-white">TRACKION</span>
+            <span className="hidden font-mono text-[10px] uppercase tracking-[0.22em] text-gray-500 sm:inline">
+              ─ trading journal v2
+            </span>
+          </a>
           <div className="hidden items-center gap-8 md:flex">
-            <a href="#recursos" className="text-sm text-gray-300 transition hover:text-white">
-              Recursos
-            </a>
-            <a href="#integracoes" className="text-sm text-gray-300 transition hover:text-white">
-              Integrações
-            </a>
-            <a href="#pare-de-apostar" className="text-sm text-gray-300 transition hover:text-white">
-              Como funciona
-            </a>
-            <a href="#" className="text-sm text-gray-300 transition hover:text-white">
-              Preços
-            </a>
-            <a href="#" className="text-sm text-gray-300 transition hover:text-white">
-              Blog
-            </a>
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="group flex items-baseline gap-1.5 text-sm text-gray-400 transition hover:text-white"
+              >
+                <span className="font-mono text-[10px] text-[#FF8C42]/70 group-hover:text-[#FF8C42]">
+                  {link.index}
+                </span>
+                {link.label}
+              </a>
+            ))}
           </div>
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={goStart}
-              className="inline-flex items-center justify-center rounded-lg border border-white bg-transparent px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+              className="hidden font-mono text-[11px] uppercase tracking-[0.22em] text-gray-400 transition hover:text-white sm:inline-flex"
             >
-              Entrar
+              Entrar →
             </button>
             <button
               type="button"
-              onClick={goStart}
-              className="inline-flex items-center justify-center rounded-lg bg-[#FF8C42] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#FF7A2E]"
+              onClick={() => openTrialModal()}
+              className="group relative inline-flex items-center gap-2 border border-[#FF8C42] bg-[#FF8C42] px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-black transition hover:bg-transparent hover:text-[#FF8C42]"
             >
-              Começar agora
+              Start Free
+              <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
             </button>
           </div>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="relative flex min-h-screen items-center overflow-visible bg-black px-6 pb-0 pt-32">
-        {/* Faixa halftone — ancora no rodapé do hero e continua na seção abaixo */}
+      {/* TICKER abaixo do nav */}
+      <div className="fixed top-[57px] z-40 w-full">
+        <TickerBar />
+      </div>
+
+      {/* =================== HERO ===================== */}
+      <section className="relative pt-[8.5rem] pb-24 sm:pt-[10rem] sm:pb-32">
+        {/* Background: grid + ambient orange + wave */}
+        <div className="pointer-events-none absolute inset-0 bg-grid bg-grid-fade" aria-hidden />
         <div
-          className="pointer-events-none absolute inset-x-0 z-[2] h-[min(46vh,400px)] sm:h-[min(50vh,440px)]"
-          style={{ bottom: "max(-14vh, -120px)" }}
+          className="pointer-events-none absolute -top-40 left-1/2 z-0 h-[820px] w-[820px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,140,66,0.16),transparent_60%)] blur-3xl"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[60vh] opacity-50"
           aria-hidden
         >
-          <div className="h-full w-full [mask-image:linear-gradient(to_bottom,#000_0%,#000_42%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,#000_0%,#000_42%,transparent_100%)]">
+          <div className="h-full w-full [mask-image:linear-gradient(to_bottom,transparent_0%,#000_55%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0%,#000_55%)]">
             <HeroWaveCanvas variant="orangeBlack" crop="wave-band" fit="stretch" />
           </div>
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-8 xl:max-w-[100rem] xl:px-8 2xl:max-w-[108rem]">
-          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.78fr)] lg:gap-6 xl:gap-8">
-            <div className="space-y-6 lg:space-y-5 lg:max-w-md xl:max-w-lg">
-              <div className="space-y-3">
-                <h1 className="text-4xl font-bold leading-[1.08] tracking-wide text-white sm:text-5xl lg:text-[2.35rem] xl:text-5xl 2xl:text-6xl">
-                  Domine seus trades.
-                  <br />
-                  Acompanhe sua
-                  <br />
-                  <span className="text-[#FF8C42]">performance.</span>
-                </h1>
-                <p className="max-w-sm text-sm leading-relaxed text-gray-300 sm:max-w-md sm:text-base">
-                  Tracktion é o sistema completo para traders que querem enxergar resultado, controlar metas e tomar
-                  decisões melhores com base nos próprios dados.
-                </p>
+        <div className="relative z-10 mx-auto max-w-[1400px] px-6">
+          {/* Linha superior: metadata editorial */}
+          <div className="tk-rise tk-rise-1 mb-12 flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.08] pb-4 font-mono text-[11px] uppercase tracking-[0.22em] text-gray-500">
+            <div className="flex items-center gap-6">
+              <span>
+                <span className="text-[#FF8C42]">●</span> Beta privado
+              </span>
+              <span className="hidden sm:inline">14 dias grátis</span>
+              <span className="hidden lg:inline">sem cartão de crédito</span>
+            </div>
+            <div className="flex items-center gap-6">
+              <span className="hidden sm:inline num">VOL.01 — ISSUE {todayISO}</span>
+              <span className="num text-white">SP-500 +0.42% · NDX +1.18%</span>
+            </div>
+          </div>
+
+          {/* Grid hero assimétrico */}
+          <div className="grid grid-cols-12 gap-6 lg:gap-10">
+            {/* Coluna esquerda: tipografia massiva */}
+            <div className="col-span-12 min-w-0 lg:col-span-6">
+              <div className="tk-rise tk-rise-2 mb-6 font-mono text-[11px] uppercase tracking-[0.32em] text-[#FF8C42]">
+                [00 — Trading Journal]
               </div>
 
-              <div className="space-y-2.5 pt-2">
-                {[
-                  { icon: TrendingUp, text: "Análises avançadas" },
-                  { icon: Target, text: "Relatórios inteligentes" },
-                  { icon: Zap, text: "Metas e objetivos" },
-                  { icon: BarChart3, text: "100% focado em resultados" },
-                ].map((item, idx) => {
-                  const Icon = item.icon;
-                  return (
-                    <div key={idx} className="flex items-center gap-2.5">
-                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#FF8C42]/20">
-                        <Icon className="h-4 w-4 text-[#FF8C42]" aria-hidden />
-                      </div>
-                      <span className="text-sm font-medium text-white sm:text-base">{item.text}</span>
-                    </div>
-                  );
-                })}
-              </div>
+              <h1 className="tk-rise tk-rise-3 font-sans text-[14vw] font-bold leading-[0.86] tracking-[-0.02em] text-white sm:text-[6rem] lg:text-[5rem] xl:text-[6.5rem] 2xl:text-[8rem]">
+                <span className="block">DOMINE</span>
+                <span className="block">SEUS</span>
+                <span className="block">
+                  <span className="font-serif italic font-light text-[#FF8C42] tracking-tight">trades</span>
+                  <span className="text-[#FF8C42]">.</span>
+                </span>
+              </h1>
 
-              <div className="flex flex-wrap gap-3 pt-4">
+              {/* CTAs */}
+              <div className="tk-rise tk-rise-5 mt-10 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => openTrialModal()}
+                  className="group relative inline-flex items-center gap-2.5 border border-[#FF8C42] bg-[#FF8C42] px-6 py-3.5 text-sm font-bold uppercase tracking-[0.22em] text-black transition hover:bg-transparent hover:text-[#FF8C42]"
+                >
+                  <span>$ start --trial=14d</span>
+                  <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
+                </button>
                 <button
                   type="button"
                   onClick={goStart}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#FF8C42] px-6 py-2.5 text-base font-bold text-white transition hover:bg-[#FF7A2E] sm:px-8"
+                  className="inline-flex items-center gap-2 border border-white/20 bg-transparent px-6 py-3.5 text-sm font-bold uppercase tracking-[0.22em] text-white transition hover:border-white/50 hover:bg-white/[0.04]"
                 >
-                  Começar agora
-                  <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />
-                </button>
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center rounded-lg border-2 border-white bg-black/40 px-6 py-2.5 text-base font-bold text-white backdrop-blur-sm transition hover:bg-white/10 sm:px-8"
-                >
-                  Ver demo
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-tk-green" />
+                  Watch demo
                 </button>
               </div>
+
+              {/* Feature row */}
+              <ul className="tk-rise tk-rise-6 mt-10 grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-4">
+                {HERO_PILLS.map(({ icon: Icon, text }, i) => (
+                  <li key={text} className="flex items-center gap-2 text-gray-400">
+                    <span className="font-mono text-[10px] text-gray-600">
+                      0{i + 1}
+                    </span>
+                    <Icon className="h-3.5 w-3.5 text-[#FF8C42]" aria-hidden />
+                    {text}
+                  </li>
+                ))}
+              </ul>
             </div>
 
-            <div className="relative mx-auto w-full min-w-0 justify-self-center lg:justify-self-end">
-              <div className="relative mx-auto w-full max-w-3xl sm:max-w-4xl lg:max-w-none lg:w-[min(100%,90rem)] xl:w-[min(100%,100rem)] 2xl:w-[min(100%,112rem)]">
+            {/* Coluna direita: PC + mobile soltos com drop-shadow (estilo V1) */}
+            <aside className="tk-rise tk-rise-4 relative col-span-12 min-w-0 self-center lg:col-span-6">
+              <div className="absolute -top-7 left-0 z-30 hidden items-center gap-3 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500 lg:flex">
+                <span className="text-[#FF8C42]">↘</span>
+                <span>fig.01 — dashboard.exec</span>
+                <span className="h-px w-16 bg-white/10" />
+                <span className="flex items-center gap-1.5 text-tk-green">
+                  <span className="h-1 w-1 animate-pulse rounded-full bg-tk-green" />
+                  live
+                </span>
+              </div>
+
+              {/* wrapper: cabe no aside até xl; vaza levemente em xl+ */}
+              <div className="relative w-full xl:w-[108%] 2xl:w-[120%]">
                 <img
                   src="/mockup_pc.png"
                   alt="Trackion Dashboard Desktop"
-                  className="relative z-10 mx-auto block h-auto w-full drop-shadow-2xl"
-                  style={{
-                    transform: `translateY(${scrollY * 0.04}px)`,
-                    transition: "transform 0.2s ease-out",
-                  }}
+                  className="relative z-10 mx-auto block h-auto w-full drop-shadow-[0_30px_80px_rgba(0,0,0,0.7)]"
+                  style={{ transform: `translateY(${Math.min(scrollY, 280) * 0.04}px)` }}
                   decoding="async"
                 />
                 <img
                   src="/mockup_mobile.png"
                   alt="Trackion Dashboard Mobile"
-                  className="absolute right-[4%] bottom-0 z-20 h-auto min-w-[80px] w-[24%] max-w-[190px] drop-shadow-2xl sm:min-w-[95px] sm:max-w-[230px] lg:w-[26%] lg:max-w-[270px] xl:max-w-[300px] 2xl:max-w-[320px]"
-                  style={{
-                    transform: `translateY(${scrollY * 0.065}px)`,
-                    transition: "transform 0.2s ease-out",
-                  }}
+                  className="absolute right-[4%] bottom-0 z-20 h-auto w-[24%] min-w-[90px] max-w-[200px] drop-shadow-[0_30px_60px_rgba(0,0,0,0.85)] sm:w-[22%] sm:max-w-[230px] lg:w-[24%] lg:max-w-[250px] xl:max-w-[290px] 2xl:max-w-[320px]"
+                  style={{ transform: `translateY(${Math.min(scrollY, 280) * 0.065}px)` }}
                   decoding="async"
                   loading="lazy"
                 />
               </div>
-            </div>
+            </aside>
           </div>
         </div>
       </section>
 
-      {/* Ofertas — imagem responsiva: celular em telas pequenas, PC em telas grandes */}
-      <section
-        id="recursos"
-        className="relative z-10 -mt-[min(14vh,128px)] bg-[linear-gradient(to_bottom,transparent_0%,transparent_10%,rgba(0,0,0,0.75)_26%,#000_42%,#000_100%)] px-6 pb-24 pt-[min(20vh,180px)] sm:pb-32 sm:pt-[min(22vh,200px)]"
-      >
-        <div className="mx-auto w-full max-w-7xl px-4 xl:max-w-[100rem] xl:px-8">
-          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,0.88fr)] lg:gap-10 xl:gap-12">
-            <div className="relative mx-auto w-full max-w-[240px] sm:max-w-[280px] lg:mx-0 lg:max-w-none lg:w-[min(100%,100rem)] xl:w-[min(100%,108rem)]">
-              <img
-                src="/mockup_pc.png"
-                alt="Trackion — painel desktop"
-                className="hidden h-auto w-full drop-shadow-2xl lg:block"
-                style={{ transform: `translateY(${scrollY * 0.02}px)` }}
-                decoding="async"
-                loading="lazy"
-              />
-              <img
-                src="/mockup_mobile.png"
-                alt="Trackion — app no celular"
-                className="block h-auto w-full drop-shadow-2xl lg:hidden"
-                style={{ transform: `translateY(${scrollY * 0.02}px)` }}
-                decoding="async"
-                loading="lazy"
-              />
-            </div>
-            <OfferingsContent onStart={goStart} />
+      {/* =================== STATS / NUMBERS ROW ===================== */}
+      <section className="relative border-y border-white/[0.08] bg-black">
+        <div className="pointer-events-none absolute inset-0 bg-grid-fine opacity-50" aria-hidden />
+        <div className="relative mx-auto max-w-[1400px] px-6">
+          <div className="flex items-center justify-between border-b border-white/[0.06] py-3 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
+            <span>
+              <span className="text-[#FF8C42]">●</span> índices · operação trackion
+            </span>
+            <span className="hidden sm:inline">ATUALIZADO {todayISO}</span>
           </div>
-        </div>
-      </section>
-
-      {/* Divisor laranja com fade nas pontas */}
-      <div className="relative z-10 bg-black px-6 py-10 sm:py-12" aria-hidden>
-        <div className="mx-auto h-px max-w-3xl bg-[linear-gradient(to_right,transparent_0%,rgba(255,140,66,0.35)_12%,#FF8C42_50%,rgba(255,140,66,0.35)_88%,transparent_100%)] sm:max-w-4xl" />
-      </div>
-
-      {/* Integrações com exchanges — sync automático de trades */}
-      <section id="integracoes" className="relative z-10 bg-black px-6 py-24 sm:py-32">
-        <div className="mx-auto w-full max-w-7xl space-y-14 px-4 xl:max-w-[100rem] xl:px-8">
-          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.25fr)] lg:gap-14">
-            <div className="space-y-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF8C42]">Integrações via API</p>
-              <h2 className="text-3xl font-bold leading-tight tracking-wide text-white sm:text-4xl lg:text-[2.75rem]">
-                Seus trades entram sozinhos.
-                <br /> Você só analisa.
-              </h2>
-              <p className="max-w-xl text-base leading-relaxed text-gray-300 sm:text-lg">
-                Conectamos com as principais exchanges para puxar execuções automaticamente. Sem planilha, sem cadastro
-                manual trade a trade — o Trackion monta seu histórico enquanto você foca no mercado.
-              </p>
-
-              <p className="font-mono text-xs tracking-[0.32em] text-gray-500 sm:text-sm">
-                {EXCHANGES.map((name, i) => (
-                  <span key={name}>
-                    {i > 0 && <span className="mx-2 text-[#FF8C42]/50 sm:mx-3">/</span>}
-                    <span className="text-white">{name}</span>
-                  </span>
-                ))}
-                <span className="mx-2 text-[#FF8C42]/50 sm:mx-3">/</span>
-                <span className="text-gray-500">+ em breve</span>
-              </p>
-            </div>
-
-            <div className="relative mx-auto w-full max-w-3xl lg:max-w-none">
-              <AnimatedWealthChart />
-            </div>
-          </div>
-
-          <ol className="grid grid-cols-1 gap-x-8 gap-y-10 border-y border-white/[0.06] py-10 sm:grid-cols-2 xl:grid-cols-4">
-            {INTEGRATION_BENEFITS.map(({ icon: Icon, title, description }, i) => (
-              <li key={title} className="relative pl-12">
-                <span className="absolute left-0 top-0 font-mono text-xs font-medium tracking-[0.25em] text-[#FF8C42]/80">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <Icon className="mt-8 h-6 w-6 text-[#FF8C42]" aria-hidden />
-                <h3 className="mt-4 text-lg font-bold tracking-wide text-white sm:text-xl">{title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-gray-400 sm:text-base">{description}</p>
-              </li>
+          <div className="grid grid-cols-2 divide-x divide-white/[0.06] lg:grid-cols-4">
+            {BIG_STATS.map((s) => (
+              <div key={s.label} className="relative space-y-3 px-6 py-10 first:pl-0 last:pr-0">
+                <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
+                  <span>{s.label}</span>
+                  <span className="text-[#FF8C42]/70">[{s.index}]</span>
+                </div>
+                <p className="num text-5xl font-bold leading-none tracking-tight text-white sm:text-6xl">
+                  {s.value}
+                </p>
+                <p className="text-xs text-gray-500 sm:text-sm">{s.caption}</p>
+              </div>
             ))}
-          </ol>
-
-          <p className="max-w-2xl text-sm leading-relaxed text-gray-500 sm:text-base">
-            Integração segura via API — você autoriza a leitura das operações; nós cuidamos de organizar, calcular e
-            exibir tudo no dashboard.
-          </p>
+          </div>
         </div>
       </section>
 
-      {/* Pare de apostar — trading com método, não no achismo */}
-      <section
-        id="pare-de-apostar"
-        className="relative z-10 bg-black px-6 pb-24 pt-4 sm:pb-32 sm:pt-6"
-      >
-        <div className="mx-auto max-w-4xl px-4 text-center xl:max-w-5xl xl:px-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF8C42]">Mindset de trader</p>
-          <h2 className="mt-4 text-4xl font-bold leading-[1.05] tracking-wide text-white sm:text-5xl lg:text-6xl">
-            PARE DE <span className="text-[#FF8C42]">APOSTAR</span>
-          </h2>
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-gray-300 sm:text-lg">
-            Trading não é sorte. Quem opera no impulso — sem registrar, medir e revisar — está apostando o próprio
-            capital. O Trackion existe para tirar você desse ciclo e colocar{" "}
-            <span className="font-semibold text-white">processo, métricas e consistência</span> no centro.
-          </p>
-        </div>
+      {/* =================== RECURSOS ===================== */}
+      <section id="recursos" className="relative bg-black py-32">
+        <div className="pointer-events-none absolute inset-0 bg-grid opacity-40 bg-grid-fade" aria-hidden />
+        <div className="relative mx-auto max-w-[1400px] px-6">
+          <div className="grid grid-cols-12 gap-6">
+            <div className="col-span-12 lg:col-span-5">
+              <SectionLabel index="01" label="Recursos" />
+              <h2 className="mt-8 text-balance text-5xl font-bold leading-[0.92] tracking-tight text-white sm:text-6xl lg:text-[5rem] xl:text-[5.5rem]">
+                Tudo num{" "}
+                <span className="bg-gradient-to-r from-[#FFD0A8] via-[#FF8C42] to-[#BC5C2A] bg-clip-text text-transparent">
+                  só
+                </span>{" "}
+                lugar.
+              </h2>
+              <p className="mt-8 max-w-md text-base leading-relaxed text-gray-400">
+                Registro, análise e metas em um produto coeso — não em três planilhas e dois apps
+                desconectados.
+              </p>
+              <div className="mt-10 flex items-center gap-4 border-t border-white/[0.06] pt-6 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
+                <span className="text-[#FF8C42]">↳</span>
+                <span>4 módulos / 1 dashboard / 0 planilhas</span>
+              </div>
+            </div>
 
-        <div className="mx-auto mt-14 max-w-5xl px-4 sm:mt-16 xl:max-w-6xl xl:px-8">
-          <div className="divide-y divide-white/[0.08]">
-            {STOP_BETTING_POINTS.map(({ icon: Icon, title, description }, i) => (
+            <div className="col-span-12 lg:col-span-7">
+              <ol className="divide-y divide-white/[0.08] border-y border-white/[0.08]">
+                {OFFERINGS.map(({ icon: Icon, title, description, tag }, i) => (
+                  <li
+                    key={title}
+                    className="group relative grid grid-cols-[auto_1fr_auto] items-start gap-6 py-8 transition-colors hover:bg-white/[0.02] sm:gap-10 sm:py-10"
+                  >
+                    <div className="space-y-3">
+                      <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-[#FF8C42]/80">
+                        [0{i + 1}]
+                      </p>
+                      <div className="flex h-12 w-12 items-center justify-center border border-white/10 bg-black transition group-hover:border-[#FF8C42]/60">
+                        <Icon className="h-5 w-5 text-[#FF8C42]" aria-hidden />
+                      </div>
+                    </div>
+                    <div className="min-w-0 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <span className="border border-white/15 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.28em] text-gray-400">
+                          {tag}
+                        </span>
+                      </div>
+                      <h3 className="text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl">
+                        {title}
+                      </h3>
+                      <p className="max-w-xl text-sm leading-relaxed text-gray-400 sm:text-base">
+                        {description}
+                      </p>
+                    </div>
+                    <ArrowUpRight
+                      className="mt-2 h-5 w-5 text-gray-700 transition-all duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-[#FF8C42]"
+                      aria-hidden
+                    />
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =================== INTEGRAÇÕES — BRUTALIST HEADER ===================== */}
+      <section id="integracoes" className="relative overflow-hidden border-t border-white/[0.08] bg-black py-32">
+        <div className="pointer-events-none absolute inset-0 bg-grid-fine opacity-60" aria-hidden />
+        <div className="relative mx-auto max-w-[1400px] px-6">
+          <SectionLabel index="02" label="Integrações via API" />
+
+          {/* HEADER MASSIVO */}
+          <div className="mt-10">
+            <h2 className="text-balance font-sans text-[11vw] font-bold leading-[0.9] tracking-[-0.03em] sm:text-[4.5rem] lg:text-[5.5rem] xl:text-[7rem] 2xl:text-[8rem]">
+              <span className="block text-white">Trades entram</span>
+              <span className="block">
+                <span className="text-stroke-orange">sozinhos.</span>
+              </span>
+              <span className="block text-gray-700">
+                Você só{" "}
+                <span className="font-serif italic font-light text-white">analisa.</span>
+              </span>
+            </h2>
+            <p className="mt-10 max-w-xl text-base leading-relaxed text-gray-400 sm:text-lg">
+              Conectamos com as principais exchanges para puxar execuções em tempo real. Sem
+              planilha, sem cadastro manual — Trackion monta seu histórico enquanto o mercado se
+              mexe.
+            </p>
+          </div>
+
+          {/* EXCHANGES TABLE */}
+          <div className="mt-20 border-y border-white/[0.08]">
+            <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-6 border-b border-white/[0.06] px-2 py-3 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
+              <span>EXCHANGE</span>
+              <span className="hidden sm:inline">TIPO</span>
+              <span>STATUS</span>
+              <span>I/O</span>
+            </div>
+            {EXCHANGES.map((ex, i) => (
+              <div
+                key={ex.name}
+                className="group grid grid-cols-[1fr_auto_auto_auto] items-center gap-6 border-b border-white/[0.04] px-2 py-5 transition-colors last:border-0 hover:bg-white/[0.02]"
+              >
+                <div className="flex items-baseline gap-4">
+                  <span className="font-mono text-[10px] text-gray-600">[0{i + 1}]</span>
+                  <span className="text-2xl font-bold tracking-wide text-white sm:text-3xl">
+                    {ex.name}
+                  </span>
+                </div>
+                <span className="hidden font-mono text-[11px] uppercase tracking-[0.22em] text-gray-500 sm:inline">
+                  {ex.pair}
+                </span>
+                <span
+                  className={`inline-flex items-center gap-2 border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.28em] ${
+                    ex.status === "live"
+                      ? "border-tk-green/40 bg-tk-green/5 text-tk-green"
+                      : "border-white/15 bg-transparent text-gray-500"
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      ex.status === "live" ? "animate-pulse bg-tk-green" : "bg-gray-600"
+                    }`}
+                  />
+                  {ex.status === "live" ? "LIVE" : "SOON"}
+                </span>
+                <ArrowUpRight
+                  className={`h-4 w-4 transition-all ${
+                    ex.status === "live"
+                      ? "text-gray-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#FF8C42]"
+                      : "text-gray-800"
+                  }`}
+                  aria-hidden
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* CHART CARD com header */}
+          <div className="mt-20 grid grid-cols-12 gap-6">
+            <div className="col-span-12 lg:col-span-7">
+              <div className="relative border border-white/10 bg-black">
+                <CornerMarks orange />
+                <div className="flex items-center justify-between border-b border-white/10 px-5 py-3 font-mono text-[10px] uppercase tracking-[0.28em]">
+                  <span className="flex items-center gap-3 text-gray-400">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-tk-green" />
+                    equity_curve · 30d
+                  </span>
+                  <span className="text-gray-600">trackion.app</span>
+                </div>
+                <div className="grid grid-cols-3 divide-x divide-white/[0.06] border-b border-white/[0.06]">
+                  <div className="space-y-1 p-4">
+                    <p className="font-mono text-[9px] uppercase tracking-[0.28em] text-gray-500">
+                      PNL
+                    </p>
+                    <p className="num text-2xl font-bold text-tk-green sm:text-3xl">+147.82%</p>
+                  </div>
+                  <div className="space-y-1 p-4">
+                    <p className="font-mono text-[9px] uppercase tracking-[0.28em] text-gray-500">
+                      TRADES
+                    </p>
+                    <p className="num text-2xl font-bold text-white sm:text-3xl">312</p>
+                  </div>
+                  <div className="space-y-1 p-4">
+                    <p className="font-mono text-[9px] uppercase tracking-[0.28em] text-gray-500">
+                      SHARPE
+                    </p>
+                    <p className="num text-2xl font-bold text-white sm:text-3xl">2.14</p>
+                  </div>
+                </div>
+                <div className="p-2 sm:p-4">
+                  <AnimatedWealthChart />
+                </div>
+              </div>
+            </div>
+
+            <div className="col-span-12 space-y-8 lg:col-span-5 lg:pl-6">
+              <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-[#FF8C42]">
+                ↳ no que muda
+              </p>
+              <ul className="space-y-px border-y border-white/[0.08]">
+                {INTEGRATION_BENEFITS.map(({ icon: Icon, title, description }, i) => (
+                  <li
+                    key={title}
+                    className="group grid grid-cols-[auto_1fr] items-start gap-5 border-b border-white/[0.04] py-5 last:border-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono text-[10px] tracking-[0.28em] text-gray-600">
+                        0{i + 1}
+                      </span>
+                      <Icon className="h-5 w-5 text-[#FF8C42]" aria-hidden />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold tracking-tight text-white">{title}</h3>
+                      <p className="mt-1.5 text-sm leading-relaxed text-gray-400">{description}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =================== MÉTODO — MANIFESTO BRUTALIST ===================== */}
+      <section id="metodo" className="relative overflow-hidden border-t border-white/[0.08] bg-black py-32">
+        <div className="pointer-events-none absolute inset-0 bg-grid opacity-30 bg-grid-fade" aria-hidden />
+        <div
+          className="pointer-events-none absolute left-1/2 top-1/3 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,140,66,0.10),transparent_70%)] blur-3xl"
+          aria-hidden
+        />
+
+        <div className="relative mx-auto max-w-[1400px] px-6">
+          <SectionLabel index="03" label="Manifesto" total="03" />
+
+          <div className="mt-10">
+            <h2 className="text-balance font-sans text-[15vw] font-bold leading-[0.88] tracking-[-0.04em] sm:text-[6rem] lg:text-[7.5rem] xl:text-[9.5rem] 2xl:text-[11rem]">
+              <span className="block text-white">PARE</span>
+              <span className="block">
+                <span className="text-gray-700">DE</span>{" "}
+                <span className="text-[#FF8C42]">APOSTAR.</span>
+              </span>
+            </h2>
+          </div>
+
+          <div className="mt-12 grid grid-cols-12 items-start gap-6 border-t border-white/[0.08] pt-10">
+            <div className="col-span-12 lg:col-span-5">
+              <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-[#FF8C42]">
+                ↳ thesis
+              </p>
+              <p className="mt-4 max-w-md text-base leading-relaxed text-gray-300 sm:text-lg">
+                Trading não é sorte. Quem opera no impulso está apostando o próprio capital.
+                Trackion coloca{" "}
+                <span className="text-white">processo, métricas e consistência</span> no centro —
+                onde sempre deveriam estar.
+              </p>
+            </div>
+            <div className="col-span-12 grid grid-cols-3 gap-6 lg:col-span-7">
+              {[
+                { k: "PROBLEMA", v: "Trading no feeling" },
+                { k: "CAUSA", v: "Falta de método" },
+                { k: "REMÉDIO", v: "Dados + disciplina" },
+              ].map((it, i) => (
+                <div key={it.k} className="space-y-2 border-l border-white/15 pl-4">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
+                    0{i + 1} · {it.k}
+                  </p>
+                  <p className="text-sm font-semibold text-white sm:text-base">{it.v}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-24 space-y-px border-y border-white/[0.1]">
+            {STOP_BETTING_POINTS.map(({ icon: Icon, title, description, tag }, i) => (
               <article
                 key={title}
-                className="group grid grid-cols-1 gap-4 py-10 first:pt-0 last:pb-0 sm:grid-cols-[auto_1fr] sm:gap-8 sm:py-12"
+                className="group relative grid grid-cols-12 items-start gap-6 border-b border-white/[0.06] py-12 last:border-0 sm:py-16"
               >
-                <div className="flex items-start gap-4 sm:flex-col sm:items-center sm:gap-2">
-                  <span
-                    className="text-5xl font-bold leading-none tracking-tighter text-white/25 transition-colors group-hover:text-[#FF8C42]/55 sm:text-6xl"
-                    aria-hidden
-                  >
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <Icon className="h-7 w-7 shrink-0 text-[#FF8C42] sm:h-8 sm:w-8" aria-hidden />
+                <div className="col-span-12 lg:col-span-3">
+                  <div className="flex items-center gap-4">
+                    <span
+                      className="num text-7xl font-bold leading-none tracking-tighter text-stroke sm:text-8xl"
+                      aria-hidden
+                    >
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span className="border border-[#FF8C42]/50 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.32em] text-[#FF8C42]">
+                      {tag}
+                    </span>
+                  </div>
+                  <div className="mt-6 flex h-12 w-12 items-center justify-center border border-white/15 bg-black transition group-hover:border-[#FF8C42]/60">
+                    <Icon className="h-5 w-5 text-[#FF8C42]" aria-hidden />
+                  </div>
                 </div>
-                <div className="sm:border-l sm:border-white/[0.06] sm:pl-8">
-                  <h3 className="text-xl font-bold tracking-wide text-white sm:text-2xl">{title}</h3>
-                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-gray-400 sm:text-base">{description}</p>
+                <div className="col-span-12 space-y-4 lg:col-span-9">
+                  <h3 className="text-balance text-4xl font-bold leading-[1] tracking-tight text-white sm:text-5xl lg:text-6xl">
+                    {title}
+                  </h3>
+                  <p className="max-w-3xl text-base leading-relaxed text-gray-400 sm:text-lg">
+                    {description}
+                  </p>
                 </div>
               </article>
             ))}
           </div>
-        </div>
 
-        <div className="mx-auto mt-14 max-w-2xl px-4 text-center sm:mt-16">
-          <p className="text-sm leading-relaxed text-gray-400 sm:text-base">
-            Pare de confiar no &ldquo;feeling&rdquo;. Comece a confiar nos seus dados — e deixe o mercado trabalhar a
-            seu favor com estratégia, não com esperança.
-          </p>
-          <button
-            type="button"
-            onClick={goStart}
-            className="mt-8 inline-flex items-center justify-center gap-2 rounded-lg bg-[#FF8C42] px-8 py-3 text-base font-bold text-white transition hover:bg-[#FF7A2E]"
-          >
-            Trocar aposta por método
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </button>
+          <div className="mt-16 flex flex-col items-start gap-6 border-t border-white/[0.08] pt-10 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-gray-500">
+                ↳ next step
+              </p>
+              <p className="max-w-md text-base text-white sm:text-lg">
+                Pare de confiar no <span className="font-serif italic text-[#FF8C42]">feeling</span>.{" "}
+                Comece a confiar nos seus dados.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => openTrialModal()}
+              className="group inline-flex items-center gap-3 border border-[#FF8C42] bg-[#FF8C42] px-7 py-4 text-xs font-bold uppercase tracking-[0.28em] text-black transition hover:bg-transparent hover:text-[#FF8C42]"
+            >
+              Trocar aposta por método
+              <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* CTA trial — footer */}
-      <footer
-        id="trial"
-        className="relative z-10 border-t border-white/[0.08] bg-black px-6 py-20 sm:py-28"
-      >
-        <div className="mx-auto max-w-3xl px-4 text-center xl:px-8">
-          <p className="font-mono text-xs font-medium uppercase tracking-[0.3em] text-[#FF8C42]">14 dias grátis</p>
-          <h2 className="mt-4 text-2xl font-bold leading-tight tracking-wide text-white sm:text-3xl lg:text-4xl">
-            Deseja usar o Trackion na sua vida e ver resultados?
+      {/* =================== CTA / TERMINAL FOOTER ===================== */}
+      <section id="precos" className="relative overflow-hidden border-t border-white/[0.08] bg-black py-32">
+        <div className="pointer-events-none absolute inset-0 bg-grid-fine opacity-60" aria-hidden />
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-[600px] max-w-3xl bg-[radial-gradient(ellipse_at_top,rgba(255,140,66,0.22),transparent_70%)]"
+          aria-hidden
+        />
+
+        <div className="relative mx-auto max-w-[1100px] px-6">
+          <SectionLabel index="04" label="Acesso · 14 dias grátis" total="04" />
+
+          <h2 className="mt-10 text-balance font-sans text-5xl font-bold leading-[0.92] tracking-tight text-white sm:text-6xl lg:text-[5rem]">
+            Comece com <span className="font-serif italic font-light text-[#FF8C42]">método</span>{" "}
+            hoje.
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-gray-400 sm:text-base">
-            Deixe seu e-mail e comece agora —{" "}
-            <span className="text-white">14 dias gratuitos</span>, sem cartão de crédito.
+          <p className="mt-6 max-w-xl text-base leading-relaxed text-gray-400 sm:text-lg">
+            Deixe seu e-mail e teste o Trackion por 14 dias grátis — sem cartão de crédito, sem
+            compromisso, sem letras miúdas.
           </p>
 
-          <div className="mx-auto mt-8 flex max-w-lg flex-col gap-3 sm:flex-row sm:items-stretch">
-            <input
-              type="email"
-              value={footerEmail}
-              onChange={(e) => setFooterEmail(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleFooterCta()}
-              placeholder="seu@email.com"
-              autoComplete="email"
-              className="min-w-0 flex-1 border border-white/15 bg-black px-4 py-3.5 text-sm text-white placeholder:text-gray-600 outline-none transition focus:border-[#FF8C42]/60 focus:ring-1 focus:ring-[#FF8C42]/40"
-            />
-            <button
-              type="button"
-              onClick={handleFooterCta}
-              className="shrink-0 rounded-lg bg-[#FF8C42] px-6 py-3.5 text-sm font-bold text-white transition hover:bg-[#FF7A2E] sm:px-8"
-            >
-              Usar 14 dias grátis
-            </button>
+          {/* Terminal-style input */}
+          <div className="mt-12 relative border border-white/15 bg-black/80 backdrop-blur-sm">
+            <CornerMarks orange />
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.28em]">
+              <span className="text-gray-500">trackion.app — signup --trial=14d</span>
+              <span className="flex items-center gap-1 text-tk-green">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-tk-green" />
+                ready
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-[1fr_auto] sm:items-stretch">
+              <div className="flex items-center gap-3 border border-white/10 bg-black px-4 py-3 font-mono text-sm">
+                <span className="select-none text-[#FF8C42]">$</span>
+                <input
+                  type="email"
+                  value={footerEmail}
+                  onChange={(e) => setFooterEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleFooterCta()}
+                  placeholder="seu@email.com"
+                  autoComplete="email"
+                  className="min-w-0 flex-1 bg-transparent text-white placeholder:text-gray-600 outline-none"
+                />
+                <span className={footerEmail ? "tk-cursor opacity-0" : "tk-cursor"} aria-hidden />
+              </div>
+              <button
+                type="button"
+                onClick={handleFooterCta}
+                className="group inline-flex items-center justify-center gap-2 border border-[#FF8C42] bg-[#FF8C42] px-7 py-3 text-xs font-bold uppercase tracking-[0.28em] text-black transition hover:bg-transparent hover:text-[#FF8C42]"
+              >
+                Iniciar
+                <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
+              </button>
+            </div>
+            <div className="border-t border-white/10 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
+              <span className="text-[#FF8C42]">›</span> sem cartão · cancele quando quiser · link
+              por e-mail
+            </div>
           </div>
-          <p className="mt-4 text-xs text-gray-500">Sem cartão · Cancele quando quiser · Link enviado por e-mail</p>
-        </div>
 
-        <div className="mx-auto mt-16 flex max-w-7xl flex-col items-center justify-between gap-4 border-t border-white/[0.06] px-4 pt-8 text-center text-xs text-gray-500 sm:flex-row sm:text-left xl:px-8">
-          <div className="flex items-center gap-2">
-            <img src="/logo-trackion.png" alt="" width={24} height={24} className="h-6 w-6 object-contain" />
-            <span className="font-bold tracking-wide text-gray-400">TRACKION</span>
+          {/* meta info */}
+          <div className="mt-12 grid grid-cols-1 gap-8 border-t border-white/[0.08] pt-10 sm:grid-cols-3">
+            {[
+              { label: "TEMPO DE SETUP", value: "< 2 minutos" },
+              { label: "EXCHANGES ATIVAS", value: "MEXC · Bitget · Binance" },
+              { label: "PERMISSÃO API", value: "read-only · seguro" },
+            ].map((it) => (
+              <div key={it.label} className="space-y-2">
+                <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
+                  {it.label}
+                </p>
+                <p className="text-base font-semibold text-white">{it.value}</p>
+              </div>
+            ))}
           </div>
-          <p>© {new Date().getFullYear()} Trackion. Trading com método, não no achismo.</p>
+        </div>
+      </section>
+
+      {/* =================== FOOTER ===================== */}
+      <footer className="relative border-t border-white/[0.08] bg-black">
+        <div className="pointer-events-none absolute inset-0 bg-grid-fine opacity-40" aria-hidden />
+        <div className="relative mx-auto max-w-[1400px] px-6 py-14">
+          <div className="grid grid-cols-12 gap-6">
+            <div className="col-span-12 lg:col-span-5">
+              <div className="flex items-center gap-3">
+                <img
+                  src="/logo-trackion.png"
+                  alt=""
+                  width={28}
+                  height={28}
+                  className="h-7 w-7 object-contain"
+                />
+                <span className="text-base font-bold tracking-[0.32em] text-white">TRACKION</span>
+              </div>
+              <p className="mt-4 max-w-sm text-sm leading-relaxed text-gray-500">
+                Trading journal e analytics para traders que querem operar com método — não no
+                achismo.
+              </p>
+              <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-600">
+                <Plus className="-mt-0.5 mr-1 inline h-3 w-3 text-[#FF8C42]" aria-hidden />
+                BUILT FOR DISCIPLINED TRADERS
+              </p>
+            </div>
+
+            <div className="col-span-6 lg:col-span-2">
+              <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
+                Produto
+              </p>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="#recursos" className="transition hover:text-white">Recursos</a></li>
+                <li><a href="#integracoes" className="transition hover:text-white">Integrações</a></li>
+                <li><a href="#metodo" className="transition hover:text-white">Método</a></li>
+                <li><a href="#precos" className="transition hover:text-white">Preços</a></li>
+              </ul>
+            </div>
+
+            <div className="col-span-6 lg:col-span-2">
+              <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
+                Conta
+              </p>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li>
+                  <button onClick={goStart} className="transition hover:text-white">Entrar</button>
+                </li>
+                <li>
+                  <button onClick={() => openTrialModal()} className="transition hover:text-white">
+                    Trial 14d
+                  </button>
+                </li>
+                <li><a href="#" className="transition hover:text-white">Status</a></li>
+              </ul>
+            </div>
+
+            <div className="col-span-12 lg:col-span-3">
+              <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
+                Last sync
+              </p>
+              <div className="space-y-2 border border-white/10 p-3 font-mono text-[11px] text-gray-400">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500">timestamp</span>
+                  <span className="text-white num">{todayISO}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500">status</span>
+                  <span className="text-tk-green">● online</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500">version</span>
+                  <span className="text-white num">v2.0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-white/[0.06] pt-6 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-600 sm:flex-row sm:items-center">
+            <p>© {year} TRACKION · Trading com método, não no achismo</p>
+            <div className="flex items-center gap-5">
+              <a href="#" className="transition hover:text-white">Privacidade</a>
+              <a href="#" className="transition hover:text-white">Termos</a>
+              <a href="#" className="transition hover:text-white">Contato</a>
+            </div>
+          </div>
         </div>
       </footer>
 
@@ -545,6 +961,10 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
         error={trialError}
         success={trialSuccess}
       />
+
+      {/* Cross-marks decorativos (estilo blueprint) — apenas em telas grandes */}
+      <CrossMark className="left-6 top-32 hidden lg:block" />
+      <CrossMark className="right-6 top-32 hidden lg:block" />
     </div>
   );
 }

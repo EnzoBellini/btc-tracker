@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 const SAMPLES = Array.from({ length: 140 }, (_, index) => {
   const t = index / 139;
@@ -96,6 +96,17 @@ export function AnimatedWealthChart() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(false);
   const progress = useLinearProgress(active);
+  const rawId = useId();
+  const uid = rawId.replace(/[:]/g, "");
+  const clipId = `wealthReveal-${uid}`;
+  const areaGradId = `wealthArea-${uid}`;
+  const lineGradId = `wealthLine-${uid}`;
+  const verticalFadeId = `wealthVerticalFade-${uid}`;
+  const glowId = `wealthGlow-${uid}`;
+  const fadeTopId = `edgeFadeTop-${uid}`;
+  const fadeBottomId = `edgeFadeBottom-${uid}`;
+  const fadeLeftId = `edgeFadeLeft-${uid}`;
+  const fadeRightId = `edgeFadeRight-${uid}`;
   const width = 980;
   const height = 520;
   const paddingX = 78;
@@ -143,46 +154,46 @@ export function AnimatedWealthChart() {
       <svg className="relative block h-full w-full" viewBox={`0 0 ${width} ${height}`} role="img">
         <title>Gráfico animado de crescimento patrimonial</title>
         <defs>
-          <clipPath id="wealthReveal">
+          <clipPath id={clipId}>
             <rect x={paddingX - 24} y="0" width={revealWidth + 24} height={height} />
           </clipPath>
-          <linearGradient id="wealthArea" x1="0" x2="0" y1="0" y2="1">
+          <linearGradient id={areaGradId} x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stopColor="#FF8C42" stopOpacity="0.4" />
             <stop offset="62%" stopColor="#FF6B12" stopOpacity="0.1" />
             <stop offset="100%" stopColor="#FF6B12" stopOpacity="0" />
           </linearGradient>
-          <linearGradient id="wealthLine" x1="0" x2="1" y1="0" y2="0">
+          <linearGradient id={lineGradId} x1="0" x2="1" y1="0" y2="0">
             <stop offset="0%" stopColor="#A4420B" />
             <stop offset="54%" stopColor="#FF8C42" />
             <stop offset="100%" stopColor="#FFD0A8" />
           </linearGradient>
-          <linearGradient id="wealthVerticalFade" x1="0" x2="0" y1="0" y2="1">
+          <linearGradient id={verticalFadeId} x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stopColor="#FF8C42" stopOpacity="0" />
             <stop offset="20%" stopColor="#FF8C42" stopOpacity="0.22" />
             <stop offset="52%" stopColor="#FF8C42" stopOpacity="0.16" />
             <stop offset="82%" stopColor="#FF8C42" stopOpacity="0.2" />
             <stop offset="100%" stopColor="#FF8C42" stopOpacity="0" />
           </linearGradient>
-          <filter id="wealthGlow" x="-30%" y="-45%" width="160%" height="190%">
+          <filter id={glowId} x="-30%" y="-45%" width="160%" height="190%">
             <feGaussianBlur stdDeviation="8" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
-          <linearGradient id="edgeFadeTop" x1="0" x2="0" y1="0" y2="1">
+          <linearGradient id={fadeTopId} x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stopColor="#000" stopOpacity="1" />
             <stop offset="100%" stopColor="#000" stopOpacity="0" />
           </linearGradient>
-          <linearGradient id="edgeFadeBottom" x1="0" x2="0" y1="0" y2="1">
+          <linearGradient id={fadeBottomId} x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stopColor="#000" stopOpacity="0" />
             <stop offset="100%" stopColor="#000" stopOpacity="1" />
           </linearGradient>
-          <linearGradient id="edgeFadeLeft" x1="0" x2="1" y1="0" y2="0">
+          <linearGradient id={fadeLeftId} x1="0" x2="1" y1="0" y2="0">
             <stop offset="0%" stopColor="#000" stopOpacity="1" />
             <stop offset="100%" stopColor="#000" stopOpacity="0" />
           </linearGradient>
-          <linearGradient id="edgeFadeRight" x1="0" x2="1" y1="0" y2="0">
+          <linearGradient id={fadeRightId} x1="0" x2="1" y1="0" y2="0">
             <stop offset="0%" stopColor="#000" stopOpacity="0" />
             <stop offset="100%" stopColor="#000" stopOpacity="1" />
           </linearGradient>
@@ -209,22 +220,22 @@ export function AnimatedWealthChart() {
           stroke="rgba(255,255,255,0.1)"
         />
 
-        <g clipPath="url(#wealthReveal)">
-          <path d={areaPath} fill="url(#wealthArea)" opacity="0.9" />
+        <g clipPath={`url(#${clipId})`}>
+          <path d={areaPath} fill={`url(#${areaGradId})`} opacity="0.9" />
         </g>
 
-        <rect x="0" y="0" width={width} height="110" fill="url(#edgeFadeTop)" />
-        <rect x="0" y={height - 130} width={width} height="130" fill="url(#edgeFadeBottom)" />
-        <rect x="0" y="0" width="78" height={height} fill="url(#edgeFadeLeft)" />
-        <rect x={width - 70} y="0" width="70" height={height} fill="url(#edgeFadeRight)" />
+        <rect x="0" y="0" width={width} height="110" fill={`url(#${fadeTopId})`} />
+        <rect x="0" y={height - 130} width={width} height="130" fill={`url(#${fadeBottomId})`} />
+        <rect x="0" y="0" width="78" height={height} fill={`url(#${fadeLeftId})`} />
+        <rect x={width - 70} y="0" width="70" height={height} fill={`url(#${fadeRightId})`} />
 
-        <g clipPath="url(#wealthReveal)">
+        <g clipPath={`url(#${clipId})`}>
           <path d={linePath} fill="none" stroke="rgba(255,140,66,0.22)" strokeLinecap="round" strokeWidth="20" />
           <path
             d={linePath}
             fill="none"
-            filter="url(#wealthGlow)"
-            stroke="url(#wealthLine)"
+            filter={`url(#${glowId})`}
+            stroke={`url(#${lineGradId})`}
             strokeLinecap="round"
             strokeWidth="7"
           />
@@ -235,7 +246,7 @@ export function AnimatedWealthChart() {
           x2={lineEnd.x}
           y1={paddingTop - 36}
           y2={height - paddingBottom + 56}
-          stroke="url(#wealthVerticalFade)"
+          stroke={`url(#${verticalFadeId})`}
           strokeWidth="2"
         />
         <circle cx={lineEnd.x} cy={lineEnd.y} r={9} fill="#000" stroke="#FFD0A8" strokeWidth="4" />

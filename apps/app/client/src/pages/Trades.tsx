@@ -3,19 +3,19 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { insertTradeSchema, type Trade } from "@shared/schema";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, Edit2, Search, X, RefreshCw } from "lucide-react";
+import {
+  Plus, Trash2, Edit2, Search, X, RefreshCw, ArrowUpRight, ArrowDownRight,
+} from "lucide-react";
 import { useTrades, useCreateTrade, useUpdateTrade, useDeleteTrade, useSyncTradesFromMexc } from "@/hooks/useTrades";
 import { useUIStore } from "@/store/ui";
-import { fmtUsdt, fmtDate, pnlColor } from "@/lib/format";
+import { fmtUsdt, pnlColor } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { PageHeader, TerminalButton, StatPill } from "@/components/tk";
+import { Button } from "@/components/ui/button";
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 const tradeFormSchema = insertTradeSchema.extend({
@@ -29,15 +29,15 @@ const tradeFormSchema = insertTradeSchema.extend({
 type TradeFormValues = z.infer<typeof tradeFormSchema>;
 
 // ── Status badge ──────────────────────────────────────────────────────────────
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    OPEN:      "bg-blue-500/15 text-blue-400 border-0",
-    WIN:       "bg-profit/15 text-profit border-0",
-    LOSS:      "bg-loss/15 text-loss border-0",
-    BREAKEVEN: "bg-muted text-muted-foreground border-0",
+function StatusCell({ status }: { status: string }) {
+  const map: Record<string, { tone: "info" | "profit" | "loss" | "neutral"; label: string }> = {
+    OPEN: { tone: "info", label: "OPEN" },
+    WIN: { tone: "profit", label: "WIN" },
+    LOSS: { tone: "loss", label: "LOSS" },
+    BREAKEVEN: { tone: "neutral", label: "B/E" },
   };
-  const labels: Record<string, string> = { OPEN: "Aberto", WIN: "Win", LOSS: "Loss", BREAKEVEN: "B/E" };
-  return <Badge className={map[status] ?? ""}>{labels[status] ?? status}</Badge>;
+  const cfg = map[status] ?? { tone: "neutral" as const, label: status };
+  return <StatPill tone={cfg.tone} pulse={status === "OPEN"}>{cfg.label}</StatPill>;
 }
 
 // ── Trade form ────────────────────────────────────────────────────────────────
@@ -82,14 +82,14 @@ function TradeForm({ onClose, initial }: { onClose: () => void; initial?: Trade 
         <div className="grid grid-cols-2 gap-3">
           <FormField control={form.control} name="date" render={({ field }) => (
             <FormItem>
-              <FormLabel>Data</FormLabel>
+              <FormLabel className="font-mono-tk text-[10px] uppercase tracking-[0.22em]">Data</FormLabel>
               <FormControl><Input type="date" {...field} data-testid="input-trade-date" /></FormControl>
               <FormMessage />
             </FormItem>
           )} />
           <FormField control={form.control} name="pair" render={({ field }) => (
             <FormItem>
-              <FormLabel>Par</FormLabel>
+              <FormLabel className="font-mono-tk text-[10px] uppercase tracking-[0.22em]">Par</FormLabel>
               <FormControl><Input {...field} placeholder="BTCUSDT" data-testid="input-trade-pair" /></FormControl>
               <FormMessage />
             </FormItem>
@@ -98,7 +98,7 @@ function TradeForm({ onClose, initial }: { onClose: () => void; initial?: Trade 
         <div className="grid grid-cols-2 gap-3">
           <FormField control={form.control} name="direction" render={({ field }) => (
             <FormItem>
-              <FormLabel>Direção</FormLabel>
+              <FormLabel className="font-mono-tk text-[10px] uppercase tracking-[0.22em]">Direção</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl><SelectTrigger data-testid="select-direction"><SelectValue /></SelectTrigger></FormControl>
                 <SelectContent>
@@ -111,7 +111,7 @@ function TradeForm({ onClose, initial }: { onClose: () => void; initial?: Trade 
           )} />
           <FormField control={form.control} name="status" render={({ field }) => (
             <FormItem>
-              <FormLabel>Status</FormLabel>
+              <FormLabel className="font-mono-tk text-[10px] uppercase tracking-[0.22em]">Status</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl><SelectTrigger data-testid="select-status"><SelectValue /></SelectTrigger></FormControl>
                 <SelectContent>
@@ -129,8 +129,10 @@ function TradeForm({ onClose, initial }: { onClose: () => void; initial?: Trade 
           {(["entryPrice", "stopPrice", "targetPrice"] as const).map(name => (
             <FormField key={name} control={form.control} name={name} render={({ field }) => (
               <FormItem>
-                <FormLabel>{name === "entryPrice" ? "Entrada" : name === "stopPrice" ? "Stop" : "Alvo"}</FormLabel>
-                <FormControl><Input type="number" step="any" {...field} data-testid={`input-${name}`} /></FormControl>
+                <FormLabel className="font-mono-tk text-[10px] uppercase tracking-[0.22em]">
+                  {name === "entryPrice" ? "Entrada" : name === "stopPrice" ? "Stop" : "Alvo"}
+                </FormLabel>
+                <FormControl><Input type="number" step="any" {...field} className="font-mono-tk num" data-testid={`input-${name}`} /></FormControl>
                 <FormMessage />
               </FormItem>
             )} />
@@ -139,38 +141,38 @@ function TradeForm({ onClose, initial }: { onClose: () => void; initial?: Trade 
         <div className="grid grid-cols-3 gap-3">
           <FormField control={form.control} name="exitPrice" render={({ field }) => (
             <FormItem>
-              <FormLabel>Saída</FormLabel>
-              <FormControl><Input type="number" step="any" {...field as any} placeholder="—" data-testid="input-exitPrice" /></FormControl>
+              <FormLabel className="font-mono-tk text-[10px] uppercase tracking-[0.22em]">Saída</FormLabel>
+              <FormControl><Input type="number" step="any" {...field as any} placeholder="—" className="font-mono-tk num" data-testid="input-exitPrice" /></FormControl>
               <FormMessage />
             </FormItem>
           )} />
           <FormField control={form.control} name="positionSize" render={({ field }) => (
             <FormItem>
-              <FormLabel>Posição (USDT)</FormLabel>
-              <FormControl><Input type="number" step="any" {...field} data-testid="input-positionSize" /></FormControl>
+              <FormLabel className="font-mono-tk text-[10px] uppercase tracking-[0.22em]">Posição (USDT)</FormLabel>
+              <FormControl><Input type="number" step="any" {...field} className="font-mono-tk num" data-testid="input-positionSize" /></FormControl>
               <FormMessage />
             </FormItem>
           )} />
           <FormField control={form.control} name="pnl" render={({ field }) => (
             <FormItem>
-              <FormLabel>PnL (USDT)</FormLabel>
-              <FormControl><Input type="number" step="any" {...field as any} placeholder="—" data-testid="input-pnl" /></FormControl>
+              <FormLabel className="font-mono-tk text-[10px] uppercase tracking-[0.22em]">PnL (USDT)</FormLabel>
+              <FormControl><Input type="number" step="any" {...field as any} placeholder="—" className="font-mono-tk num" data-testid="input-pnl" /></FormControl>
               <FormMessage />
             </FormItem>
           )} />
         </div>
         <FormField control={form.control} name="notes" render={({ field }) => (
           <FormItem>
-            <FormLabel>Notas</FormLabel>
+            <FormLabel className="font-mono-tk text-[10px] uppercase tracking-[0.22em]">Notas</FormLabel>
             <FormControl><Input {...field as any} placeholder="Observações..." data-testid="input-notes" /></FormControl>
             <FormMessage />
           </FormItem>
         )} />
         <div className="flex justify-end gap-2 pt-2">
-          <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button type="submit" disabled={isPending} data-testid="button-save-trade">
-            {isPending ? "Salvando..." : "Salvar"}
-          </Button>
+          <TerminalButton type="button" variant="outline" onClick={onClose}>Cancelar</TerminalButton>
+          <TerminalButton type="submit" disabled={isPending} data-testid="button-save-trade">
+            {isPending ? "Salvando…" : "Salvar"}
+          </TerminalButton>
         </div>
       </form>
     </Form>
@@ -179,23 +181,20 @@ function TradeForm({ onClose, initial }: { onClose: () => void; initial?: Trade 
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function Trades() {
-  const [open, setOpen]           = useState(false);
+  const [open, setOpen] = useState(false);
   const [editTrade, setEditTrade] = useState<Trade | null>(null);
 
-  // Zustand filter state
   const { tradesFilter, setTradesFilter, resetTradesFilter } = useUIStore();
-
   const { data: trades = [], isLoading } = useTrades();
   const deleteTrade = useDeleteTrade();
   const syncFromMexc = useSyncTradesFromMexc();
 
-  // Filtered trades (client-side), ordenados por data (mais recente primeiro)
   const filtered = [...trades]
     .filter(t => {
-    if (tradesFilter.status !== "all" && t.status !== tradesFilter.status) return false;
-    if (tradesFilter.direction !== "all" && t.direction !== tradesFilter.direction) return false;
-    if (tradesFilter.search && !t.pair.toLowerCase().includes(tradesFilter.search.toLowerCase()) &&
-        !(t.notes ?? "").toLowerCase().includes(tradesFilter.search.toLowerCase())) return false;
+      if (tradesFilter.status !== "all" && t.status !== tradesFilter.status) return false;
+      if (tradesFilter.direction !== "all" && t.direction !== tradesFilter.direction) return false;
+      if (tradesFilter.search && !t.pair.toLowerCase().includes(tradesFilter.search.toLowerCase()) &&
+          !(t.notes ?? "").toLowerCase().includes(tradesFilter.search.toLowerCase())) return false;
       return true;
     })
     .sort((a, b) => {
@@ -206,139 +205,196 @@ export default function Trades() {
   const hasActiveFilter = tradesFilter.status !== "all" || tradesFilter.direction !== "all" || tradesFilter.search !== "";
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Trades</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Registro de operações de futuros</p>
-        </div>
-        <Button
-          variant="outline"
-          onClick={() => syncFromMexc.mutate()}
-          disabled={syncFromMexc.isPending}
-          className="gap-2"
-          title="Buscar trades de futuros da MEXC"
-        >
-          <RefreshCw className={cn("w-4 h-4", syncFromMexc.isPending && "animate-spin")} />
-          {syncFromMexc.isPending ? "Sincronizando..." : "Sincronizar MEXC"}
-        </Button>
-        <Dialog open={open || !!editTrade} onOpenChange={v => { setOpen(v); if (!v) setEditTrade(null); }}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setOpen(true)} data-testid="button-add-trade" className="gap-2">
-              <Plus className="w-4 h-4" /> Novo Trade
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>{editTrade ? "Editar Trade" : "Registrar Trade"}</DialogTitle>
-            </DialogHeader>
-            <TradeForm onClose={() => { setOpen(false); setEditTrade(null); }} initial={editTrade ?? undefined} />
-          </DialogContent>
-        </Dialog>
-      </div>
+    <div className="relative space-y-8 p-6 md:p-10">
+      <div className="pointer-events-none absolute inset-0 bg-grid-fine opacity-50" aria-hidden />
 
-      {/* Filters */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-          <Input
-            placeholder="Buscar par ou notas..."
-            className="pl-8 h-8 text-sm w-48"
-            value={tradesFilter.search}
-            onChange={e => setTradesFilter({ search: e.target.value })}
-            data-testid="input-filter-search"
-          />
-        </div>
-        <Select value={tradesFilter.status} onValueChange={v => setTradesFilter({ status: v })}>
-          <SelectTrigger className="h-8 w-32 text-sm" data-testid="select-filter-status">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="OPEN">Aberto</SelectItem>
-            <SelectItem value="WIN">Win</SelectItem>
-            <SelectItem value="LOSS">Loss</SelectItem>
-            <SelectItem value="BREAKEVEN">B/E</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={tradesFilter.direction} onValueChange={v => setTradesFilter({ direction: v })}>
-          <SelectTrigger className="h-8 w-32 text-sm" data-testid="select-filter-direction">
-            <SelectValue placeholder="Direção" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="LONG">LONG</SelectItem>
-            <SelectItem value="SHORT">SHORT</SelectItem>
-          </SelectContent>
-        </Select>
-        {hasActiveFilter && (
-          <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={resetTradesFilter}>
-            <X className="w-3.5 h-3.5" /> Limpar
-          </Button>
-        )}
-        <span className="text-xs text-muted-foreground ml-auto">
-          {filtered.length} de {trades.length} trade{trades.length !== 1 ? "s" : ""}
-        </span>
-      </div>
+      <div className="relative space-y-8">
+        {/* HEADER */}
+        <PageHeader
+          index="02"
+          total="08"
+          eyebrow="Trades · execution log"
+          title="Registro de operações."
+          subtitle="Tudo que foi executado — manual ou via sync da exchange."
+          actions={
+            <>
+              <TerminalButton
+                variant="outline"
+                icon={RefreshCw}
+                onClick={() => syncFromMexc.mutate()}
+                disabled={syncFromMexc.isPending}
+                className={cn(syncFromMexc.isPending && "[&_svg]:animate-spin")}
+              >
+                {syncFromMexc.isPending ? "syncing…" : "sync mexc"}
+              </TerminalButton>
+              <Dialog open={open || !!editTrade} onOpenChange={v => { setOpen(v); if (!v) setEditTrade(null); }}>
+                <DialogTrigger asChild>
+                  <button
+                    onClick={() => setOpen(true)}
+                    data-testid="button-add-trade"
+                    className="inline-flex items-center gap-2 border border-primary bg-primary px-4 py-2.5 font-mono-tk text-[11px] font-bold uppercase tracking-[0.22em] text-primary-foreground transition hover:bg-transparent hover:text-primary"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> novo trade
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle className="font-display text-xl">
+                      {editTrade ? "Editar Trade" : "Registrar Trade"}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <TradeForm onClose={() => { setOpen(false); setEditTrade(null); }} initial={editTrade ?? undefined} />
+                </DialogContent>
+              </Dialog>
+            </>
+          }
+        />
 
-      {/* Table */}
-      <Card className="bg-card border-border">
-        <CardContent className="p-0">
+        {/* FILTERS */}
+        <div className="flex flex-wrap items-center gap-3 border border-border bg-card px-4 py-3">
+          <span className="hidden font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground sm:inline">
+            <span className="text-primary">↳</span> filter
+          </span>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar par ou notas..."
+              className="h-8 w-48 pl-8 font-mono-tk text-xs"
+              value={tradesFilter.search}
+              onChange={e => setTradesFilter({ search: e.target.value })}
+              data-testid="input-filter-search"
+            />
+          </div>
+          <Select value={tradesFilter.status} onValueChange={v => setTradesFilter({ status: v })}>
+            <SelectTrigger className="h-8 w-32 font-mono-tk text-xs uppercase tracking-[0.18em]" data-testid="select-filter-status">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="OPEN">Aberto</SelectItem>
+              <SelectItem value="WIN">Win</SelectItem>
+              <SelectItem value="LOSS">Loss</SelectItem>
+              <SelectItem value="BREAKEVEN">B/E</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={tradesFilter.direction} onValueChange={v => setTradesFilter({ direction: v })}>
+            <SelectTrigger className="h-8 w-32 font-mono-tk text-xs uppercase tracking-[0.18em]" data-testid="select-filter-direction">
+              <SelectValue placeholder="Direção" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="LONG">LONG</SelectItem>
+              <SelectItem value="SHORT">SHORT</SelectItem>
+            </SelectContent>
+          </Select>
+          {hasActiveFilter && (
+            <button
+              onClick={resetTradesFilter}
+              className="inline-flex h-8 items-center gap-1 border border-white/10 px-2 font-mono-tk text-[10px] uppercase tracking-[0.22em] text-muted-foreground transition hover:border-white/30 hover:text-foreground"
+            >
+              <X className="h-3 w-3" /> clear
+            </button>
+          )}
+          <span className="ml-auto font-mono-tk text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+            <span className="text-foreground num">{filtered.length}</span> / <span className="num">{trades.length}</span> trades
+          </span>
+        </div>
+
+        {/* TABLE — Bloomberg style */}
+        <div className="border border-border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  {["Data", "Par", "Dir.", "Entrada", "Stop", "Alvo", "Saída", "Tamanho", "PnL", "Status", ""].map(h => (
-                    <th key={h} className="text-left px-4 py-3 text-xs text-muted-foreground uppercase tracking-wider font-medium whitespace-nowrap">{h}</th>
+                  {[
+                    { k: "#",       w: "w-12" },
+                    { k: "Data",    w: "" },
+                    { k: "Par",     w: "" },
+                    { k: "Dir.",    w: "" },
+                    { k: "Entrada", w: "" },
+                    { k: "Stop",    w: "" },
+                    { k: "Alvo",    w: "" },
+                    { k: "Saída",   w: "" },
+                    { k: "Tamanho", w: "" },
+                    { k: "PnL",     w: "" },
+                    { k: "Status",  w: "" },
+                    { k: "",        w: "w-20" },
+                  ].map(({ k, w }) => (
+                    <th
+                      key={k}
+                      className={cn(
+                        "px-4 py-3 text-left font-mono-tk text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground whitespace-nowrap",
+                        w,
+                      )}
+                    >
+                      {k}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
-                  [...Array(5)].map((_, i) => (
-                    <tr key={i} className="border-b border-border">
-                      {[...Array(11)].map((_, j) => (
-                        <td key={j} className="px-4 py-3"><div className="h-4 bg-muted rounded animate-pulse w-16" /></td>
+                  [...Array(6)].map((_, i) => (
+                    <tr key={i} className="border-b border-border/60">
+                      {[...Array(12)].map((_, j) => (
+                        <td key={j} className="px-4 py-3"><div className="h-3 w-16 animate-pulse bg-muted" /></td>
                       ))}
                     </tr>
                   ))
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={11} className="px-4 py-12 text-center text-muted-foreground">
-                      {trades.length === 0 ? "Nenhum trade registrado ainda" : "Nenhum trade encontrado com os filtros atuais"}
+                    <td colSpan={12} className="px-4 py-16 text-center">
+                      <p className="font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground/50">[empty]</p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {trades.length === 0 ? "Nenhum trade registrado ainda" : "Nenhum trade com os filtros atuais"}
+                      </p>
                     </td>
                   </tr>
-                ) : filtered.map(t => (
-                  <tr key={t.id} className="border-b border-border hover:bg-muted/30 transition-colors" data-testid={`row-trade-${t.id}`}>
-                    <td className="px-4 py-3 tabular text-muted-foreground whitespace-nowrap">{t.date}</td>
-                    <td className="px-4 py-3 font-medium">{t.pair}</td>
-                    <td className="px-4 py-3">
-                      <Badge className={cn("border-0 text-xs", t.direction === "LONG" ? "bg-profit/15 text-profit" : "bg-loss/15 text-loss")}>
-                        {t.direction}
-                      </Badge>
+                ) : filtered.map((t, idx) => (
+                  <tr key={t.id} className="group border-b border-border/40 transition-colors hover:bg-white/[0.02]" data-testid={`row-trade-${t.id}`}>
+                    <td className="px-4 py-3 font-mono-tk text-[10px] tracking-[0.18em] text-muted-foreground/60">
+                      {String(idx + 1).padStart(3, "0")}
                     </td>
-                    <td className="px-4 py-3 tabular">{fmtUsdt(t.entryPrice)}</td>
-                    <td className="px-4 py-3 tabular text-loss">{fmtUsdt(t.stopPrice)}</td>
-                    <td className="px-4 py-3 tabular text-profit">{fmtUsdt(t.targetPrice)}</td>
-                    <td className="px-4 py-3 tabular">{t.exitPrice ? fmtUsdt(t.exitPrice) : "—"}</td>
-                    <td className="px-4 py-3 tabular">{fmtUsdt(t.positionSize)} USDT</td>
-                    <td className={cn("px-4 py-3 tabular font-medium", pnlColor(t.pnl ?? 0))}>
+                    <td className="num px-4 py-3 font-mono-tk text-xs text-muted-foreground whitespace-nowrap">{t.date}</td>
+                    <td className="px-4 py-3 font-mono-tk text-sm font-bold tracking-wide text-foreground">{t.pair}</td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 font-mono-tk text-[11px] font-bold uppercase tracking-[0.22em]",
+                          t.direction === "LONG" ? "text-profit" : "text-loss",
+                        )}
+                      >
+                        {t.direction === "LONG" ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                        {t.direction}
+                      </span>
+                    </td>
+                    <td className="num px-4 py-3 font-mono-tk text-xs">{fmtUsdt(t.entryPrice)}</td>
+                    <td className="num px-4 py-3 font-mono-tk text-xs text-loss">{fmtUsdt(t.stopPrice)}</td>
+                    <td className="num px-4 py-3 font-mono-tk text-xs text-profit">{fmtUsdt(t.targetPrice)}</td>
+                    <td className="num px-4 py-3 font-mono-tk text-xs">{t.exitPrice ? fmtUsdt(t.exitPrice) : "—"}</td>
+                    <td className="num px-4 py-3 font-mono-tk text-xs text-muted-foreground">{fmtUsdt(t.positionSize)}</td>
+                    <td className={cn("num px-4 py-3 font-mono-tk text-sm font-bold", pnlColor(t.pnl ?? 0))}>
                       {t.pnl != null ? `${t.pnl > 0 ? "+" : ""}${fmtUsdt(t.pnl)}` : "—"}
                     </td>
-                    <td className="px-4 py-3"><StatusBadge status={t.status} /></td>
+                    <td className="px-4 py-3"><StatusCell status={t.status} /></td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => setEditTrade(t)} data-testid={`button-edit-trade-${t.id}`}>
-                          <Edit2 className="w-3.5 h-3.5" />
+                      <div className="flex items-center gap-1 opacity-50 transition-opacity group-hover:opacity-100">
+                        <Button
+                          variant="ghost" size="icon"
+                          className="h-7 w-7 rounded-none border border-transparent text-muted-foreground hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+                          onClick={() => setEditTrade(t)}
+                          data-testid={`button-edit-trade-${t.id}`}
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
                         </Button>
                         <Button
-                          variant="ghost" size="icon" className="w-7 h-7 text-loss"
+                          variant="ghost" size="icon"
+                          className="h-7 w-7 rounded-none border border-transparent text-muted-foreground hover:border-loss/40 hover:bg-loss/10 hover:text-loss"
                           onClick={() => deleteTrade.mutate(t.id)}
                           disabled={deleteTrade.isPending}
                           data-testid={`button-delete-trade-${t.id}`}
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </td>
@@ -347,8 +403,13 @@ export default function Trades() {
               </tbody>
             </table>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        <div className="flex items-center justify-between border-t border-border pt-4 font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
+          <span>↳ tabela · ordem: data DESC</span>
+          <span><span className="text-foreground num">{filtered.length}</span> linhas</span>
+        </div>
+      </div>
     </div>
   );
 }

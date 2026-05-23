@@ -1,17 +1,18 @@
 import PlanTracker from "@/components/PlanTracker";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { insertSettingsSchema, type Settings } from "@shared/schema";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { AlertTriangle, CheckCircle2, TrendingUp, Shield, DollarSign, BookOpen } from "lucide-react";
+import {
+  AlertTriangle, TrendingUp, Shield, DollarSign, BookOpen, type LucideIcon,
+} from "lucide-react";
 import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
 import { useUserRules } from "@/hooks/useOnboarding";
+import {
+  PageHeader, TerminalFrame, TerminalButton, StatPill, Eyebrow,
+} from "@/components/tk";
 
 const settingsFormSchema = insertSettingsSchema.extend({
   totalCapital:            z.coerce.number().positive(),
@@ -33,38 +34,43 @@ function SettingsForm({ settings }: { settings: Settings }) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(d => updateSettings.mutate(d))} className="space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <form onSubmit={form.handleSubmit(d => updateSettings.mutate(d))} className="space-y-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {[
             { name: "totalCapital" as const,            label: "Capital Total (USDT)" },
             { name: "futuresCapital" as const,          label: "Capital Futuros (USDT)" },
             { name: "spotCapital" as const,             label: "Capital Spot BTC (USDT)" },
             { name: "riskPerTrade" as const,            label: "Risco por Trade (USDT)" },
             { name: "profitTransferThreshold" as const, label: "Transferir a cada +X USDT" },
-            { name: "defaultLeverage" as const,         label: "Alavancagem Padrão (x)" },
-            { name: "stopTradingDrawdown" as const,     label: "Parar com Drawdown (%)" },
-          ].map(({ name, label }) => (
+            { name: "defaultLeverage" as const,         label: "Alavancagem padrão (x)" },
+            { name: "stopTradingDrawdown" as const,     label: "Parar com drawdown (%)" },
+          ].map(({ name, label }, i) => (
             <FormField key={name} control={form.control} name={name} render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">{label}</FormLabel>
-                <FormControl><Input type="number" step="any" {...field} data-testid={`input-setting-${name}`} /></FormControl>
+                <FormLabel className="flex items-center gap-2 font-mono-tk text-[10px] uppercase tracking-[0.22em]">
+                  <span className="text-primary">{String(i + 1).padStart(2, "0")}</span>
+                  {label}
+                </FormLabel>
+                <FormControl><Input type="number" step="any" {...field} className="font-mono-tk num" data-testid={`input-setting-${name}`} /></FormControl>
                 <FormMessage />
               </FormItem>
             )} />
           ))}
         </div>
-        <Button type="submit" disabled={updateSettings.isPending} data-testid="button-save-settings">
-          {updateSettings.isPending ? "Salvando..." : "Salvar Configurações"}
-        </Button>
+        <TerminalButton type="submit" disabled={updateSettings.isPending} data-testid="button-save-settings">
+          {updateSettings.isPending ? "Salvando…" : "Salvar configurações"}
+        </TerminalButton>
       </form>
     </Form>
   );
 }
 
 // ── Static content ────────────────────────────────────────────────────────────
-const rules = [
+type RuleBlock = { icon: LucideIcon; title: string; items: string[]; tone: "orange" | "blue" | "profit" | "amber" };
+
+const rules: RuleBlock[] = [
   {
-    icon: DollarSign, title: "Alocação de Capital", color: "text-primary", bg: "bg-primary/10",
+    icon: DollarSign, title: "Alocação de capital", tone: "orange",
     items: [
       "Capital total sugerido: 200 USDT",
       "50% em futuros (100 USDT) — para operar com alavancagem",
@@ -73,17 +79,17 @@ const rules = [
     ],
   },
   {
-    icon: Shield, title: "Regras de Risco", color: "text-blue-400", bg: "bg-blue-500/10",
+    icon: Shield, title: "Regras de risco", tone: "blue",
     items: [
       "Risco máximo por trade: 2,50 USDT (2,5% do capital de futuros)",
       "Com 3x de alavancagem, a posição é ~3x o risco calculado",
       "Nunca mover o stop após entrar no trade",
       "Stop-loss obrigatório em TODOS os trades",
-      "Se atingir -20% de drawdown: PARAR de operar imediatamente",
+      "Se atingir −20% de drawdown: PARAR de operar imediatamente",
     ],
   },
   {
-    icon: TrendingUp, title: "Entrada e Saída", color: "text-profit", bg: "bg-profit/10",
+    icon: TrendingUp, title: "Entrada e saída", tone: "profit",
     items: [
       "Entrar apenas em setups com R:R mínimo de 1:2",
       "Stop-loss abaixo/acima do último pivot relevante",
@@ -93,7 +99,7 @@ const rules = [
     ],
   },
   {
-    icon: BookOpen, title: "Transferência de Lucro", color: "text-yellow-400", bg: "bg-yellow-400/10",
+    icon: BookOpen, title: "Transferência de lucro", tone: "amber",
     items: [
       "A cada +10 USDT de lucro nos futuros → comprar BTC no spot",
       "Registrar a transferência com o preço exato do BTC",
@@ -104,132 +110,171 @@ const rules = [
 ];
 
 const scenarios = [
-  { condition: "Você acabou de fechar um WIN",  action: "Registre o trade. Se o lucro acumulado atingiu +10 USDT, transfira para BTC spot.", badge: "WIN",     badgeClass: "bg-profit/15 text-profit border-0" },
-  { condition: "Você acabou de fechar um LOSS", action: "Registre o trade. Analise o porquê. Respeite o plano, não faça revenge trading.",  badge: "LOSS",    badgeClass: "bg-loss/15 text-loss border-0" },
-  { condition: "Drawdown de 20% atingido",       action: "PARE de operar imediatamente. Revise a estratégia antes de voltar.",               badge: "STOP",    badgeClass: "bg-loss/15 text-loss border-0" },
-  { condition: "Sem setup claro no mercado",     action: "Não opere. Ficar de fora é uma posição válida e lucrativa.",                       badge: "AGUARDAR", badgeClass: "bg-muted text-muted-foreground border-0" },
+  { condition: "Você acabou de fechar um WIN",  action: "Registre o trade. Se o lucro acumulado atingiu +10 USDT, transfira para BTC spot.", tag: "WIN", tone: "profit" as const },
+  { condition: "Você acabou de fechar um LOSS", action: "Registre o trade. Analise o porquê. Respeite o plano, não faça revenge trading.",  tag: "LOSS", tone: "loss" as const },
+  { condition: "Drawdown de 20% atingido",      action: "PARE de operar imediatamente. Revise a estratégia antes de voltar.",               tag: "STOP", tone: "loss" as const },
+  { condition: "Sem setup claro no mercado",    action: "Não opere. Ficar de fora é uma posição válida e lucrativa.",                        tag: "AGUARDAR", tone: "off" as const },
 ];
 
 const positionSizingExample = [
-  { step: "Capital futuros",                           value: "100 USDT" },
-  { step: "Risco por trade (2,5%)",                    value: "2,50 USDT" },
-  { step: "Alavancagem",                               value: "3x" },
-  { step: "Tamanho da posição",                        value: "≈ 33,33 USDT (notional ~100)" },
+  { step: "Capital futuros",                            value: "100 USDT" },
+  { step: "Risco por trade (2,5%)",                     value: "2,50 USDT" },
+  { step: "Alavancagem",                                value: "3x" },
+  { step: "Tamanho da posição",                         value: "≈ 33,33 USDT (notional ~100)" },
   { step: "Exemplo: entrada em 85.000, stop em 84.500", value: "Distância = 500 USDT (0,59%)" },
   { step: "Quantidade de BTC",                          value: "2,50 / (85.000 × 0,0059) ≈ 0,000499 BTC" },
 ];
 
-const categoryMeta: Record<string, { icon: typeof DollarSign; color: string; bg: string }> = {
-  capital: { icon: DollarSign, color: "text-primary", bg: "bg-primary/10" },
-  risk: { icon: Shield, color: "text-blue-400", bg: "bg-blue-500/10" },
-  entry_exit: { icon: TrendingUp, color: "text-profit", bg: "bg-profit/10" },
-  transfer: { icon: BookOpen, color: "text-yellow-400", bg: "bg-yellow-400/10" },
+const categoryMeta: Record<string, { icon: LucideIcon; tone: RuleBlock["tone"] }> = {
+  capital:    { icon: DollarSign, tone: "orange" },
+  risk:       { icon: Shield,     tone: "blue" },
+  entry_exit: { icon: TrendingUp, tone: "profit" },
+  transfer:   { icon: BookOpen,   tone: "amber" },
 };
+
+function toneClasses(tone: RuleBlock["tone"]) {
+  switch (tone) {
+    case "blue":   return { text: "text-blue-400",   border: "border-blue-400/30",  bg: "bg-blue-400/[0.06]" };
+    case "profit": return { text: "text-profit",     border: "border-profit/30",    bg: "bg-profit/[0.06]" };
+    case "amber":  return { text: "text-[hsl(var(--neutral))]", border: "border-[hsl(var(--neutral))]/30", bg: "bg-[hsl(var(--neutral))]/[0.06]" };
+    default:       return { text: "text-primary",    border: "border-primary/30",   bg: "bg-primary/[0.06]" };
+  }
+}
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function Rules() {
   const { data: settings, isLoading } = useSettings();
   const { data: userRules } = useUserRules();
 
-  type RuleBlock = { icon: typeof DollarSign; title: string; color: string; bg: string; items: string[] };
-
   const displayRules: RuleBlock[] =
     userRules && userRules.length > 0
       ? userRules.map((r: { category: string; title: string; items: string[] }) => {
           const meta = categoryMeta[r.category] ?? categoryMeta.capital;
-          return { icon: meta.icon, title: r.title, color: meta.color, bg: meta.bg, items: r.items };
+          return { icon: meta.icon, title: r.title, tone: meta.tone, items: r.items };
         })
       : rules;
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-xl font-bold">Regras da Estratégia</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Seu manual de trading — leia antes de operar</p>
-      </div>
+    <div className="relative space-y-12 p-6 md:p-10">
+      <div className="pointer-events-none absolute inset-0 bg-grid-fine opacity-50" aria-hidden />
 
-      {/* Rules grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {displayRules.map(({ icon: Icon, title, color, bg, items }) => (
-          <Card key={title} className="bg-card border-border">
-            <CardHeader className="pb-3 px-5 pt-5">
-              <div className="flex items-center gap-2.5">
-                <div className={`p-2 rounded-lg ${bg}`}>
-                  <Icon className={`w-4 h-4 ${color}`} />
+      <div className="relative space-y-12">
+        <PageHeader
+          index="06"
+          total="08"
+          eyebrow="Rules · doctrine"
+          title="Manual de trading."
+          subtitle="Leia antes de operar. Disciplina nasce de regras escritas, não de palpite."
+        />
+
+        {/* Rules grid */}
+        <section className="space-y-4">
+          <Eyebrow>doutrina · 4 pilares</Eyebrow>
+          <ol className="grid grid-cols-1 gap-px overflow-hidden border border-border bg-border md:grid-cols-2">
+            {displayRules.map(({ icon: Icon, title, tone, items }, i) => {
+              const t = toneClasses(tone);
+              return (
+                <li key={title} className="relative bg-card p-6">
+                  <div className="flex items-start justify-between gap-3 border-b border-border pb-4">
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono-tk text-[10px] tracking-[0.28em] text-primary">
+                        [{String(i + 1).padStart(2, "0")}]
+                      </span>
+                      <div className={`flex h-9 w-9 items-center justify-center border ${t.border} ${t.bg}`}>
+                        <Icon className={`h-4 w-4 ${t.text}`} />
+                      </div>
+                    </div>
+                    <span className="font-mono-tk text-[9px] uppercase tracking-[0.28em] text-muted-foreground">
+                      pilar {i + 1} / {displayRules.length}
+                    </span>
+                  </div>
+                  <h3 className="font-display mt-4 text-2xl font-bold leading-tight tracking-tight">{title}</h3>
+                  <ul className="mt-4 space-y-2">
+                    {items.map((item, k) => (
+                      <li key={k} className="grid grid-cols-[auto_1fr] items-start gap-3 text-sm leading-relaxed">
+                        <span className="num font-mono-tk text-[10px] tracking-[0.22em] text-muted-foreground">
+                          0{k + 1}
+                        </span>
+                        <span className="text-muted-foreground">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+
+        {/* Position sizing — editorial */}
+        <section>
+          <TerminalFrame title="position_sizing · exemplo" status="docs" statusTone="info" orangeCorners>
+            <div className="divide-y divide-border">
+              {positionSizingExample.map((row, i) => (
+                <div key={i} className="grid grid-cols-[auto_1fr_auto] items-center gap-4 px-5 py-4">
+                  <span className="font-mono-tk text-[10px] tracking-[0.28em] text-muted-foreground/70">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="text-sm text-muted-foreground">{row.step}</span>
+                  <span className="num font-mono-tk text-sm font-bold text-foreground">{row.value}</span>
                 </div>
-                <CardTitle className="text-sm font-semibold">{title}</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="px-5 pb-5">
-              <ul className="space-y-2">
-                {items.map((item, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-primary flex-shrink-0 mt-0.5" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              ))}
+            </div>
+          </TerminalFrame>
+        </section>
 
-      {/* Position sizing */}
-      <Card className="bg-card border-border">
-        <CardHeader className="pb-3 px-5 pt-5">
-          <CardTitle className="text-sm font-semibold">Cálculo de Tamanho da Posição</CardTitle>
-        </CardHeader>
-        <CardContent className="px-5 pb-5">
-          <div className="space-y-2">
-            {positionSizingExample.map(({ step, value }, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                <span className="text-sm text-muted-foreground">{step}</span>
-                <span className="text-sm font-medium tabular text-foreground">{value}</span>
-              </div>
+        {/* Scenarios — what to do when */}
+        <section className="space-y-4">
+          <div className="flex items-end justify-between border-b border-border pb-3">
+            <div className="space-y-1">
+              <Eyebrow>scenarios · playbook</Eyebrow>
+              <h2 className="font-display text-2xl font-bold tracking-tight">O que fazer quando…</h2>
+            </div>
+            <span className="font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
+              <AlertTriangle className="-mt-0.5 mr-1 inline h-3 w-3 text-[hsl(var(--neutral))]" />
+              decision tree
+            </span>
+          </div>
+          <div className="divide-y divide-border border border-border bg-card">
+            {scenarios.map((s, i) => (
+              <article key={s.condition} className="grid grid-cols-[auto_auto_1fr] items-start gap-5 px-5 py-5 transition-colors hover:bg-white/[0.02]">
+                <span className="font-mono-tk text-[10px] tracking-[0.28em] text-muted-foreground/70">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <StatPill tone={s.tone}>{s.tag}</StatPill>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-foreground sm:text-base">{s.condition}</p>
+                  <p className="text-xs text-muted-foreground sm:text-sm">{s.action}</p>
+                </div>
+              </article>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </section>
 
-      {/* Scenarios */}
-      <Card className="bg-card border-border">
-        <CardHeader className="pb-3 px-5 pt-5">
-          <div className="flex items-center gap-2.5">
-            <AlertTriangle className="w-4 h-4 text-yellow-400" />
-            <CardTitle className="text-sm font-semibold">O que fazer quando...</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="px-5 pb-5 space-y-3">
-          {scenarios.map(({ condition, action, badge, badgeClass }) => (
-            <div key={condition} className="flex items-start gap-3 p-3 bg-muted rounded-md">
-              <Badge className={`${badgeClass} flex-shrink-0 mt-0.5`}>{badge}</Badge>
-              <div className="space-y-0.5">
-                <p className="text-sm font-medium">{condition}</p>
-                <p className="text-xs text-muted-foreground">{action}</p>
-              </div>
+        {/* Plan Tracker */}
+        <section className="space-y-4">
+          <Eyebrow>goals · plan tracker</Eyebrow>
+          <PlanTracker />
+        </section>
+
+        {/* Settings */}
+        <section className="space-y-4">
+          <div className="flex items-end justify-between border-b border-border pb-3">
+            <div className="space-y-1">
+              <Eyebrow>config · strategy</Eyebrow>
+              <h2 className="font-display text-2xl font-bold tracking-tight">Configurações da estratégia.</h2>
             </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Plan Tracker */}
-      <PlanTracker />
-
-      {/* Settings */}
-      <Card className="bg-card border-border">
-        <CardHeader className="pb-3 px-5 pt-5">
-          <CardTitle className="text-sm font-semibold">Configurações da Estratégia</CardTitle>
-        </CardHeader>
-        <CardContent className="px-5 pb-5">
+          </div>
           {isLoading ? (
-            <div className="space-y-3">
-              {[...Array(4)].map((_, i) => <div key={i} className="h-10 bg-muted rounded animate-pulse" />)}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              {[...Array(6)].map((_, i) => <div key={i} className="h-16 animate-pulse bg-muted" />)}
             </div>
           ) : settings ? (
-            <SettingsForm settings={settings} />
+            <div className="border border-border bg-card p-6">
+              <SettingsForm settings={settings} />
+            </div>
           ) : null}
-        </CardContent>
-      </Card>
+        </section>
+      </div>
     </div>
   );
 }
