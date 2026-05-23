@@ -11,6 +11,7 @@ import {
   insertTradeSchema, insertTransferSchema, insertBtcHoldingSchema,
   insertSettingsSchema, insertMexcCredentialsSchema, insertGoalSchema,
 } from "@shared/schema";
+import { getMarketTicker } from "./market";
 
 // ─── MEXC API helpers ─────────────────────────────────────────────────────────
 
@@ -116,6 +117,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     "GET:/api/auth/verify-email",
     "GET:/api/auth/me",
     "POST:/api/trial-signup",
+    "GET:/api/market/ticker",
   ]);
 
   app.use((req, res, next) => {
@@ -123,6 +125,18 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const key = `${req.method}:${req.path}`;
     if (publicAuthPaths.has(key)) return next();
     return requireAuth(req, res, next);
+  });
+
+  // ── Market ticker (MEXC spot · público) ───────────────────────────────────
+  app.get("/api/market/ticker", async (_req, res) => {
+    try {
+      const items = await getMarketTicker();
+      res.setHeader("Cache-Control", "public, max-age=20");
+      res.json({ items, source: "mexc", updatedAt: new Date().toISOString() });
+    } catch (e: unknown) {
+      console.error("[market/ticker]", e);
+      res.status(502).json({ error: "Não foi possível obter cotações da MEXC" });
+    }
   });
 
   // ── Trades ────────────────────────────────────────────────────────────────

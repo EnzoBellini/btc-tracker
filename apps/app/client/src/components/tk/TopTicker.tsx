@@ -1,6 +1,7 @@
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { useStats } from "@/hooks/useStats";
 import { useTrades } from "@/hooks/useTrades";
+import { useMarketTicker } from "@/hooks/useMarketTicker";
 import { fmtUsdt, fmtPct } from "@/lib/format";
 
 type Item = { symbol: string; value: string; delta?: string; up?: boolean | null };
@@ -39,10 +40,21 @@ function buildItems(stats: any, trades: any[]): Item[] {
   ];
 }
 
+function marketToItems(market: { symbol: string; price: string; delta: string; up: boolean | null }[]): Item[] {
+  return market.map((m) => ({
+    symbol: m.symbol,
+    value: m.price,
+    delta: m.delta,
+    up: m.up,
+  }));
+}
+
 export default function TopTicker() {
   const { data: stats } = useStats();
   const { data: trades = [] } = useTrades();
-  const items = buildItems(stats, trades);
+  const { data: market = [] } = useMarketTicker();
+  const userItems = buildItems(stats, trades);
+  const items = [...marketToItems(market), ...userItems];
 
   return (
     <div className="relative z-30 overflow-hidden border-b border-border bg-card/80 backdrop-blur-md">

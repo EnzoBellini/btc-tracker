@@ -78,10 +78,13 @@ app.use((req, res, next) => {
   if (origin && landingOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Vary", "Origin");
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   }
-  if (req.method === "OPTIONS" && req.path.startsWith("/api/trial-signup")) {
+  if (
+    req.method === "OPTIONS" &&
+    (req.path.startsWith("/api/trial-signup") || req.path.startsWith("/api/market"))
+  ) {
     return res.sendStatus(204);
   }
   next();

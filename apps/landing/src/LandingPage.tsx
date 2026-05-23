@@ -21,6 +21,7 @@ import { AnimatedWealthChart } from "./components/AnimatedWealthChart";
 import { HeroWaveCanvas } from "./components/HeroWaveCanvas";
 import { TrialSignupModal } from "./components/TrialSignupModal";
 import { submitTrialSignup } from "./lib/trialSignup";
+import { useMarketTicker } from "./hooks/useMarketTicker";
 
 export type LandingPageProps = {
   onStartClick?: () => void;
@@ -31,17 +32,6 @@ type IconType = ComponentType<SVGProps<SVGSVGElement>>;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // ============================== DATA ==============================
-
-const TICKER_ITEMS: ReadonlyArray<{ symbol: string; price: string; delta: string; up: boolean }> = [
-  { symbol: "BTC/USDT", price: "67,432.10", delta: "+2.34%", up: true },
-  { symbol: "ETH/USDT", price: "3,890.55", delta: "−1.20%", up: false },
-  { symbol: "SOL/USDT", price: "184.20", delta: "+4.81%", up: true },
-  { symbol: "BNB/USDT", price: "612.40", delta: "+0.42%", up: true },
-  { symbol: "XRP/USDT", price: "0.6182", delta: "−0.78%", up: false },
-  { symbol: "TRADERS ONLINE", price: "1,247", delta: "LIVE", up: true },
-  { symbol: "WIN RATE MÉDIO", price: "58.4%", delta: "Trackion", up: true },
-  { symbol: "TRADES IMPORTADOS", price: "1,284,902", delta: "+18.2k 7d", up: true },
-];
 
 const NAV_LINKS = [
   { href: "#recursos", index: "01", label: "Recursos" },
@@ -157,12 +147,14 @@ const HERO_PILLS: ReadonlyArray<{ icon: IconType; text: string }> = [
 // ============================== UI HELPERS ==============================
 
 function TickerBar() {
+  const { items } = useMarketTicker();
+
   return (
     <div className="relative z-40 overflow-hidden border-y border-white/[0.08] bg-black/90 backdrop-blur-xl">
       <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-32 bg-gradient-to-r from-black to-transparent" />
       <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-32 bg-gradient-to-l from-black to-transparent" />
       <div className="flex w-max tk-marquee">
-        {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
+        {[...items, ...items].map((item, i) => (
           <div
             key={`${item.symbol}-${i}`}
             className="flex shrink-0 items-center gap-3 border-r border-white/[0.06] px-6 py-2.5 font-mono text-[11px]"

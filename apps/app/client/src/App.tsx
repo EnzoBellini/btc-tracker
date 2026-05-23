@@ -134,7 +134,7 @@ function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
       {/* Brand block — bordered */}
       <div className="border-b border-border px-5 py-5">
         <div className="flex items-center gap-2.5">
-          <img src="/logo.png" alt="" className="h-7 w-7 shrink-0 object-contain" />
+          <img src="/logo-trackion.png" alt="" className="h-7 w-7 shrink-0 object-contain" decoding="async" />
           <div className="min-w-0">
             <p className="text-base font-bold tracking-[0.28em] text-foreground">TRACKION</p>
             <p className="font-mono-tk text-[9px] uppercase tracking-[0.22em] text-muted-foreground">
@@ -253,7 +253,7 @@ function Layout({ children }: { children: React.ReactNode }) {
               {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
             <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="" className="h-6 w-6 object-contain" />
+              <img src="/logo-trackion.png" alt="" className="h-6 w-6 object-contain" decoding="async" />
               <span className="text-sm font-bold tracking-[0.22em] text-foreground">TRACKION</span>
             </div>
             <div className="ml-auto flex items-center gap-2 font-mono-tk text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
