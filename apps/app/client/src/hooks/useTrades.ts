@@ -50,26 +50,11 @@ export function useDeleteTrade() {
   });
 }
 
+import { useSyncAllTrades } from "./useExchanges";
+
+export { useSyncAllTrades };
+
+/** @deprecated Use useSyncAllTrades — importa de todas as exchanges conectadas */
 export function useSyncTradesFromMexc() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async () => {
-      const res = await fetch("/api/trades/sync-from-mexc", { method: "POST", credentials: "include" });
-      let data: any;
-      try {
-        const text = await res.text();
-        data = text ? JSON.parse(text) : {};
-      } catch {
-        throw new Error("Resposta inválida do servidor. Pode ser timeout — verifique se o IP do Railway está na whitelist da MEXC.");
-      }
-      if (!res.ok) throw new Error(data?.error ?? "Erro ao sincronizar");
-      return data;
-    },
-    onSuccess: (data: { success?: boolean; imported?: number; message?: string }) => {
-      qc.invalidateQueries({ queryKey: ["/api/trades"] });
-      qc.invalidateQueries({ queryKey: ["/api/stats"] });
-      toast.success(data.message ?? "Trades sincronizados");
-    },
-    onError: (err: any) => toast.error(err?.message ?? "Erro ao sincronizar trades"),
-  });
+  return useSyncAllTrades();
 }

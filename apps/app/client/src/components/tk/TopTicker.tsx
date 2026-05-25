@@ -35,7 +35,7 @@ function buildItems(stats: any, trades: any[]): Item[] {
     { symbol: "TRADES FECHADOS", value: String(closed), delta: `${total} total`, up: null },
     { symbol: "ABERTOS", value: String(open), delta: open > 0 ? "live" : "—", up: null },
     { symbol: "BTC ACUMULADO", value: `${btc.toFixed(6)} BTC`, delta: "spot", up: null },
-    { symbol: "EXCHANGE", value: "MEXC", delta: "futures · spot", up: null },
+    { symbol: "EXCHANGE", value: "MULTI", delta: "mexc · binance · bitget", up: null },
     { symbol: "STATUS", value: "OPERATIONAL", delta: "all systems", up: true },
   ];
 }

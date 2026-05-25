@@ -41,17 +41,28 @@ export const goalsApi = {
   remove: (id: number) => apiRequest("DELETE", `/api/goals/${id}`),
 };
 
-// ── Settings / MEXC ───────────────────────────────────────────────────────────
+// ── Settings ──────────────────────────────────────────────────────────────────
 export const settingsApi = {
   get: () => fetch("/api/settings").then(r => r.json()) as Promise<Settings>,
   update: (data: Partial<InsertSettings>) => apiRequest("PATCH", "/api/settings", data),
 };
 
+export const exchangesApi = {
+  list: () => fetch("/api/exchanges").then((r) => r.json()),
+  getCredentials: (exchange: string) =>
+    fetch(`/api/exchanges/${exchange}/credentials`).then((r) => r.json()),
+  test: (exchange: string, body: { apiKey: string; secretKey: string; passphrase?: string }) =>
+    apiRequest("POST", `/api/exchanges/${exchange}/test`, body),
+  sync: (exchange: string) => apiRequest("POST", `/api/exchanges/${exchange}/sync`),
+  syncAllTrades: (exchanges?: string[]) =>
+    apiRequest("POST", "/api/trades/sync", exchanges?.length ? { exchanges } : {}),
+};
+
+/** @deprecated Use exchangesApi */
 export const mexcApi = {
-  getCredentials: () => fetch("/api/mexc/credentials").then(r => r.json()),
-  test: (apiKey: string, secretKey: string) =>
-    apiRequest("POST", "/api/mexc/test", { apiKey, secretKey }),
-  sync: () => apiRequest("POST", "/api/mexc/sync"),
+  getCredentials: () => exchangesApi.getCredentials("mexc"),
+  test: (apiKey: string, secretKey: string) => exchangesApi.test("mexc", { apiKey, secretKey }),
+  sync: () => exchangesApi.sync("mexc"),
 };
 
 export const statsApi = {

@@ -4,6 +4,7 @@
 
 -- 1) Apagar todas as tabelas (ordem importa por causa das FKs)
 DROP TABLE IF EXISTS goals CASCADE;
+DROP TABLE IF EXISTS exchange_credentials CASCADE;
 DROP TABLE IF EXISTS mexc_credentials CASCADE;
 DROP TABLE IF EXISTS settings CASCADE;
 DROP TABLE IF EXISTS btc_holdings CASCADE;

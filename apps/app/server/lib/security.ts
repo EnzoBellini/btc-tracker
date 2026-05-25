@@ -40,7 +40,7 @@ export function logEmailConfigStatus(log: (msg: string, source?: string) => void
 /** Remove dados sensíveis antes de logar respostas da API. */
 export function redactForLog(path: string, body: unknown): unknown {
   if (!body || typeof body !== "object") return body;
-  const sensitivePaths = ["/api/auth", "/api/mexc"];
+  const sensitivePaths = ["/api/auth", "/api/mexc", "/api/exchanges"];
   if (!sensitivePaths.some((p) => path.startsWith(p))) return body;
 
   const clone = JSON.parse(JSON.stringify(body)) as Record<string, unknown>;

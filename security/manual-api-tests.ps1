@@ -69,7 +69,7 @@ if ($hdr['X-Powered-By']) {
 
 # --- Rotas protegidas ---
 @(
-    '/api/trades','/api/settings','/api/mexc/credentials','/api/stats','/api/goals',
+    '/api/trades','/api/settings','/api/mexc/credentials','/api/exchanges/mexc/credentials','/api/stats','/api/goals',
     '/api/onboarding/progress','/api/user-rules','/api/btc-holdings','/api/transfers'
 ) | ForEach-Object {
     $r = Invoke-ApiRaw GET $_

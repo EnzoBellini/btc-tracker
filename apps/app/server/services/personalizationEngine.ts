@@ -266,7 +266,7 @@ export function buildRoadmap(
       title: "Fundação — semana 1–2",
       description: "Conectar exchange, validar settings e registrar operações.",
       checklist: JSON.stringify([
-        { task: "Conectar API MEXC em Configurações", done: false },
+        { task: "Conectar exchanges (MEXC, Binance, Bitget) em Configurações", done: false },
         { task: "Confirmar capital e risco por trade", done: false },
         { task: "Registrar primeiro trade com stop e alvo", done: false },
       ]),

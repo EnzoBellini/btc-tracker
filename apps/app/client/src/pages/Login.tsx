@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 const FEATURES = [
   { icon: TrendingUp, index: "01", label: "Rastreie trades BTCUSDT em tempo real" },
   { icon: Shield, index: "02", label: "Gerencie risco com regras personalizadas" },
-  { icon: Zap, index: "03", label: "Sincronize com a MEXC via API" },
+  { icon: Zap, index: "03", label: "Sincronize MEXC, Binance e Bitget via API" },
 ];
 
 type Step = "email" | "check_email" | "password";

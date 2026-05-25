@@ -103,25 +103,37 @@ export const insertSettingsSchema = createInsertSchema(settings).omit({ id: true
 export type InsertSettings = z.infer<typeof insertSettingsSchema>;
 export type Settings = typeof settings.$inferSelect;
 
-// ── MEXC API Credentials (uma linha por usuário) ─────────────────────────────
-export const mexcCredentials = pgTable(
-  "mexc_credentials",
+// ── Exchange API Credentials (uma linha por usuário + exchange) ───────────────
+export const EXCHANGE_IDS = ["mexc", "binance", "bitget"] as const;
+export type ExchangeId = (typeof EXCHANGE_IDS)[number];
+
+export const exchangeCredentials = pgTable(
+  "exchange_credentials",
   {
     id: serial("id").primaryKey(),
     userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    exchange: text("exchange").notNull(), // mexc | binance | bitget
     apiKey: text("api_key").notNull().default(""),
-  secretKey: text("secret_key").notNull().default(""),
-  isConnected: boolean("is_connected").notNull().default(false),
-  lastSyncAt: text("last_sync_at"),  // ISO timestamp
-  lastSyncStatus: text("last_sync_status"), // "success" | "error" | null
-  lastSyncMessage: text("last_sync_message"),
+    secretKey: text("secret_key").notNull().default(""),
+    passphrase: text("passphrase").notNull().default(""),
+    isConnected: boolean("is_connected").notNull().default(false),
+    lastSyncAt: text("last_sync_at"),
+    lastSyncStatus: text("last_sync_status"),
+    lastSyncMessage: text("last_sync_message"),
   },
-  (t) => [uniqueIndex("mexc_credentials_user_id_unique").on(t.userId)],
+  (t) => [uniqueIndex("exchange_credentials_user_exchange_unique").on(t.userId, t.exchange)],
 );
 
-export const insertMexcCredentialsSchema = createInsertSchema(mexcCredentials).omit({ id: true, userId: true });
-export type InsertMexcCredentials = z.infer<typeof insertMexcCredentialsSchema>;
-export type MexcCredentials = typeof mexcCredentials.$inferSelect;
+export const insertExchangeCredentialsSchema = createInsertSchema(exchangeCredentials).omit({
+  id: true,
+  userId: true,
+  exchange: true,
+});
+export type InsertExchangeCredentials = z.infer<typeof insertExchangeCredentialsSchema>;
+export type ExchangeCredentials = typeof exchangeCredentials.$inferSelect;
+
+/** @deprecated use ExchangeCredentials */
+export type MexcCredentials = ExchangeCredentials;
 
 // ── Goals / Plan Tracker ──────────────────────────────────────────────────────
 export const goals = pgTable("goals", {

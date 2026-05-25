@@ -9,8 +9,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, useLogout } from "@/hooks/useAuth";
-import { useSyncTradesFromMexc } from "@/hooks/useTrades";
-import { useMexcCredentials } from "@/hooks/useMexc";
+import { useSyncAllTrades } from "@/hooks/useTrades";
+import { useExchangesSummary } from "@/hooks/useExchanges";
 import TopTicker from "@/components/tk/TopTicker";
 
 const LoginPage = lazy(() => import("@/pages/Login"));
@@ -27,15 +27,15 @@ const Rules = lazy(() => import("@/pages/Rules"));
 const ApiSettings = lazy(() => import("@/pages/ApiSettings"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
-// ── Sync MEXC ao abrir o app (após login) ────────────────────────────────────────
+// ── Sync trades de todas as exchanges conectadas ao abrir o app ───────────────
 function SyncOnLogin() {
   const { user } = useAuth();
-  const syncFromMexc = useSyncTradesFromMexc();
+  const syncAll = useSyncAllTrades();
   const hasSynced = useRef(false);
   useEffect(() => {
     if (user && !hasSynced.current) {
       hasSynced.current = true;
-      syncFromMexc.mutate();
+      syncAll.mutate(undefined);
     }
   }, [user]);
   return null;
@@ -49,7 +49,7 @@ const navItems = [
   { href: "/btc-holdings", index: "04", label: "BTC Stack",      mono: "BTC.STACK",  icon: Bitcoin },
   { href: "/reports",      index: "05", label: "Relatórios",     mono: "REPORTS",    icon: BarChart2 },
   { href: "/rules",        index: "06", label: "Regras & Metas", mono: "RULES",      icon: BookOpen },
-  { href: "/api-settings", index: "07", label: "API MEXC",       mono: "API.MEXC",   icon: Plug },
+  { href: "/api-settings", index: "07", label: "API Exchanges",  mono: "API.EXCH",   icon: Plug },
   { href: "/conta",        index: "08", label: "Conta",          mono: "ACCOUNT",    icon: User },
 ];
 
@@ -116,8 +116,8 @@ function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
   const [location] = useHashLocation();
   const { user } = useAuth();
   const logout = useLogout();
-  const { data: creds } = useMexcCredentials();
-  const isConnected = !!creds?.isConnected;
+  const { data: summary } = useExchangesSummary();
+  const connectedCount = summary?.filter((s) => s.isConnected).length ?? 0;
 
   const todayISO = new Date().toISOString().slice(0, 10);
 
@@ -145,8 +145,8 @@ function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
         <div className="mt-4 flex items-center justify-between font-mono-tk text-[9px] uppercase tracking-[0.22em] text-muted-foreground">
           <span className="num">{todayISO}</span>
           <span className="flex items-center gap-1.5">
-            <span className={cn("h-1.5 w-1.5 rounded-full", isConnected ? "bg-profit animate-pulse" : "bg-muted-foreground/40")} />
-            {isConnected ? "MEXC LIVE" : "MEXC OFF"}
+            <span className={cn("h-1.5 w-1.5 rounded-full", connectedCount > 0 ? "bg-profit animate-pulse" : "bg-muted-foreground/40")} />
+            {connectedCount > 0 ? `${connectedCount} EXCH LIVE` : "EXCH OFF"}
           </span>
         </div>
       </div>

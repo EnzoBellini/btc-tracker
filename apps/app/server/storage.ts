@@ -4,7 +4,7 @@ import {
   Transfer, InsertTransfer,
   BtcHolding, InsertBtcHolding,
   Settings, InsertSettings,
-  MexcCredentials, InsertMexcCredentials,
+  ExchangeCredentials, InsertExchangeCredentials, ExchangeId, EXCHANGE_IDS,
   Goal, InsertGoal,
   User, InsertUser,
   UserRule, InsertUserRule,
@@ -15,7 +15,7 @@ import {
   transfers,
   btcHoldings,
   settings,
-  mexcCredentials,
+  exchangeCredentials,
   goals,
   users,
   emailVerificationTokens,
@@ -50,13 +50,19 @@ export interface IStorage {
 
   getBtcHoldings(userId: number): Promise<BtcHolding[]>;
   createBtcHolding(userId: number, holding: InsertBtcHolding): Promise<BtcHolding>;
+  updateBtcHolding(userId: number, id: number, holding: Partial<InsertBtcHolding>): Promise<BtcHolding | undefined>;
   deleteBtcHolding(userId: number, id: number): Promise<boolean>;
 
   getSettings(userId: number): Promise<Settings>;
   updateSettings(userId: number, s: Partial<InsertSettings>): Promise<Settings>;
 
-  getMexcCredentials(userId: number): Promise<MexcCredentials>;
-  updateMexcCredentials(userId: number, c: Partial<InsertMexcCredentials>): Promise<MexcCredentials>;
+  listExchangeCredentials(userId: number): Promise<ExchangeCredentials[]>;
+  getExchangeCredentials(userId: number, exchange: ExchangeId): Promise<ExchangeCredentials>;
+  updateExchangeCredentials(
+    userId: number,
+    exchange: ExchangeId,
+    c: Partial<InsertExchangeCredentials>,
+  ): Promise<ExchangeCredentials>;
 
   getGoals(userId: number): Promise<Goal[]>;
   getGoal(userId: number, id: number): Promise<Goal | undefined>;
@@ -134,6 +140,14 @@ export class DbStorage implements IStorage {
     if (!holding) throw new Error("Failed to create BTC holding");
     return holding;
   }
+  async updateBtcHolding(userId: number, id: number, h: Partial<InsertBtcHolding>): Promise<BtcHolding | undefined> {
+    const [updated] = await db!
+      .update(btcHoldings)
+      .set(h)
+      .where(and(eq(btcHoldings.id, id), eq(btcHoldings.userId, userId)))
+      .returning();
+    return updated;
+  }
   async deleteBtcHolding(userId: number, id: number): Promise<boolean> {
     const result = await db!.delete(btcHoldings).where(and(eq(btcHoldings.id, id), eq(btcHoldings.userId, userId))).returning();
     return result.length > 0;
@@ -160,39 +174,104 @@ export class DbStorage implements IStorage {
     return updated;
   }
 
-  async getMexcCredentials(userId: number): Promise<MexcCredentials> {
-    const [row] = await db!.select().from(mexcCredentials).where(eq(mexcCredentials.userId, userId)).limit(1);
-    if (!row) {
-      const [inserted] = await db!.insert(mexcCredentials).values({
-        userId,
-        apiKey: "",
-        secretKey: "",
-        isConnected: false,
-      }).returning();
-      if (!inserted) throw new Error("Failed to create default MEXC credentials");
-      return inserted;
-    }
-    return { ...row, apiKey: decrypt(row.apiKey), secretKey: decrypt(row.secretKey) };
+  private decryptExchangeRow(row: ExchangeCredentials): ExchangeCredentials {
+    return {
+      ...row,
+      apiKey: decrypt(row.apiKey),
+      secretKey: decrypt(row.secretKey),
+      passphrase: row.passphrase ? decrypt(row.passphrase) : "",
+    };
   }
-  async updateMexcCredentials(userId: number, c: Partial<InsertMexcCredentials>): Promise<MexcCredentials> {
+
+  private encryptExchangePayload(c: Partial<InsertExchangeCredentials>): Partial<InsertExchangeCredentials> {
     const payload = { ...c };
-    if (payload.secretKey && payload.secretKey !== "••••••••••••••••") {
+    const masked = "••••••••••••••••";
+    if (payload.secretKey && payload.secretKey !== masked) {
       payload.secretKey = encrypt(payload.secretKey);
     } else {
       delete payload.secretKey;
     }
+    if (payload.passphrase && payload.passphrase !== masked) {
+      payload.passphrase = encrypt(payload.passphrase);
+    } else {
+      delete payload.passphrase;
+    }
     if (payload.apiKey) {
       payload.apiKey = encrypt(payload.apiKey);
     }
-    const [existing] = await db!.select().from(mexcCredentials).where(eq(mexcCredentials.userId, userId)).limit(1);
-    if (!existing) {
-      const [inserted] = await db!.insert(mexcCredentials).values({ userId, apiKey: "", secretKey: "", isConnected: false, ...payload }).returning();
-      if (!inserted) throw new Error("Failed to create MEXC credentials");
-      return { ...inserted, apiKey: decrypt(inserted.apiKey), secretKey: decrypt(inserted.secretKey) };
+    return payload;
+  }
+
+  async listExchangeCredentials(userId: number): Promise<ExchangeCredentials[]> {
+    const rows = await db!.select().from(exchangeCredentials).where(eq(exchangeCredentials.userId, userId));
+    const byExchange = new Map(rows.map((r) => [r.exchange, r]));
+    const result: ExchangeCredentials[] = [];
+    for (const exchange of EXCHANGE_IDS) {
+      const row = byExchange.get(exchange);
+      if (row) {
+        result.push(this.decryptExchangeRow(row));
+      } else {
+        const [inserted] = await db!
+          .insert(exchangeCredentials)
+          .values({ userId, exchange, apiKey: "", secretKey: "", passphrase: "", isConnected: false })
+          .returning();
+        if (inserted) result.push(this.decryptExchangeRow(inserted));
+      }
     }
-    const [updated] = await db!.update(mexcCredentials).set(payload).where(eq(mexcCredentials.userId, userId)).returning();
-    if (!updated) throw new Error("Failed to update MEXC credentials");
-    return { ...updated, apiKey: decrypt(updated.apiKey), secretKey: decrypt(updated.secretKey) };
+    return result;
+  }
+
+  async getExchangeCredentials(userId: number, exchange: ExchangeId): Promise<ExchangeCredentials> {
+    const [row] = await db!
+      .select()
+      .from(exchangeCredentials)
+      .where(and(eq(exchangeCredentials.userId, userId), eq(exchangeCredentials.exchange, exchange)))
+      .limit(1);
+    if (!row) {
+      const [inserted] = await db!
+        .insert(exchangeCredentials)
+        .values({ userId, exchange, apiKey: "", secretKey: "", passphrase: "", isConnected: false })
+        .returning();
+      if (!inserted) throw new Error(`Failed to create ${exchange} credentials`);
+      return this.decryptExchangeRow(inserted);
+    }
+    return this.decryptExchangeRow(row);
+  }
+
+  async updateExchangeCredentials(
+    userId: number,
+    exchange: ExchangeId,
+    c: Partial<InsertExchangeCredentials>,
+  ): Promise<ExchangeCredentials> {
+    const payload = this.encryptExchangePayload(c);
+    const [existing] = await db!
+      .select()
+      .from(exchangeCredentials)
+      .where(and(eq(exchangeCredentials.userId, userId), eq(exchangeCredentials.exchange, exchange)))
+      .limit(1);
+    if (!existing) {
+      const [inserted] = await db!
+        .insert(exchangeCredentials)
+        .values({
+          userId,
+          exchange,
+          apiKey: "",
+          secretKey: "",
+          passphrase: "",
+          isConnected: false,
+          ...payload,
+        })
+        .returning();
+      if (!inserted) throw new Error(`Failed to create ${exchange} credentials`);
+      return this.decryptExchangeRow(inserted);
+    }
+    const [updated] = await db!
+      .update(exchangeCredentials)
+      .set(payload)
+      .where(and(eq(exchangeCredentials.userId, userId), eq(exchangeCredentials.exchange, exchange)))
+      .returning();
+    if (!updated) throw new Error(`Failed to update ${exchange} credentials`);
+    return this.decryptExchangeRow(updated);
   }
 
   async getGoals(userId: number): Promise<Goal[]> {
@@ -325,7 +404,7 @@ class MemStorage implements IStorage {
   private transfers: Map<number, Transfer> = new Map();
   private btcHoldings: Map<number, BtcHolding> = new Map();
   private settingsByUser: Map<number, Settings> = new Map();
-  private mexcByUser: Map<number, MexcCredentials> = new Map();
+  private exchangeByKey: Map<string, ExchangeCredentials> = new Map();
   private goalsMap: Map<number, Goal> = new Map();
   private usersMap: Map<number, User> = new Map();
   private verificationTokens: Map<number, EmailVerificationToken & { user?: User }> = new Map();
@@ -348,17 +427,23 @@ class MemStorage implements IStorage {
     } as Settings;
   }
 
-  private defaultMexc(userId: number): MexcCredentials {
+  private exchangeKey(userId: number, exchange: ExchangeId) {
+    return `${userId}:${exchange}`;
+  }
+
+  private defaultExchange(userId: number, exchange: ExchangeId): ExchangeCredentials {
     return {
       id: userId,
       userId,
+      exchange,
       apiKey: "",
       secretKey: "",
+      passphrase: "",
       isConnected: false,
       lastSyncAt: null,
       lastSyncStatus: null,
       lastSyncMessage: null,
-    } as MexcCredentials;
+    } as ExchangeCredentials;
   }
 
   async getTrades(userId: number) {
@@ -420,6 +505,13 @@ class MemStorage implements IStorage {
     this.btcHoldings.set(holding.id, holding);
     return holding;
   }
+  async updateBtcHolding(userId: number, id: number, h: Partial<InsertBtcHolding>) {
+    const existing = this.btcHoldings.get(id);
+    if (!existing || existing.userId !== userId) return undefined;
+    const updated = { ...existing, ...h } as BtcHolding;
+    this.btcHoldings.set(id, updated);
+    return updated;
+  }
   async deleteBtcHolding(userId: number, id: number) {
     const h = this.btcHoldings.get(id);
     if (!h || h.userId !== userId) return false;
@@ -441,39 +533,57 @@ class MemStorage implements IStorage {
     return updated;
   }
 
-  async getMexcCredentials(userId: number) {
-    let c = this.mexcByUser.get(userId);
-    if (!c) {
-      c = this.defaultMexc(userId);
-      this.mexcByUser.set(userId, c);
-    }
+  private decryptMemExchange(row: ExchangeCredentials): ExchangeCredentials {
     return {
-      ...c,
-      apiKey: decrypt(c.apiKey),
-      secretKey: decrypt(c.secretKey),
+      ...row,
+      apiKey: decrypt(row.apiKey),
+      secretKey: decrypt(row.secretKey),
+      passphrase: row.passphrase ? decrypt(row.passphrase) : "",
     };
   }
-  async updateMexcCredentials(userId: number, c: Partial<InsertMexcCredentials>) {
+
+  async listExchangeCredentials(userId: number) {
+    const result: ExchangeCredentials[] = [];
+    for (const exchange of EXCHANGE_IDS) {
+      result.push(await this.getExchangeCredentials(userId, exchange));
+    }
+    return result;
+  }
+
+  async getExchangeCredentials(userId: number, exchange: ExchangeId) {
+    const key = this.exchangeKey(userId, exchange);
+    let c = this.exchangeByKey.get(key);
+    if (!c) {
+      c = this.defaultExchange(userId, exchange);
+      this.exchangeByKey.set(key, c);
+    }
+    return this.decryptMemExchange(c);
+  }
+
+  async updateExchangeCredentials(userId: number, exchange: ExchangeId, c: Partial<InsertExchangeCredentials>) {
+    const masked = "••••••••••••••••";
     const payload = { ...c };
-    if (payload.secretKey && payload.secretKey !== "••••••••••••••••") {
+    if (payload.secretKey && payload.secretKey !== masked) {
       payload.secretKey = encrypt(payload.secretKey);
     } else {
       delete payload.secretKey;
     }
+    if (payload.passphrase && payload.passphrase !== masked) {
+      payload.passphrase = encrypt(payload.passphrase);
+    } else {
+      delete payload.passphrase;
+    }
     if (payload.apiKey) {
       payload.apiKey = encrypt(payload.apiKey);
     }
-    let row = this.mexcByUser.get(userId);
+    const key = this.exchangeKey(userId, exchange);
+    let row = this.exchangeByKey.get(key);
     if (!row) {
-      row = this.defaultMexc(userId);
+      row = this.defaultExchange(userId, exchange);
     }
-    const merged = { ...row, ...payload } as MexcCredentials;
-    this.mexcByUser.set(userId, merged);
-    return {
-      ...merged,
-      apiKey: decrypt(merged.apiKey),
-      secretKey: decrypt(merged.secretKey),
-    };
+    const merged = { ...row, ...payload } as ExchangeCredentials;
+    this.exchangeByKey.set(key, merged);
+    return this.decryptMemExchange(merged);
   }
 
   async getGoals(userId: number) {

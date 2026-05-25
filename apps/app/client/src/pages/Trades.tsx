@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import {
   Plus, Trash2, Edit2, Search, X, RefreshCw, ArrowUpRight, ArrowDownRight,
 } from "lucide-react";
-import { useTrades, useCreateTrade, useUpdateTrade, useDeleteTrade, useSyncTradesFromMexc } from "@/hooks/useTrades";
+import { useTrades, useCreateTrade, useUpdateTrade, useDeleteTrade, useSyncAllTrades } from "@/hooks/useTrades";
 import { useUIStore } from "@/store/ui";
 import { fmtUsdt, pnlColor } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -187,7 +187,7 @@ export default function Trades() {
   const { tradesFilter, setTradesFilter, resetTradesFilter } = useUIStore();
   const { data: trades = [], isLoading } = useTrades();
   const deleteTrade = useDeleteTrade();
-  const syncFromMexc = useSyncTradesFromMexc();
+  const syncAll = useSyncAllTrades();
 
   const filtered = [...trades]
     .filter(t => {
@@ -221,11 +221,11 @@ export default function Trades() {
               <TerminalButton
                 variant="outline"
                 icon={RefreshCw}
-                onClick={() => syncFromMexc.mutate()}
-                disabled={syncFromMexc.isPending}
-                className={cn(syncFromMexc.isPending && "[&_svg]:animate-spin")}
+                onClick={() => syncAll.mutate(undefined)}
+                disabled={syncAll.isPending}
+                className={cn(syncAll.isPending && "[&_svg]:animate-spin")}
               >
-                {syncFromMexc.isPending ? "syncing…" : "sync mexc"}
+                {syncAll.isPending ? "syncing…" : "sync exchanges"}
               </TerminalButton>
               <Dialog open={open || !!editTrade} onOpenChange={v => { setOpen(v); if (!v) setEditTrade(null); }}>
                 <DialogTrigger asChild>

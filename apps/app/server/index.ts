@@ -16,10 +16,13 @@ const httpServer = createServer(app);
 const isProd = process.env.NODE_ENV === "production";
 
 app.disable("x-powered-by");
-const mexcOrigins = [
+const exchangeOrigins = [
   "'self'",
   "https://contract.mexc.com",
   "https://api.mexc.com",
+  "https://fapi.binance.com",
+  "https://api.binance.com",
+  "https://api.bitget.com",
   "https://api.ipify.org",
 ];
 
@@ -33,7 +36,7 @@ app.use(
             scriptSrc: ["'self'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: mexcOrigins,
+            connectSrc: exchangeOrigins,
             frameAncestors: ["'self'"],
             objectSrc: ["'none'"],
             baseUri: ["'self'"],
