@@ -1,4 +1,4 @@
-import PlanTracker from "@/components/PlanTracker";
+import GoalsSection from "@/components/GoalsSection";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -253,7 +253,7 @@ export default function Rules() {
         {/* Plan Tracker */}
         <section className="space-y-4">
           <Eyebrow>goals · plan tracker</Eyebrow>
-          <PlanTracker />
+          <GoalsSection />
         </section>
 
         {/* Settings */}

@@ -1,9 +1,9 @@
 import { lazy, Suspense, useState, useEffect, useRef, Component, type ErrorInfo, type ReactNode } from "react";
 import { Router, Switch, Route, Link } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import {
   LayoutDashboard, ArrowLeftRight, TrendingUp, Bitcoin, BarChart2, BookOpen, Plug, LogOut, Menu, User, CreditCard, X,
 } from "lucide-react";
@@ -30,22 +30,58 @@ const Billing = lazy(() => import("@/pages/Billing"));
 const SubscriptionWall = lazy(() => import("@/pages/SubscriptionWall"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
-// ── Sync trades de todas as exchanges conectadas ao abrir o app ───────────────
-function SyncOnLogin() {
+// ── Sync automático: 1x ao abrir + intervalo com app visível (Pro 2min / Elite 30s) ─
+function AutoSync() {
   const { user } = useAuth();
   const { data: sub } = useSubscription();
   const syncAll = useSyncAllTrades();
-  const hasSynced = useRef(false);
-  useEffect(() => {
-    const canSync =
-      sub?.entitlements &&
-      typeof sub.entitlements === "object" &&
-      (sub.entitlements as { syncMode?: string }).syncMode !== "manual";
-    if (user && canSync && !hasSynced.current) {
-      hasSynced.current = true;
-      syncAll.mutate(undefined);
+  const qc = useQueryClient();
+  const initialDone = useRef(false);
+  const pendingRef = useRef(false);
+
+  const syncMode =
+    sub?.entitlements && typeof sub.entitlements === "object"
+      ? (sub.entitlements as { syncMode?: string }).syncMode
+      : "manual";
+  const intervalMs =
+    syncMode === "webhook" ? 30_000 : syncMode === "auto_2m" ? 120_000 : 0;
+
+  const runSilentSync = async () => {
+    if (pendingRef.current || syncMode === "manual") return;
+    pendingRef.current = true;
+    try {
+      const res = await fetch("/api/trades/sync", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (res.ok && data.totalImported > 0) {
+        qc.invalidateQueries({ queryKey: ["/api/trades"] });
+        qc.invalidateQueries({ queryKey: ["/api/stats"] });
+        toast.success(`${data.totalImported} trade(s) importado(s)`);
+      }
+    } catch {
+      /* ignore background sync errors */
+    } finally {
+      pendingRef.current = false;
     }
-  }, [user, sub]);
+  };
+
+  useEffect(() => {
+    if (!user || syncMode === "manual" || initialDone.current) return;
+    initialDone.current = true;
+    syncAll.mutate(undefined);
+  }, [user, syncMode, syncAll]);
+
+  useEffect(() => {
+    if (!user || !intervalMs) return;
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") runSilentSync();
+    }, intervalMs);
+    return () => clearInterval(id);
+  }, [user, intervalMs, syncMode]);
+
   return null;
 }
 
@@ -372,7 +408,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <SyncOnLogin />
+      <AutoSync />
       {children}
     </>
   );

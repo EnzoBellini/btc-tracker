@@ -3,12 +3,18 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Cell,
   LineChart, Line, CartesianGrid,
 } from "recharts";
+import { Download } from "lucide-react";
 import { useStats } from "@/hooks/useStats";
+import { useSubscription } from "@/hooks/useSubscription";
+import { useAdvancedReports, type AggRow } from "@/hooks/useAdvancedReports";
+import { useWeeklyInsights } from "@/hooks/useWeeklyInsights";
 import { fmtUsdt, fmtPct, pnlColor } from "@/lib/format";
 import {
-  PageHeader, KpiTerminal, TerminalFrame, Eyebrow, StatPill,
+  PageHeader, KpiTerminal, TerminalFrame, Eyebrow, StatPill, TerminalButton,
 } from "@/components/tk";
+import UpgradeCard from "@/components/UpgradeCard";
 import { cn } from "@/lib/utils";
+import { Link } from "wouter";
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -52,7 +58,7 @@ function ReportTable({
           </tr>
         </thead>
         <tbody>
-          {entries.map(([key, v], i) => {
+          {entries.map(([key, v]) => {
             const wr = v.count > 0 ? (v.wins / v.count) * 100 : 0;
             return (
               <tr key={key} className="border-b border-border/40 transition-colors hover:bg-white/[0.02]">
@@ -75,9 +81,79 @@ function ReportTable({
   );
 }
 
+function BreakdownTable({ rows, labelCol }: { rows: AggRow[]; labelCol: string }) {
+  if (!rows.length) {
+    return <p className="p-6 text-sm text-muted-foreground">Sem dados para este recorte.</p>;
+  }
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-border">
+            {[labelCol, "Trades", "Wins", "Losses", "PnL"].map(h => (
+              <th key={h} className="px-4 py-3 text-left font-mono-tk text-[10px] uppercase tracking-[0.22em] text-muted-foreground">{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(row => (
+            <tr key={row.key} className="border-b border-border/40 hover:bg-white/[0.02]">
+              <td className="px-4 py-3 font-mono-tk text-xs font-bold">{row.key}</td>
+              <td className="num px-4 py-3 font-mono-tk text-xs">{row.count}</td>
+              <td className="num px-4 py-3 text-profit">{row.wins}</td>
+              <td className="num px-4 py-3 text-loss">{row.losses}</td>
+              <td className={cn("num px-4 py-3 font-bold", pnlColor(row.pnl))}>
+                {row.pnl >= 0 ? "+" : ""}{fmtUsdt(row.pnl)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function BreakdownChart({ rows }: { rows: AggRow[] }) {
+  const chartData = rows.slice(0, 8).map(r => ({
+    key: r.key.length > 12 ? `${r.key.slice(0, 10)}…` : r.key,
+    pnl: parseFloat(r.pnl.toFixed(2)),
+  }));
+  if (!chartData.length) return null;
+  return (
+    <ResponsiveContainer width="100%" height={200}>
+      <BarChart data={chartData} barSize={16}>
+        <XAxis dataKey="key" tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 9 }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10 }} axisLine={false} tickLine={false} width={50} />
+        <Tooltip content={<CustomTooltip />} />
+        <ReferenceLine y={0} stroke="rgba(255,255,255,0.12)" />
+        <Bar dataKey="pnl" name="PnL">
+          {chartData.map((e, i) => (
+            <Cell key={i} fill={e.pnl >= 0 ? "hsl(var(--profit))" : "hsl(var(--loss))"} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
 export default function Reports() {
   const { data: stats, isLoading } = useStats();
+  const { data: sub } = useSubscription();
   const [tab, setTab] = useState<"monthly" | "weekly">("monthly");
+  const [breakdownTab, setBreakdownTab] = useState<"pair" | "setup" | "hour" | "exchange">("pair");
+  const [selectedWeek, setSelectedWeek] = useState<string | undefined>(undefined);
+
+  const isAdvanced =
+    sub?.entitlements &&
+    typeof sub.entitlements === "object" &&
+    (sub.entitlements as { moduleSmartReports?: string }).moduleSmartReports === "advanced";
+  const isElite =
+    sub?.entitlements &&
+    typeof sub.entitlements === "object" &&
+    (sub.entitlements as { moduleInvestorExport?: boolean }).moduleInvestorExport === true;
+
+  const { data: advanced } = useAdvancedReports(!!isAdvanced);
+  const { data: insights } = useWeeklyInsights(selectedWeek, !!isAdvanced && tab === "weekly");
 
   const monthData = stats?.tradesByMonth ?? {};
   const weekData  = stats?.tradesByWeek  ?? {};
@@ -97,6 +173,21 @@ export default function Reports() {
       weekChartData:  toChart(weekData).slice(-12),
     };
   }, [stats]);
+
+  const weekOptions = insights?.availableWeeks ?? Object.keys(weekData).sort((a, b) => b.localeCompare(a)).slice(0, 12);
+  const activeWeek = selectedWeek ?? weekOptions[0];
+
+  const handleExport = async () => {
+    const res = await fetch("/api/reports/export?format=csv", { credentials: "include" });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `trackion-report-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const totalPnl = stats?.totalPnl ?? 0;
   const winRate = stats?.winRate ?? 0;
@@ -127,9 +218,22 @@ export default function Reports() {
           eyebrow="Reports · performance"
           title="Análise temporal."
           subtitle="Performance agregada por semana e mês — disciplina é repetir o que funciona."
+          actions={
+            isElite ? (
+              <TerminalButton variant="outline" icon={Download} onClick={handleExport}>
+                Exportar CSV
+              </TerminalButton>
+            ) : undefined
+          }
         />
 
-        {/* Summary KPIs */}
+        {!isAdvanced && (
+          <div className="border border-primary/30 bg-primary/[0.04] px-4 py-3 font-mono-tk text-xs text-muted-foreground">
+            Relatórios avançados (insights por par, setup e horário) no{" "}
+            <Link href="/billing" className="text-primary underline">Pro Trader</Link>.
+          </div>
+        )}
+
         <section className="grid grid-cols-2 gap-px bg-border md:grid-cols-4 [&>*]:bg-background">
           <KpiTerminal
             label="PNL TOTAL"
@@ -151,16 +255,44 @@ export default function Reports() {
             value={String(closed)}
             caption="fechados"
           />
-          <KpiTerminal
-            label="BTC COMPRADO"
-            index="04"
-            value={btc.toFixed(6)}
-            tone="orange"
-            caption="spot via transfers"
-          />
+          {isElite && advanced?.sharpeRatio != null ? (
+            <KpiTerminal
+              label="SHARPE"
+              index="04"
+              value={String(advanced.sharpeRatio)}
+              tone="orange"
+              caption="anualizado · elite"
+            />
+          ) : (
+            <KpiTerminal
+              label="BTC COMPRADO"
+              index="04"
+              value={btc.toFixed(6)}
+              tone="orange"
+              caption="spot via transfers"
+            />
+          )}
         </section>
 
-        {/* Tabs as terminal */}
+        {isElite && advanced && (
+          <section className="grid grid-cols-2 gap-px bg-border md:grid-cols-2 [&>*]:bg-background">
+            <KpiTerminal
+              label="MAX DRAWDOWN"
+              index="E1"
+              value={`${advanced.maxDrawdownPct ?? 0}%`}
+              tone="loss"
+              caption="pico a vale · elite"
+            />
+            <KpiTerminal
+              label="SHARPE RATIO"
+              index="E2"
+              value={advanced.sharpeRatio != null ? String(advanced.sharpeRatio) : "—"}
+              tone="orange"
+              caption="retornos diários"
+            />
+          </section>
+        )}
+
         <div className="flex items-center gap-px border border-border bg-border w-fit">
           {(["monthly", "weekly"] as const).map((t) => (
             <button
@@ -177,6 +309,122 @@ export default function Reports() {
             </button>
           ))}
         </div>
+
+        {tab === "weekly" && isAdvanced && (
+          <section className="space-y-4">
+            <TerminalFrame title="insights · semana" status="live" statusTone="live" orangeCorners>
+              <div className="space-y-4 p-4">
+                {weekOptions.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {weekOptions.map(w => (
+                      <button
+                        key={w}
+                        onClick={() => setSelectedWeek(w)}
+                        className={cn(
+                          "border px-3 py-1 font-mono-tk text-[10px] uppercase tracking-wider transition",
+                          activeWeek === w
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border text-muted-foreground hover:border-white/20",
+                        )}
+                      >
+                        {w}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {insights ? (
+                  <>
+                    <p className="font-display text-lg font-bold">{insights.headline}</p>
+                    {insights.bullets.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">Sem trades fechados nesta semana.</p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {insights.bullets.map((b, i) => (
+                          <li key={i} className="border-l-2 border-primary/50 pl-3 text-sm text-foreground/90">
+                            {b.text}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Carregando insights…</p>
+                )}
+              </div>
+            </TerminalFrame>
+
+            {advanced && (
+              <div className="space-y-4">
+                <Eyebrow>breakdown · pro</Eyebrow>
+                <div className="flex flex-wrap gap-px border border-border bg-border w-fit">
+                  {(
+                    [
+                      ["pair", "por par"],
+                      ["setup", "por setup"],
+                      ["hour", "por horário"],
+                      ...(advanced.byExchange ? [["exchange", "multi-conta"] as const] : []),
+                    ] as const
+                  ).map(([id, label]) => (
+                    <button
+                      key={id}
+                      onClick={() => setBreakdownTab(id)}
+                      className={cn(
+                        "px-4 py-2 font-mono-tk text-[10px] font-bold uppercase tracking-[0.22em]",
+                        breakdownTab === id
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-card text-muted-foreground",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className="border border-border bg-card">
+                  <div className="grid gap-6 p-4 md:grid-cols-2">
+                    <BreakdownChart
+                      rows={
+                        breakdownTab === "pair"
+                          ? advanced.byPair
+                          : breakdownTab === "setup"
+                            ? advanced.bySetup
+                            : breakdownTab === "hour"
+                              ? advanced.byHour
+                              : advanced.byExchange ?? []
+                      }
+                    />
+                    <BreakdownTable
+                      rows={
+                        breakdownTab === "pair"
+                          ? advanced.byPair
+                          : breakdownTab === "setup"
+                            ? advanced.bySetup
+                            : breakdownTab === "hour"
+                              ? advanced.byHour
+                              : advanced.byExchange ?? []
+                      }
+                      labelCol={
+                        breakdownTab === "pair"
+                          ? "Par"
+                          : breakdownTab === "setup"
+                            ? "Setup"
+                            : breakdownTab === "hour"
+                              ? "Faixa UTC"
+                              : "Exchange"
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {tab === "weekly" && !isAdvanced && (
+          <UpgradeCard
+            title="Insights semanais"
+            description="Veja em qual par você ganhou ou perdeu, faixas de horário fracas e sequências de loss — disponível no Pro Trader."
+          />
+        )}
 
         {tab === "monthly" && (
           <div className="space-y-6">

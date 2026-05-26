@@ -51,8 +51,9 @@ export const PLAN_CATALOG: Record<PlanId, PlanDefinition> = {
     highlights: [
       "Até 3 contas de exchange",
       "Histórico ilimitado",
-      "Sync automático a cada 2 min",
+      "Sync automático a cada 2 min (app aberto)",
       "Metas & Risco avançado",
+      "Insights semanais por par",
       "Relatórios por setup/horário",
       "Suporte prioritário",
     ],
@@ -77,7 +78,7 @@ export const PLAN_CATALOG: Record<PlanId, PlanDefinition> = {
     sortOrder: 3,
     highlights: [
       "Contas de exchange ilimitadas",
-      "Sync em tempo real (webhook)",
+      "Sync automático acelerado (~30s, app aberto)",
       "Relatórios consolidados multi-conta",
       "Sharpe Ratio e drawdown avançado",
       "Exportação para investidores",

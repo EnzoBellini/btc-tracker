@@ -10,7 +10,7 @@ import {
 import { useStats } from "@/hooks/useStats";
 import { useTrades } from "@/hooks/useTrades";
 import { fmtUsdt, fmtPct, pnlColor } from "@/lib/format";
-import PlanTracker from "@/components/PlanTracker";
+import GoalsSection from "@/components/GoalsSection";
 import { useRoadmap } from "@/hooks/useOnboarding";
 import {
   PageHeader, KpiTerminal, TerminalFrame, StatPill, KeyValueRow, Eyebrow,
@@ -148,7 +148,7 @@ export default function Dashboard() {
         {/* Goals */}
         <section className="space-y-4">
           <Eyebrow>plan tracker · metas ativas</Eyebrow>
-          <PlanTracker />
+          <GoalsSection />
         </section>
 
         {/* Charts */}

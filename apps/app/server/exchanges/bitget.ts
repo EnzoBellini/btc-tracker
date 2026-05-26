@@ -63,6 +63,8 @@ function mapBitgetPosition(pos: Record<string, unknown>, defaultLeverage: number
     pnl,
     status: pnl > 0 ? "WIN" : pnl < 0 ? "LOSS" : "BREAKEVEN",
     notes: `bitget_pos_${pos.positionId ?? pos.posId ?? pos.id}`,
+    closedAt: new Date(cTime).toISOString(),
+    sourceExchange: "bitget",
   };
 }
 

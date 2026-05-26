@@ -3,7 +3,11 @@ import { insertExchangeCredentialsSchema, type ExchangeId } from "@shared/schema
 import { storage } from "./storage";
 import { getAdapter, isExchangeId, MASKED_SECRET } from "./exchanges";
 import { syncTradesFromExchanges, syncFullExchange } from "./exchanges/syncTrades";
-import { assertCanConnectExchange, assertSyncAllowed } from "./billing/entitlements";
+import {
+  assertCanConnectExchange,
+  assertCanConnectExchangeIfNew,
+  assertSyncAllowed,
+} from "./billing/entitlements";
 
 function uid(req: Request): number {
   return req.session.userId as number;
@@ -71,6 +75,7 @@ export function registerExchangeRoutes(app: Express): void {
   });
 
   app.patch("/api/exchanges/:exchange/credentials", async (req, res) => {
+    const userId = uid(req);
     const exchange = req.params.exchange;
     if (!isExchangeId(exchange)) return res.status(400).json({ error: "Exchange inválida" });
     const result = insertExchangeCredentialsSchema.partial().safeParse(req.body);
@@ -78,7 +83,10 @@ export function registerExchangeRoutes(app: Express): void {
     const payload = { ...result.data };
     if (payload.secretKey === MASKED_SECRET) delete payload.secretKey;
     if (payload.passphrase === MASKED_SECRET) delete payload.passphrase;
-    const creds = await storage.updateExchangeCredentials(uid(req), exchange, payload);
+    if (payload.isConnected === true) {
+      if (!(await assertCanConnectExchangeIfNew(userId, exchange, true, res))) return;
+    }
+    const creds = await storage.updateExchangeCredentials(userId, exchange, payload);
     res.json(maskCredentials(creds));
   });
 

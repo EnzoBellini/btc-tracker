@@ -18,7 +18,12 @@ export function useCreateGoal() {
       qc.invalidateQueries({ queryKey: ["/api/goals"] });
       toast.success("Meta criada");
     },
-    onError: () => toast.error("Erro ao criar meta"),
+    onError: (err: Error) => {
+      const msg = err.message?.includes("Pro Trader")
+        ? err.message
+        : "Erro ao criar meta";
+      toast.error(msg);
+    },
   });
 }
 
@@ -31,7 +36,12 @@ export function useUpdateGoal() {
       qc.invalidateQueries({ queryKey: ["/api/goals"] });
       toast.success("Meta atualizada");
     },
-    onError: () => toast.error("Erro ao atualizar meta"),
+    onError: (err: Error) => {
+      const msg = err.message?.includes("Pro Trader")
+        ? err.message
+        : "Erro ao atualizar meta";
+      toast.error(msg);
+    },
   });
 }
 
@@ -43,6 +53,11 @@ export function useDeleteGoal() {
       qc.invalidateQueries({ queryKey: ["/api/goals"] });
       toast.success("Meta removida");
     },
-    onError: () => toast.error("Erro ao remover meta"),
+    onError: (err: Error) => {
+      const msg = err.message?.includes("Pro Trader")
+        ? err.message
+        : "Erro ao remover meta";
+      toast.error(msg);
+    },
   });
 }

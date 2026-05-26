@@ -48,6 +48,8 @@ function mapIncomeToTrade(row: Record<string, unknown>, defaultLeverage: number)
     pnl: income,
     status: income > 0 ? "WIN" : income < 0 ? "LOSS" : "BREAKEVEN",
     notes: `binance_income_${row.tranId}`,
+    closedAt: new Date(time).toISOString(),
+    sourceExchange: "binance",
   };
 }
 

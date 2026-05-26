@@ -52,6 +52,7 @@ function TradeForm({ onClose, initial }: { onClose: () => void; initial?: Trade 
       exitPrice: initial.exitPrice ?? undefined,
       pnl: initial.pnl ?? undefined,
       notes: initial.notes ?? "",
+      setup: initial.setup ?? "",
     } : {
       date: new Date().toISOString().split("T")[0],
       pair: "BTCUSDT",
@@ -63,11 +64,18 @@ function TradeForm({ onClose, initial }: { onClose: () => void; initial?: Trade 
       leverage: 3,
       status: "OPEN",
       notes: "",
+      setup: "",
     },
   });
 
   const onSubmit = (data: TradeFormValues) => {
-    const payload = { ...data, exitPrice: data.exitPrice || undefined, pnl: data.pnl || undefined };
+    const payload = {
+      ...data,
+      exitPrice: data.exitPrice || undefined,
+      pnl: data.pnl || undefined,
+      setup: data.setup?.trim() || undefined,
+      sourceExchange: initial?.sourceExchange ?? "manual",
+    };
     const mutation = initial
       ? updateTrade.mutateAsync({ id: initial.id, data: payload })
       : createTrade.mutateAsync(payload as any);
@@ -161,13 +169,22 @@ function TradeForm({ onClose, initial }: { onClose: () => void; initial?: Trade 
             </FormItem>
           )} />
         </div>
-        <FormField control={form.control} name="notes" render={({ field }) => (
-          <FormItem>
-            <FormLabel className="font-mono-tk text-[10px] uppercase tracking-[0.22em]">Notas</FormLabel>
-            <FormControl><Input {...field as any} placeholder="Observações..." data-testid="input-notes" /></FormControl>
-            <FormMessage />
-          </FormItem>
-        )} />
+        <div className="grid grid-cols-2 gap-3">
+          <FormField control={form.control} name="setup" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="font-mono-tk text-[10px] uppercase tracking-[0.22em]">Setup</FormLabel>
+              <FormControl><Input {...field as any} placeholder="Ex: scalp, breakout…" data-testid="input-setup" /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+          <FormField control={form.control} name="notes" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="font-mono-tk text-[10px] uppercase tracking-[0.22em]">Notas</FormLabel>
+              <FormControl><Input {...field as any} placeholder="Observações..." data-testid="input-notes" /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </div>
         <div className="flex justify-end gap-2 pt-2">
           <TerminalButton type="button" variant="outline" onClick={onClose}>Cancelar</TerminalButton>
           <TerminalButton type="submit" disabled={isPending} data-testid="button-save-trade">
@@ -356,7 +373,19 @@ export default function Trades() {
                       {String(idx + 1).padStart(3, "0")}
                     </td>
                     <td className="num px-4 py-3 font-mono-tk text-xs text-muted-foreground whitespace-nowrap">{t.date}</td>
-                    <td className="px-4 py-3 font-mono-tk text-sm font-bold tracking-wide text-foreground">{t.pair}</td>
+                    <td className="px-4 py-3">
+                      <div className="font-mono-tk text-sm font-bold tracking-wide text-foreground">{t.pair}</div>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {t.setup && (
+                          <span className="font-mono-tk text-[9px] uppercase tracking-wider text-muted-foreground">
+                            {t.setup}
+                          </span>
+                        )}
+                        {t.sourceExchange && t.sourceExchange !== "manual" && (
+                          <StatPill tone="info">{t.sourceExchange}</StatPill>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-4 py-3">
                       <span
                         className={cn(

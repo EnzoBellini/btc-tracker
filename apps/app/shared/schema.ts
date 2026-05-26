@@ -108,6 +108,9 @@ export const trades = pgTable("trades", {
   pnl: real("pnl"),                          // realized PnL in USDT
   status: text("status").notNull().default("OPEN"), // "OPEN" | "WIN" | "LOSS" | "BREAKEVEN"
   notes: text("notes"),
+  closedAt: text("closed_at"),           // ISO datetime for hour buckets
+  setup: text("setup"),                  // strategy tag (optional)
+  sourceExchange: text("source_exchange"), // mexc | binance | bitget | manual
 });
 
 export const insertTradeSchema = createInsertSchema(trades).omit({ id: true, userId: true });

@@ -62,8 +62,10 @@ export async function mexcSpotRequest(
 
 function mapMexcPosition(pos: Record<string, unknown>, defaultLeverage: number): TradeInsert {
   const pnl = parseFloat(String(pos.realised ?? 0));
+  const closedMs = Number(pos.updateTime || pos.createTime || Date.now());
+  const date = new Date(closedMs).toISOString().split("T")[0];
   return {
-    date: new Date(Number(pos.updateTime || pos.createTime)).toISOString().split("T")[0],
+    date,
     pair: String(pos.symbol || "BTCUSDT").replace("_", ""),
     direction: pos.positionType === 1 ? "LONG" : "SHORT",
     entryPrice: Number(pos.openAvgPrice || pos.holdAvgPrice || 0),
@@ -75,6 +77,8 @@ function mapMexcPosition(pos: Record<string, unknown>, defaultLeverage: number):
     pnl,
     status: pnl > 0 ? "WIN" : pnl < 0 ? "LOSS" : "BREAKEVEN",
     notes: `mexc_pos_${pos.positionId}`,
+    closedAt: new Date(closedMs).toISOString(),
+    sourceExchange: "mexc",
   };
 }
 

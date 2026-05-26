@@ -4,8 +4,9 @@ import { requireAuth } from "./auth";
 import { storage } from "./storage";
 import { registerExchangeRoutes } from "./exchangeRoutes";
 import { requireSubscriptionMiddleware } from "./billing/middleware";
-import { filterTradesByHistory } from "./billing/entitlements";
+import { assertGoalsRisk, filterTradesByHistory } from "./billing/entitlements";
 import { getResolvedSubscription } from "./billing/subscriptionService";
+import { registerReportRoutes } from "./reportRoutes";
 
 function uid(req: Request): number {
   return req.session.userId as number;
@@ -64,7 +65,16 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.post("/api/trades", async (req, res) => {
     const result = insertTradeSchema.safeParse(req.body);
     if (!result.success) return res.status(400).json({ error: result.error.format() });
-    res.status(201).json(await storage.createTrade(uid(req), result.data));
+    const data = {
+      ...result.data,
+      sourceExchange: result.data.sourceExchange ?? "manual",
+      closedAt:
+        result.data.closedAt ??
+        (result.data.status !== "OPEN"
+          ? `${result.data.date}T12:00:00.000Z`
+          : undefined),
+    };
+    res.status(201).json(await storage.createTrade(uid(req), data));
   });
   app.patch("/api/trades/:id", async (req, res) => {
     const id = parseInt(req.params.id);
@@ -119,27 +129,26 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // ── Goals ─────────────────────────────────────────────────────────────────
   app.get("/api/goals", async (req, res) => res.json(await storage.getGoals(uid(req))));
   app.post("/api/goals", async (req, res) => {
-    const resolved = await getResolvedSubscription(uid(req));
-    if (!resolved.entitlements?.moduleGoalsRisk) {
-      return res.status(403).json({
-        code: "PLAN_FEATURE",
-        error: "Metas & Risco avançado disponível no plano Pro Trader ou superior.",
-      });
-    }
+    const userId = uid(req);
+    if (!(await assertGoalsRisk(userId, res))) return;
     const result = insertGoalSchema.safeParse(req.body);
     if (!result.success) return res.status(400).json({ error: result.error.format() });
-    res.status(201).json(await storage.createGoal(uid(req), result.data));
+    res.status(201).json(await storage.createGoal(userId, result.data));
   });
   app.patch("/api/goals/:id", async (req, res) => {
+    const userId = uid(req);
+    if (!(await assertGoalsRisk(userId, res))) return;
     const id = parseInt(req.params.id);
     const result = insertGoalSchema.partial().safeParse(req.body);
     if (!result.success) return res.status(400).json({ error: result.error.format() });
-    const goal = await storage.updateGoal(uid(req), id, result.data);
+    const goal = await storage.updateGoal(userId, id, result.data);
     if (!goal) return res.status(404).json({ error: "Not found" });
     res.json(goal);
   });
   app.delete("/api/goals/:id", async (req, res) => {
-    const ok = await storage.deleteGoal(uid(req), parseInt(req.params.id));
+    const userId = uid(req);
+    if (!(await assertGoalsRisk(userId, res))) return;
+    const ok = await storage.deleteGoal(userId, parseInt(req.params.id));
     if (!ok) return res.status(404).json({ error: "Not found" });
     res.status(204).end();
   });
@@ -206,6 +215,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       tradesByWeek,
     });
   });
+
+  registerReportRoutes(app);
 
   return httpServer;
 }

@@ -77,6 +77,45 @@ export async function assertAdvancedReports(userId: number, res: Response): Prom
   return true;
 }
 
+export async function assertGoalsRisk(userId: number, res: Response): Promise<boolean> {
+  if (!(await assertHasAccess(userId, res))) return false;
+  const resolved = await getResolvedSubscription(userId);
+  if (!resolved.entitlements?.moduleGoalsRisk) {
+    res.status(403).json({
+      code: "PLAN_FEATURE",
+      error: "Metas & Risco avançado disponível no plano Pro Trader ou superior.",
+    });
+    return false;
+  }
+  return true;
+}
+
+export async function assertInvestorExport(userId: number, res: Response): Promise<boolean> {
+  if (!(await assertHasAccess(userId, res))) return false;
+  const resolved = await getResolvedSubscription(userId);
+  if (!resolved.entitlements?.moduleInvestorExport) {
+    res.status(403).json({
+      code: "PLAN_FEATURE",
+      error: "Exportação para investidores disponível no plano Elite.",
+    });
+    return false;
+  }
+  return true;
+}
+
+/** Limite de contas ao marcar uma exchange como conectada pela primeira vez. */
+export async function assertCanConnectExchangeIfNew(
+  userId: number,
+  exchange: string,
+  willConnect: boolean,
+  res: Response,
+): Promise<boolean> {
+  if (!willConnect) return true;
+  const creds = await storage.getExchangeCredentials(userId, exchange as "mexc" | "binance" | "bitget");
+  if (creds.isConnected) return true;
+  return assertCanConnectExchange(userId, res);
+}
+
 export function filterTradesByHistory<T extends { date: string }>(
   trades: T[],
   entitlements: PlanEntitlements | null,
