@@ -1,3 +1,3 @@
-export * from "./features";
-export * from "./plans";
-export * from "./resolveEntitlements";
+export * from "./features.js";
+export * from "./plans.js";
+export * from "./resolveEntitlements.js";
