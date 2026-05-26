@@ -1,5 +1,5 @@
 const APP_URL = process.env.APP_URL ?? "http://localhost:5000";
-const EMAIL_FROM = process.env.EMAIL_FROM ?? "onboarding@resend.dev";
+const EMAIL_FROM = process.env.EMAIL_FROM ?? "Trackion <noreply@trackion.app>";
 
 export interface WelcomeEmailParams {
   to: string;
@@ -7,11 +7,11 @@ export interface WelcomeEmailParams {
   verifyUrl: string;
 }
 
-function hasResend(): boolean {
+export function isResendConfigured(): boolean {
   return Boolean(process.env.RESEND_API_KEY?.trim());
 }
 
-export async function sendWelcomeEmail(params: WelcomeEmailParams): Promise<void> {
+export async function sendWelcomeEmail(params: WelcomeEmailParams): Promise<{ sent: boolean }> {
   const { to, password, verifyUrl } = params;
   const subject = "Bem-vindo ao Trackion — sua senha de acesso";
   const body = [
@@ -23,21 +23,20 @@ export async function sendWelcomeEmail(params: WelcomeEmailParams): Promise<void
     "",
     "Por segurança, altere esta senha após o primeiro login.",
     "",
-    "Confirme seu e-mail clicando no link (válido por 24h):",
+    "Confirme seu e-mail para ativar o trial Elite de 14 dias (link válido por 24h):",
     verifyUrl,
     "",
     "Se você não solicitou este cadastro, ignore este e-mail.",
   ].join("\n");
 
-  if (!hasResend()) {
+  if (!isResendConfigured()) {
     if (process.env.NODE_ENV === "production") {
       throw new Error("RESEND_API_KEY não configurada — não é possível enviar e-mail em produção.");
     }
-    // Dev: nunca logar senha nem token completo (segurança em logs compartilhados/CI).
     console.log(
-      `[email] DEV — e-mail NÃO enviado para ${to}. Defina RESEND_API_KEY no .env (apps/app/.env.example).`,
+      `[email] DEV — e-mail NÃO enviado para ${to}. Defina RESEND_API_KEY em apps/app/.env — o link de confirmação volta na resposta da API (dev).`,
     );
-    return;
+    return { sent: false };
   }
 
   const res = await fetch("https://api.resend.com/emails", {
@@ -61,6 +60,7 @@ export async function sendWelcomeEmail(params: WelcomeEmailParams): Promise<void
   }
 
   console.log(`[email] Enviado para ${to} via Resend`);
+  return { sent: true };
 }
 
 export function buildVerifyUrl(token: string): string {

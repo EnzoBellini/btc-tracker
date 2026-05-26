@@ -1,12 +1,21 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 
+export interface AuthUserSubscription {
+  status: string;
+  effectivePlanId: string | null;
+  hasAccess: boolean;
+  trialEnded: boolean;
+  daysLeftInTrial: number | null;
+}
+
 export interface AuthUser {
   id: number;
   email: string;
   emailVerified: boolean;
   mustChangePassword: boolean;
   onboardingCompleted: boolean;
+  subscription?: AuthUserSubscription;
 }
 
 export function useAuth() {
@@ -70,8 +79,8 @@ export function useVerifyEmail() {
       if (!res.ok) throw new Error(data.error ?? "Link inválido");
       return data as { ok: boolean; user: AuthUser };
     },
-    onSuccess: (data) => {
-      queryClient.setQueryData(["/api/auth/me"], data.user);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
     },
   });
 }
@@ -89,8 +98,8 @@ export function useLogin() {
       if (!res.ok) throw new Error(data.error ?? "Erro ao fazer login");
       return data as AuthUser;
     },
-    onSuccess: (user) => {
-      queryClient.setQueryData(["/api/auth/me"], user);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
     },
   });
 }

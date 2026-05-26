@@ -4,6 +4,7 @@
     { "path": "apps/app" },
     { "path": "apps/landing" },
     { "path": "packages/ui" },
-    { "path": "packages/config" }
+    { "path": "packages/config" },
+    { "path": "packages/billing" }
   ]
 }

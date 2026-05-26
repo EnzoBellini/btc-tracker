@@ -26,7 +26,7 @@ export function validateSecurityConfig(): void {
 }
 
 export function logEmailConfigStatus(log: (msg: string, source?: string) => void): void {
-  if (process.env.RESEND_API_KEY) {
+  if (process.env.RESEND_API_KEY?.trim()) {
     log(`E-mail: Resend ativo (remetente: ${process.env.EMAIL_FROM ?? "padrão"})`, "email");
     return;
   }

@@ -3,6 +3,10 @@ const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.repl
 export type TrialSignupResult = {
   ok: boolean;
   message: string;
+  emailSent?: boolean;
+  /** Só em dev quando Resend não está configurado */
+  devVerifyUrl?: string;
+  devPassword?: string;
 };
 
 export async function submitTrialSignup(name: string, email: string): Promise<TrialSignupResult> {
@@ -13,7 +17,7 @@ export async function submitTrialSignup(name: string, email: string): Promise<Tr
     body: JSON.stringify({ name, email }),
   });
 
-  const data = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
+  const data = (await res.json().catch(() => ({}))) as TrialSignupResult & { error?: string };
 
   if (!res.ok) {
     return { ok: false, message: data.error ?? "Não foi possível enviar. Tente novamente." };
@@ -22,5 +26,8 @@ export async function submitTrialSignup(name: string, email: string): Promise<Tr
   return {
     ok: true,
     message: data.message ?? "Verifique seu e-mail para o link de acesso.",
+    emailSent: data.emailSent,
+    devVerifyUrl: data.devVerifyUrl,
+    devPassword: data.devPassword,
   };
 }

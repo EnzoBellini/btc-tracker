@@ -21,6 +21,7 @@ import { AnimatedWealthChart } from "./components/AnimatedWealthChart";
 import { HeroWaveCanvas } from "./components/HeroWaveCanvas";
 import { TrialSignupModal } from "./components/TrialSignupModal";
 import { submitTrialSignup } from "./lib/trialSignup";
+import { PRICING_PLANS, formatPlanPrice, TRIAL_DAYS } from "./lib/plans";
 import { useMarketTicker } from "./hooks/useMarketTicker";
 
 export type LandingPageProps = {
@@ -222,12 +223,18 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
   const [trialSubmitting, setTrialSubmitting] = useState(false);
   const [trialError, setTrialError] = useState<string | null>(null);
   const [trialSuccess, setTrialSuccess] = useState(false);
+  const [trialDevVerifyUrl, setTrialDevVerifyUrl] = useState<string | null>(null);
+  const [trialDevPassword, setTrialDevPassword] = useState<string | null>(null);
+  const [trialEmailSent, setTrialEmailSent] = useState(true);
   const goStart = onStartClick ?? (() => {});
 
   const openTrialModal = (email?: string) => {
     if (email?.trim()) setFooterEmail(email.trim());
     setTrialError(null);
     setTrialSuccess(false);
+    setTrialDevVerifyUrl(null);
+    setTrialDevPassword(null);
+    setTrialEmailSent(true);
     setTrialModalOpen(true);
   };
 
@@ -250,6 +257,9 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
       return;
     }
     setTrialSuccess(true);
+    setTrialEmailSent(result.emailSent ?? true);
+    setTrialDevVerifyUrl(result.devVerifyUrl ?? null);
+    setTrialDevPassword(result.devPassword ?? null);
     setFooterEmail(email);
   };
 
@@ -264,6 +274,12 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
 
   return (
     <div className="relative overflow-hidden bg-black text-white">
+      {/* Grid contínuo em toda a página (sem “ilhas” por seção) */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0 bg-grid-fine opacity-[0.28]"
+        aria-hidden
+      />
+
       {/* =================== NAV ===================== */}
       <nav className="fixed top-0 z-50 w-full border-b border-white/[0.06] bg-black/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-3.5">
@@ -321,13 +337,8 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
       </div>
 
       {/* =================== HERO ===================== */}
-      <section className="relative pt-[8.5rem] pb-24 sm:pt-[10rem] sm:pb-32">
-        {/* Background: grid + ambient orange + wave */}
-        <div className="pointer-events-none absolute inset-0 bg-grid bg-grid-fade" aria-hidden />
-        <div
-          className="pointer-events-none absolute -top-40 left-1/2 z-0 h-[820px] w-[820px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,140,66,0.16),transparent_60%)] blur-3xl"
-          aria-hidden
-        />
+      <section className="relative z-[1] pt-[8.5rem] pb-24 sm:pt-[10rem] sm:pb-32">
+        {/* Onda animada no rodapé do hero */}
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[60vh] opacity-50"
           aria-hidden
@@ -440,8 +451,7 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
       </section>
 
       {/* =================== STATS / NUMBERS ROW ===================== */}
-      <section className="relative border-y border-white/[0.08] bg-black">
-        <div className="pointer-events-none absolute inset-0 bg-grid-fine opacity-50" aria-hidden />
+      <section className="relative z-[1] bg-black">
         <div className="relative mx-auto max-w-[1400px] px-6">
           <div className="flex items-center justify-between border-b border-white/[0.06] py-3 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
             <span>
@@ -467,8 +477,7 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
       </section>
 
       {/* =================== RECURSOS ===================== */}
-      <section id="recursos" className="relative bg-black py-32">
-        <div className="pointer-events-none absolute inset-0 bg-grid opacity-40 bg-grid-fade" aria-hidden />
+      <section id="recursos" className="relative z-[1] bg-black py-32">
         <div className="relative mx-auto max-w-[1400px] px-6">
           <div className="grid grid-cols-12 gap-6">
             <div className="col-span-12 lg:col-span-5">
@@ -531,8 +540,7 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
       </section>
 
       {/* =================== INTEGRAÇÕES — BRUTALIST HEADER ===================== */}
-      <section id="integracoes" className="relative overflow-hidden border-t border-white/[0.08] bg-black py-32">
-        <div className="pointer-events-none absolute inset-0 bg-grid-fine opacity-60" aria-hidden />
+      <section id="integracoes" className="relative z-[1] overflow-hidden bg-black py-32">
         <div className="relative mx-auto max-w-[1400px] px-6">
           <SectionLabel index="02" label="Integrações via API" />
 
@@ -670,13 +678,7 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
       </section>
 
       {/* =================== MÉTODO — MANIFESTO BRUTALIST ===================== */}
-      <section id="metodo" className="relative overflow-hidden border-t border-white/[0.08] bg-black py-32">
-        <div className="pointer-events-none absolute inset-0 bg-grid opacity-30 bg-grid-fade" aria-hidden />
-        <div
-          className="pointer-events-none absolute left-1/2 top-1/3 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,140,66,0.10),transparent_70%)] blur-3xl"
-          aria-hidden
-        />
-
+      <section id="metodo" className="relative z-[1] overflow-hidden bg-black py-32">
         <div className="relative mx-auto max-w-[1400px] px-6">
           <SectionLabel index="03" label="Manifesto" total="03" />
 
@@ -775,30 +777,69 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
       </section>
 
       {/* =================== CTA / TERMINAL FOOTER ===================== */}
-      <section id="precos" className="relative overflow-hidden border-t border-white/[0.08] bg-black py-32">
-        <div className="pointer-events-none absolute inset-0 bg-grid-fine opacity-60" aria-hidden />
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-[600px] max-w-3xl bg-[radial-gradient(ellipse_at_top,rgba(255,140,66,0.22),transparent_70%)]"
-          aria-hidden
-        />
-
+      <section id="precos" className="relative z-[1] overflow-hidden bg-black py-32">
         <div className="relative mx-auto max-w-[1100px] px-6">
-          <SectionLabel index="04" label="Acesso · 14 dias grátis" total="04" />
+          <SectionLabel index="04" label="Planos · trial Elite 14d" total="04" />
 
-          <h2 className="mt-10 text-balance font-sans text-5xl font-bold leading-[0.92] tracking-tight text-white sm:text-6xl lg:text-[5rem]">
-            Comece com <span className="font-serif italic font-light text-[#FF8C42]">método</span>{" "}
-            hoje.
+          <h2 className="mt-10 text-balance font-sans text-5xl font-bold leading-[0.92] tracking-tight text-white sm:text-6xl lg:text-[4.5rem]">
+            Planos para cada fase do seu{" "}
+            <span className="font-serif italic font-light text-[#FF8C42]">trading</span>.
           </h2>
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-gray-400 sm:text-lg">
-            Deixe seu e-mail e teste o Trackion por 14 dias grátis — sem cartão de crédito, sem
-            compromisso, sem letras miúdas.
+          <p className="mt-6 max-w-2xl text-base leading-relaxed text-gray-400 sm:text-lg">
+            Teste <strong className="text-white">todos os recursos Elite por {TRIAL_DAYS} dias</strong>{" "}
+            grátis. Depois do trial, escolha o plano que combina com seu volume e número de contas.
           </p>
 
-          {/* Terminal-style input */}
+          <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
+            {PRICING_PLANS.map((plan) => {
+              const isPro = plan.id === "pro";
+              return (
+                <div
+                  key={plan.id}
+                  className={`relative border bg-black/60 p-6 backdrop-blur-sm ${
+                    isPro ? "border-[#FF8C42]" : "border-white/15"
+                  }`}
+                >
+                  <CornerMarks orange={isPro} />
+                  {isPro && (
+                    <span className="absolute -top-2.5 left-4 bg-[#FF8C42] px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-black">
+                      Âncora
+                    </span>
+                  )}
+                  <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
+                    {plan.name}
+                  </p>
+                  <p className="mt-2 font-sans text-3xl font-bold text-white">{formatPlanPrice(plan)}</p>
+                  <p className="text-xs text-gray-500">/ mês</p>
+                  <p className="mt-3 text-sm text-gray-400">{plan.tagline}</p>
+                  <ul className="mt-5 space-y-2 text-sm text-gray-300">
+                    {plan.highlights.map((h) => (
+                      <li key={h} className="flex gap-2">
+                        <span className="text-[#FF8C42]">›</span>
+                        {h}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => openTrialModal()}
+                    className={`mt-6 w-full border px-4 py-2.5 text-xs font-bold uppercase tracking-[0.2em] transition ${
+                      isPro
+                        ? "border-[#FF8C42] bg-[#FF8C42] text-black hover:bg-transparent hover:text-[#FF8C42]"
+                        : "border-white/20 text-white hover:border-[#FF8C42]"
+                    }`}
+                  >
+                    Trial Elite {TRIAL_DAYS}d
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
           <div className="mt-12 relative border border-white/15 bg-black/80 backdrop-blur-sm">
             <CornerMarks orange />
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.28em]">
-              <span className="text-gray-500">trackion.app — signup --trial=14d</span>
+              <span className="text-gray-500">trackion.app — signup --trial=elite --days={TRIAL_DAYS}</span>
               <span className="flex items-center gap-1 text-tk-green">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-tk-green" />
                 ready
@@ -823,37 +864,19 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                 onClick={handleFooterCta}
                 className="group inline-flex items-center justify-center gap-2 border border-[#FF8C42] bg-[#FF8C42] px-7 py-3 text-xs font-bold uppercase tracking-[0.28em] text-black transition hover:bg-transparent hover:text-[#FF8C42]"
               >
-                Iniciar
+                Iniciar trial
                 <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
               </button>
             </div>
             <div className="border-t border-white/10 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
-              <span className="text-[#FF8C42]">›</span> sem cartão · cancele quando quiser · link
-              por e-mail
+              <span className="text-[#FF8C42]">›</span> trial = Elite completo · sem cartão no cadastro
             </div>
-          </div>
-
-          {/* meta info */}
-          <div className="mt-12 grid grid-cols-1 gap-8 border-t border-white/[0.08] pt-10 sm:grid-cols-3">
-            {[
-              { label: "TEMPO DE SETUP", value: "< 2 minutos" },
-              { label: "EXCHANGES ATIVAS", value: "MEXC · Bitget · Binance" },
-              { label: "PERMISSÃO API", value: "read-only · seguro" },
-            ].map((it) => (
-              <div key={it.label} className="space-y-2">
-                <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
-                  {it.label}
-                </p>
-                <p className="text-base font-semibold text-white">{it.value}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>
 
       {/* =================== FOOTER ===================== */}
-      <footer className="relative border-t border-white/[0.08] bg-black">
-        <div className="pointer-events-none absolute inset-0 bg-grid-fine opacity-40" aria-hidden />
+      <footer className="relative z-[1] bg-black">
         <div className="relative mx-auto max-w-[1400px] px-6 py-14">
           <div className="grid grid-cols-12 gap-6">
             <div className="col-span-12 lg:col-span-5">
@@ -868,12 +891,11 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                 <span className="text-base font-bold tracking-[0.32em] text-white">TRACKION</span>
               </div>
               <p className="mt-4 max-w-sm text-sm leading-relaxed text-gray-500">
-                Trading journal e analytics para traders que querem operar com método — não no
-                achismo.
+                Não aposte. Registre.
               </p>
               <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-600">
                 <Plus className="-mt-0.5 mr-1 inline h-3 w-3 text-[#FF8C42]" aria-hidden />
-                BUILT FOR DISCIPLINED TRADERS
+                Don&apos;t bet. Track.
               </p>
             </div>
 
@@ -952,6 +974,9 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
         submitting={trialSubmitting}
         error={trialError}
         success={trialSuccess}
+        emailSent={trialEmailSent}
+        devVerifyUrl={trialDevVerifyUrl}
+        devPassword={trialDevPassword}
       />
 
       {/* Cross-marks decorativos (estilo blueprint) — apenas em telas grandes */}

@@ -3,6 +3,9 @@ import { type Server } from "http";
 import { requireAuth } from "./auth";
 import { storage } from "./storage";
 import { registerExchangeRoutes } from "./exchangeRoutes";
+import { requireSubscriptionMiddleware } from "./billing/middleware";
+import { filterTradesByHistory } from "./billing/entitlements";
+import { getResolvedSubscription } from "./billing/subscriptionService";
 
 function uid(req: Request): number {
   return req.session.userId as number;
@@ -24,14 +27,19 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     "GET:/api/auth/me",
     "POST:/api/trial-signup",
     "GET:/api/market/ticker",
+    "GET:/api/billing/plans",
+    "POST:/api/billing/webhook",
   ]);
 
   app.use((req, res, next) => {
     if (!req.path.startsWith("/api")) return next();
+    if (req.path.startsWith("/api/admin")) return next();
     const key = `${req.method}:${req.path}`;
     if (publicAuthPaths.has(key)) return next();
     return requireAuth(req, res, next);
   });
+
+  app.use(requireSubscriptionMiddleware());
 
   // ── Market ticker (MEXC spot · público) ───────────────────────────────────
   app.get("/api/market/ticker", async (_req, res) => {
@@ -47,7 +55,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   // ── Trades ────────────────────────────────────────────────────────────────
   app.get("/api/trades", async (req, res) => {
-    const trades = await storage.getTrades(uid(req));
+    const userId = uid(req);
+    const resolved = await getResolvedSubscription(userId);
+    let trades = await storage.getTrades(userId);
+    trades = filterTradesByHistory(trades, resolved.entitlements);
     res.json(trades);
   });
   app.post("/api/trades", async (req, res) => {
@@ -108,6 +119,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // ── Goals ─────────────────────────────────────────────────────────────────
   app.get("/api/goals", async (req, res) => res.json(await storage.getGoals(uid(req))));
   app.post("/api/goals", async (req, res) => {
+    const resolved = await getResolvedSubscription(uid(req));
+    if (!resolved.entitlements?.moduleGoalsRisk) {
+      return res.status(403).json({
+        code: "PLAN_FEATURE",
+        error: "Metas & Risco avançado disponível no plano Pro Trader ou superior.",
+      });
+    }
     const result = insertGoalSchema.safeParse(req.body);
     if (!result.success) return res.status(400).json({ error: result.error.format() });
     res.status(201).json(await storage.createGoal(uid(req), result.data));
@@ -128,11 +146,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   // ── Stats (aggregated) ────────────────────────────────────────────────────
   app.get("/api/stats", async (req, res) => {
-    const [trades, transfers, holdings, settings] = await Promise.all([
-      storage.getTrades(uid(req)),
-      storage.getTransfers(uid(req)),
-      storage.getBtcHoldings(uid(req)),
-      storage.getSettings(uid(req)),
+    const userId = uid(req);
+    const resolved = await getResolvedSubscription(userId);
+    if (resolved.entitlements?.moduleSmartReports === "none") {
+      return res.status(403).json({
+        code: "PLAN_FEATURE",
+        error: "Relatórios disponíveis a partir do plano Starter com relatórios básicos.",
+      });
+    }
+    let trades = await storage.getTrades(userId);
+    trades = filterTradesByHistory(trades, resolved.entitlements);
+    const [transfers, holdings, settings] = await Promise.all([
+      storage.getTransfers(userId),
+      storage.getBtcHoldings(userId),
+      storage.getSettings(userId),
     ]);
     const closedTrades = trades.filter(t => t.status !== "OPEN");
     const wins = closedTrades.filter(t => t.status === "WIN");

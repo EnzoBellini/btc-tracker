@@ -12,9 +12,15 @@
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
     "db:migrate": "tsx script/migrate-exchange-credentials.ts",
-    "db:push": "tsx script/db-push.ts"
+    "db:push": "tsx script/db-push.ts",
+    "db:seed-plans": "tsx script/seed-plans.ts",
+    "db:migrate-billing": "tsx script/run-sql.ts script/migrate-billing.sql",
+    "test:stripe": "tsx script/stripe-integration-test.ts",
+    "test:billing-flow": "tsx script/e2e-billing-flow.ts",
+    "test:email": "tsx script/test-email.ts"
   },
   "dependencies": {
+    "@trackion/billing": "*",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@neondatabase/serverless": "^1.0.2",
@@ -79,6 +85,7 @@
     "react-icons": "^5.4.0",
     "react-resizable-panels": "^2.1.7",
     "recharts": "^2.15.2",
+    "stripe": "^17.7.0",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "tw-animate-css": "^1.2.5",

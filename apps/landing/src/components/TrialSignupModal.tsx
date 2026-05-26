@@ -9,6 +9,9 @@ export type TrialSignupModalProps = {
   submitting?: boolean;
   error?: string | null;
   success?: boolean;
+  devVerifyUrl?: string | null;
+  devPassword?: string | null;
+  emailSent?: boolean;
 };
 
 export function TrialSignupModal({
@@ -19,6 +22,9 @@ export function TrialSignupModal({
   submitting = false,
   error = null,
   success = false,
+  devVerifyUrl = null,
+  devPassword = null,
+  emailSent = true,
 }: TrialSignupModalProps) {
   const titleId = useId();
   const nameRef = useRef<HTMLInputElement>(null);
@@ -70,9 +76,33 @@ export function TrialSignupModal({
               Quase lá!
             </h2>
             <p className="text-sm leading-relaxed text-gray-300 sm:text-base">
-              Enviamos o link de acesso e sua senha temporária para o e-mail informado. Confira a caixa de entrada e o
-              spam — você tem <span className="font-semibold text-[#FF8C42]">14 dias grátis</span>, sem cartão.
+              {emailSent ? (
+                <>
+                  Enviamos o link de confirmação e a senha temporária para o e-mail informado. Confira a caixa de
+                  entrada e o spam — o trial Elite de{" "}
+                  <span className="font-semibold text-[#FF8C42]">14 dias</span> começa ao clicar no link.
+                </>
+              ) : (
+                <>
+                  Conta criada em modo dev (e-mail não configurado). Use o link e a senha abaixo para confirmar e
+                  ativar o trial.
+                </>
+              )}
             </p>
+            {!emailSent && devVerifyUrl && (
+              <div className="space-y-3 rounded border border-amber-500/40 bg-amber-500/10 p-3 text-left text-xs text-gray-200">
+                <p>
+                  <span className="font-semibold text-amber-400">Senha temporária:</span>{" "}
+                  <code className="break-all text-white">{devPassword}</code>
+                </p>
+                <a
+                  href={devVerifyUrl}
+                  className="block break-all font-mono text-[#FF8C42] underline hover:text-[#FF7A2E]"
+                >
+                  {devVerifyUrl}
+                </a>
+              </div>
+            )}
             <button
               type="button"
               onClick={onClose}

@@ -3,6 +3,7 @@ import { insertExchangeCredentialsSchema, type ExchangeId } from "@shared/schema
 import { storage } from "./storage";
 import { getAdapter, isExchangeId, MASKED_SECRET } from "./exchanges";
 import { syncTradesFromExchanges, syncFullExchange } from "./exchanges/syncTrades";
+import { assertCanConnectExchange, assertSyncAllowed } from "./billing/entitlements";
 
 function uid(req: Request): number {
   return req.session.userId as number;
@@ -82,6 +83,8 @@ export function registerExchangeRoutes(app: Express): void {
   });
 
   app.post("/api/exchanges/:exchange/test", async (req, res) => {
+    const userId = uid(req);
+    if (!(await assertCanConnectExchange(userId, res))) return;
     const exchange = req.params.exchange;
     if (!isExchangeId(exchange)) return res.status(400).json({ error: "Exchange inválida" });
     const { apiKey, secretKey, passphrase } = req.body as {
@@ -120,6 +123,8 @@ export function registerExchangeRoutes(app: Express): void {
   });
 
   app.post("/api/exchanges/:exchange/sync", async (req, res) => {
+    const userId = uid(req);
+    if (!(await assertSyncAllowed(userId, res))) return;
     const exchange = req.params.exchange;
     if (!isExchangeId(exchange)) return res.status(400).json({ error: "Exchange inválida" });
     try {
@@ -138,6 +143,8 @@ export function registerExchangeRoutes(app: Express): void {
   });
 
   app.post("/api/trades/sync", async (req, res) => {
+    const userId = uid(req);
+    if (!(await assertSyncAllowed(userId, res))) return;
     const body = req.body as { exchanges?: string[] } | undefined;
     let requested: ExchangeId[] | undefined;
     if (body?.exchanges?.length) {

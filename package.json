@@ -16,6 +16,9 @@
     "check": "npm run check --workspace=apps/app",
     "db:migrate": "npm run db:migrate --workspace=apps/app",
     "db:push": "npm run db:push --workspace=apps/app",
+    "db:seed-plans": "npm run db:seed-plans --workspace=apps/app",
+    "dev:admin": "npm run dev --workspace=apps/admin",
+    "build:admin": "npm run build --workspace=apps/admin",
     "security": "powershell -NoProfile -ExecutionPolicy Bypass -File security/run-full-suite.ps1"
   },
   "engines": {

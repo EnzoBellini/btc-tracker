@@ -12,6 +12,68 @@ export const users = pgTable("users", {
   onboardingStep: integer("onboarding_step").notNull().default(0),
   traderProfile: text("trader_profile"),
   passwordChangedAt: timestamp("password_changed_at"),
+  trialUsedAt: timestamp("trial_used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// ── Billing: plan catalog ─────────────────────────────────────────────────────
+export const plans = pgTable("plans", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  priceCents: integer("price_cents").notNull(),
+  currency: text("currency").notNull().default("BRL"),
+  stripePriceId: text("stripe_price_id"),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  highlights: text("highlights"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Plan = typeof plans.$inferSelect;
+
+export const SUBSCRIPTION_STATUSES = [
+  "trialing",
+  "active",
+  "past_due",
+  "canceled",
+  "expired",
+] as const;
+export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
+
+export const SUBSCRIPTION_SOURCES = ["trial_signup", "checkout", "admin_override"] as const;
+export type SubscriptionSource = (typeof SUBSCRIPTION_SOURCES)[number];
+
+export const subscriptions = pgTable(
+  "subscriptions",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    planId: text("plan_id")
+      .notNull()
+      .references(() => plans.id),
+    status: text("status").notNull().default("trialing"),
+    trialEndsAt: timestamp("trial_ends_at"),
+    currentPeriodStart: timestamp("current_period_start"),
+    currentPeriodEnd: timestamp("current_period_end"),
+    stripeCustomerId: text("stripe_customer_id"),
+    stripeSubscriptionId: text("stripe_subscription_id"),
+    source: text("source").notNull().default("trial_signup"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => [uniqueIndex("subscriptions_user_id_unique").on(t.userId)],
+);
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = typeof subscriptions.$inferInsert;
+
+export const adminAuditLog = pgTable("admin_audit_log", {
+  id: serial("id").primaryKey(),
+  action: text("action").notNull(),
+  targetUserId: integer("target_user_id"),
+  payload: text("payload"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

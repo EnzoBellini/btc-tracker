@@ -2,12 +2,17 @@ import { defineConfig } from "vite";
 import path from "path";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
+import { marketTickerDevPlugin } from "./vite-market-ticker";
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), marketTickerDevPlugin()],
+  optimizeDeps: {
+    include: ["@trackion/billing"],
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@trackion/billing": path.resolve(__dirname, "../../packages/billing/src/index.ts"),
     },
   },
   build: {
@@ -20,7 +25,12 @@ export default defineConfig({
     strictPort: true,
     open: false,
     proxy: {
-      "/api": {
+      // trial-signup e demais rotas do app — requer `npm run dev` em apps/app (porta 5000)
+      "/api/trial-signup": {
+        target: "http://127.0.0.1:5000",
+        changeOrigin: true,
+      },
+      "/api/auth": {
         target: "http://127.0.0.1:5000",
         changeOrigin: true,
       },

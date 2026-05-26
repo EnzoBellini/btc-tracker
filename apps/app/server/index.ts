@@ -6,6 +6,9 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import { setupSession, registerAuthRoutes } from "./auth";
 import { registerOnboardingRoutes } from "./onboarding";
+import { registerBillingRoutes } from "./billing/routes";
+import { registerAdminRoutes } from "./admin/routes";
+import { startSubscriptionCron } from "./billing/cron";
 import { db } from "./db";
 import { validateSecurityConfig, logEmailConfigStatus, redactForLog } from "./lib/security";
 
@@ -71,22 +74,27 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
-const landingOrigins = (process.env.LANDING_ORIGIN ?? "http://localhost:3000")
-  .split(",")
+const corsOrigins = [
+  ...(process.env.LANDING_ORIGIN ?? "http://localhost:3000").split(","),
+  ...(process.env.ADMIN_ORIGIN ?? "http://localhost:3001").split(","),
+]
   .map((o) => o.trim())
   .filter(Boolean);
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (origin && landingOrigins.includes(origin)) {
+  if (origin && corsOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Vary", "Origin");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Admin-Key");
   }
   if (
     req.method === "OPTIONS" &&
-    (req.path.startsWith("/api/trial-signup") || req.path.startsWith("/api/market"))
+    (req.path.startsWith("/api/trial-signup") ||
+      req.path.startsWith("/api/market") ||
+      req.path.startsWith("/api/billing/webhook") ||
+      req.path.startsWith("/api/admin"))
   ) {
     return res.sendStatus(204);
   }
@@ -97,6 +105,8 @@ app.use((req, res, next) => {
 setupSession(app);
 registerAuthRoutes(app);
 registerOnboardingRoutes(app);
+registerBillingRoutes(app);
+registerAdminRoutes(app);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -172,5 +182,6 @@ app.use((req, res, next) => {
     log(`serving on port ${port}`);
     if (!db) log("Modo local: sem DATABASE_URL, usando armazenamento em memória", "storage");
     logEmailConfigStatus(log);
+    startSubscriptionCron(log);
   });
 })();

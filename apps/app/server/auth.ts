@@ -9,9 +9,11 @@ import { storage } from "./storage";
 import { generateSecurePassword, validateNewPassword } from "./lib/password";
 import { generateToken, hashToken, verificationExpiresAt } from "./lib/tokens";
 import { sendWelcomeEmail, buildVerifyUrl } from "./lib/email";
-import { toAuthUserPayload } from "./lib/authUser";
+import { toAuthUserPayload, type AuthUserPayload } from "./lib/authUser";
+import { getResolvedSubscription } from "./billing/subscriptionService";
 import { createPgPool, getPgConnectionString } from "./lib/pg";
 import { createRateLimiter } from "./lib/rateLimit";
+import { activateTrialAfterEmailVerification, startTrialForUser } from "./billing/routes";
 
 const authEnterLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 8, keyPrefix: "auth:enter" });
 const authLoginLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 15, keyPrefix: "auth:login" });
@@ -53,15 +55,54 @@ function loginSession(
   });
 }
 
-async function issueVerification(userId: number, email: string, plainPassword: string) {
+type VerificationResult = {
+  verifyUrl: string;
+  emailSent: boolean;
+  devVerifyUrl?: string;
+  devPassword?: string;
+};
+
+function devVerificationExtras(
+  verifyUrl: string,
+  emailSent: boolean,
+  plainPassword: string,
+): Pick<VerificationResult, "devVerifyUrl" | "devPassword"> {
+  if (process.env.NODE_ENV === "production" || emailSent) return {};
+  return { devVerifyUrl: verifyUrl, devPassword: plainPassword };
+}
+
+async function issueVerification(
+  userId: number,
+  email: string,
+  plainPassword: string,
+): Promise<VerificationResult> {
   const token = generateToken();
   const tokenHash = hashToken(token);
   await storage.createEmailVerificationToken(userId, tokenHash, verificationExpiresAt(24));
-  await sendWelcomeEmail({
+  const verifyUrl = buildVerifyUrl(token);
+  const { sent } = await sendWelcomeEmail({
     to: email,
     password: plainPassword,
-    verifyUrl: buildVerifyUrl(token),
+    verifyUrl,
   });
+  return {
+    verifyUrl,
+    emailSent: sent,
+    ...devVerificationExtras(verifyUrl, sent, plainPassword),
+  };
+}
+
+function trialSignupJson(verification: VerificationResult, messageWhenSent: string) {
+  return {
+    ok: true as const,
+    emailSent: verification.emailSent,
+    message: verification.emailSent
+      ? messageWhenSent
+      : "Conta criada. Configure RESEND_API_KEY para enviar e-mail — em dev use o link abaixo para confirmar.",
+    ...(verification.devVerifyUrl
+      ? { devVerifyUrl: verification.devVerifyUrl, devPassword: verification.devPassword }
+      : {}),
+  };
 }
 
 export function setupSession(app: Express) {
@@ -129,11 +170,13 @@ export function registerAuthRoutes(app: Express) {
           onboardingStep: 0,
           traderProfile: leadProfile,
         });
-        await issueVerification(user.id, user.email, plainPassword);
-        return res.status(201).json({
-          ok: true,
-          message: "Enviamos o link de acesso e a senha temporária para seu e-mail.",
-        });
+        const verification = await issueVerification(user.id, user.email, plainPassword);
+        return res.status(201).json(
+          trialSignupJson(
+            verification,
+            "Enviamos o link de confirmação e a senha temporária. Seu trial Elite de 14 dias começa ao clicar no link do e-mail.",
+          ),
+        );
       }
 
       if (!user.emailVerified) {
@@ -144,11 +187,22 @@ export function registerAuthRoutes(app: Express) {
           mustChangePassword: true,
           traderProfile: leadProfile,
         });
-        await issueVerification(user.id, user.email, plainPassword);
-        return res.json({
-          ok: true,
-          message: "Reenviamos o link de acesso para seu e-mail.",
-        });
+        const verification = await issueVerification(user.id, user.email, plainPassword);
+        return res.json(
+          trialSignupJson(
+            verification,
+            "Reenviamos o link de confirmação. O trial de 14 dias começa quando você confirmar o e-mail.",
+          ),
+        );
+      }
+
+      const existingSub = user.trialUsedAt;
+      if (!existingSub) {
+        try {
+          await startTrialForUser(user.id);
+        } catch {
+          /* trial já usado ou sem DB */
+        }
       }
 
       return res.json({
@@ -186,7 +240,8 @@ export function registerAuthRoutes(app: Express) {
         await issueVerification(user.id, user.email, plainPassword);
         return res.status(201).json({
           status: "created",
-          message: "Conta criada. Verifique seu e-mail para a senha e o link de confirmação.",
+          message:
+            "Conta criada. Confirme o e-mail para ativar o trial; enviamos senha temporária e o link.",
         });
       }
 
@@ -239,7 +294,28 @@ export function registerAuthRoutes(app: Express) {
       const user = await storage.updateUser(record.userId, { emailVerified: true });
       if (!user) return res.status(500).json({ error: "Usuário não encontrado" });
 
-      loginSession(req, user, res, { ok: true, user: toAuthUserPayload(user) });
+      try {
+        await activateTrialAfterEmailVerification(user.id);
+      } catch (trialErr) {
+        console.warn("[auth/verify-email] trial", trialErr);
+      }
+
+      const refreshed = await storage.getUserById(user.id);
+      const resolved = await import("./billing/subscriptionService").then((m) =>
+        m.getResolvedSubscription(user.id),
+      );
+      const payload: AuthUserPayload = {
+        ...toAuthUserPayload(refreshed ?? user),
+        subscription: {
+          status: resolved.status,
+          effectivePlanId: resolved.effectivePlanId,
+          hasAccess: resolved.hasAccess,
+          trialEnded: resolved.trialEnded,
+          daysLeftInTrial: resolved.daysLeftInTrial,
+        },
+      };
+
+      loginSession(req, refreshed ?? user, res, { ok: true, user: payload });
     } catch (err: unknown) {
       console.error("[auth/verify-email]", err);
       res.status(500).json({ error: "Erro interno" });
@@ -264,6 +340,12 @@ export function registerAuthRoutes(app: Express) {
         mustChangePassword: false,
         onboardingCompleted: false,
       });
+
+      try {
+        await startTrialForUser(user.id);
+      } catch (trialErr) {
+        console.warn("[auth/register] trial", trialErr);
+      }
 
       loginSession(req, user, res, toAuthUserPayload(user), 201);
       return;
@@ -334,6 +416,17 @@ export function registerAuthRoutes(app: Express) {
     if (!req.session.userId) return res.status(401).json({ error: "Não autenticado" });
     const user = await storage.getUserById(req.session.userId);
     if (!user) return res.status(401).json({ error: "Não autenticado" });
-    res.json(toAuthUserPayload(user));
+    const resolved = await getResolvedSubscription(user.id);
+    const payload: AuthUserPayload = {
+      ...toAuthUserPayload(user),
+      subscription: {
+        status: resolved.status,
+        effectivePlanId: resolved.effectivePlanId,
+        hasAccess: resolved.hasAccess,
+        trialEnded: resolved.trialEnded,
+        daysLeftInTrial: resolved.daysLeftInTrial,
+      },
+    };
+    res.json(payload);
   });
 }

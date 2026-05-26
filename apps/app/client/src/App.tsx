@@ -5,12 +5,13 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Toaster } from "react-hot-toast";
 import {
-  LayoutDashboard, ArrowLeftRight, TrendingUp, Bitcoin, BarChart2, BookOpen, Plug, LogOut, Menu, User, X,
+  LayoutDashboard, ArrowLeftRight, TrendingUp, Bitcoin, BarChart2, BookOpen, Plug, LogOut, Menu, User, CreditCard, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, useLogout } from "@/hooks/useAuth";
 import { useSyncAllTrades } from "@/hooks/useTrades";
 import { useExchangesSummary } from "@/hooks/useExchanges";
+import { useSubscription } from "@/hooks/useSubscription";
 import TopTicker from "@/components/tk/TopTicker";
 
 const LoginPage = lazy(() => import("@/pages/Login"));
@@ -25,19 +26,26 @@ const BtcHoldings = lazy(() => import("@/pages/BtcHoldings"));
 const Reports = lazy(() => import("@/pages/Reports"));
 const Rules = lazy(() => import("@/pages/Rules"));
 const ApiSettings = lazy(() => import("@/pages/ApiSettings"));
+const Billing = lazy(() => import("@/pages/Billing"));
+const SubscriptionWall = lazy(() => import("@/pages/SubscriptionWall"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // ── Sync trades de todas as exchanges conectadas ao abrir o app ───────────────
 function SyncOnLogin() {
   const { user } = useAuth();
+  const { data: sub } = useSubscription();
   const syncAll = useSyncAllTrades();
   const hasSynced = useRef(false);
   useEffect(() => {
-    if (user && !hasSynced.current) {
+    const canSync =
+      sub?.entitlements &&
+      typeof sub.entitlements === "object" &&
+      (sub.entitlements as { syncMode?: string }).syncMode !== "manual";
+    if (user && canSync && !hasSynced.current) {
       hasSynced.current = true;
       syncAll.mutate(undefined);
     }
-  }, [user]);
+  }, [user, sub]);
   return null;
 }
 
@@ -50,7 +58,8 @@ const navItems = [
   { href: "/reports",      index: "05", label: "Relatórios",     mono: "REPORTS",    icon: BarChart2 },
   { href: "/rules",        index: "06", label: "Regras & Metas", mono: "RULES",      icon: BookOpen },
   { href: "/api-settings", index: "07", label: "API Exchanges",  mono: "API.EXCH",   icon: Plug },
-  { href: "/conta",        index: "08", label: "Conta",          mono: "ACCOUNT",    icon: User },
+  { href: "/billing",      index: "08", label: "Assinatura",     mono: "BILLING",    icon: CreditCard },
+  { href: "/conta",        index: "09", label: "Conta",          mono: "ACCOUNT",    icon: User },
 ];
 
 // ── Page loading fallback ─────────────────────────────────────────────────────
@@ -353,6 +362,14 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     );
   }
 
+  if (user.subscription && !user.subscription.hasAccess) {
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-background" />}>
+        <SubscriptionWall />
+      </Suspense>
+    );
+  }
+
   return (
     <>
       <SyncOnLogin />
@@ -375,6 +392,7 @@ export default function App() {
             <Route path="/reports"      component={() => <Layout><Reports /></Layout>} />
             <Route path="/rules"        component={() => <Layout><Rules /></Layout>} />
             <Route path="/api-settings" component={() => <Layout><ApiSettings /></Layout>} />
+            <Route path="/billing"      component={() => <Layout><Billing /></Layout>} />
             <Route path="/conta"        component={() => <Layout><ChangePasswordPage /></Layout>} />
             <Route path="/verify-email" component={() => <VerifyEmailPage />} />
             <Route component={() => <Layout><NotFound /></Layout>} />

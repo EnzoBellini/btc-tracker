@@ -31,6 +31,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
+      "@trackion/billing": path.resolve(import.meta.dirname, "../../packages/billing/src/index.ts"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
   },

@@ -3,27 +3,41 @@ dist/
 .DS_Store
 *.tsbuildinfo
 
-# Segredos e ambiente local (nunca commitar)
+# ── Segredos e ambiente (NUNCA commitar) ─────────────────────────────────────
 .env
 .env.*
 !.env.example
+!.env.*.example
 apps/app/.env
 apps/landing/.env
+apps/admin/.env
 
-# Relatórios e logs de pentest (podem conter URLs, tokens de teste, dumps)
+# Chaves / certificados
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+secrets.json
+service-account*.json
+
+# Relatórios e logs de pentest (podem conter URLs, tokens, dumps)
 security/reports/
 security/*.log
 security/zap.out
+*.log
 
-# IDE / OS
+# IDE / editor / OS
 .idea/
 .vscode/
+.cursor/
 *.swp
 Thumbs.db
 
 # Build / cache
 apps/app/dist/
 apps/landing/dist/
+apps/admin/dist/
 .vite/
 coverage/
 

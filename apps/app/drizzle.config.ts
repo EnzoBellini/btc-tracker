@@ -19,6 +19,9 @@ const tablesFilter = [
   "onboarding_responses",
   "user_rules",
   "roadmap_items",
+  "plans",
+  "subscriptions",
+  "admin_audit_log",
 ];
 
 export default defineConfig({

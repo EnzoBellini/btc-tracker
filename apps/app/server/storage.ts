@@ -629,6 +629,7 @@ class MemStorage implements IStorage {
       onboardingStep: u.onboardingStep ?? 0,
       traderProfile: u.traderProfile ?? null,
       passwordChangedAt: u.passwordChangedAt ?? null,
+      trialUsedAt: u.trialUsedAt ?? null,
       createdAt: new Date(),
     } as User;
     this.usersMap.set(user.id, user);
