@@ -1,10 +1,9 @@
-# Railway: defina Root Directory = . (raiz do repositório), não apps/landing.
-# O pacote @trackion/billing é workspace local em packages/billing.
+# Root Directory no Railway: apps/landing (padrão para deploy via GitHub)
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm ci && npm run build --workspace=@trackion/landing"
+buildCommand = "npm install && npm run build"
 
 [deploy]
-startCommand = "npm run start --workspace=@trackion/landing"
+startCommand = "npm run start"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3

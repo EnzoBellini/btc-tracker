@@ -6,13 +6,9 @@ import { marketTickerDevPlugin } from "./vite-market-ticker";
 
 export default defineConfig({
   plugins: [react(), tailwindcss(), marketTickerDevPlugin()],
-  optimizeDeps: {
-    include: ["@trackion/billing"],
-  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "@trackion/billing": path.resolve(__dirname, "../../packages/billing/src/index.ts"),
     },
   },
   build: {

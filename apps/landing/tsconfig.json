@@ -17,8 +17,7 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@trackion/billing": ["../../packages/billing/src/index.ts"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src"]
