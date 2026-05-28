@@ -1,9 +1,11 @@
 import { useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
+import type { LandingContent } from "../lib/landing-content";
 
 export type TrialSignupModalProps = {
   open: boolean;
   initialEmail?: string;
+  copy: LandingContent["trialModal"];
   onClose: () => void;
   onSubmit: (data: { name: string; email: string }) => Promise<void>;
   submitting?: boolean;
@@ -17,6 +19,7 @@ export type TrialSignupModalProps = {
 export function TrialSignupModal({
   open,
   initialEmail = "",
+  copy,
   onClose,
   onSubmit,
   submitting = false,
@@ -65,7 +68,7 @@ export function TrialSignupModal({
           type="button"
           onClick={onClose}
           className="absolute right-4 top-4 rounded p-1 text-gray-400 transition hover:bg-white/10 hover:text-white"
-          aria-label="Fechar"
+          aria-label={copy.close}
         >
           <X className="h-5 w-5" />
         </button>
@@ -73,26 +76,15 @@ export function TrialSignupModal({
         {success ? (
           <div className="space-y-4 pt-2">
             <h2 id={titleId} className="text-xl font-bold tracking-wide text-white sm:text-2xl">
-              Quase lá!
+              {copy.successTitle}
             </h2>
             <p className="text-sm leading-relaxed text-gray-300 sm:text-base">
-              {emailSent ? (
-                <>
-                  Enviamos o link de confirmação e a senha temporária para o e-mail informado. Confira a caixa de
-                  entrada e o spam — o trial Elite de{" "}
-                  <span className="font-semibold text-[#FF8C42]">14 dias</span> começa ao clicar no link.
-                </>
-              ) : (
-                <>
-                  Conta criada em modo dev (e-mail não configurado). Use o link e a senha abaixo para confirmar e
-                  ativar o trial.
-                </>
-              )}
+              {emailSent ? copy.successEmail : copy.successDev}
             </p>
             {!emailSent && devVerifyUrl && (
               <div className="space-y-3 rounded border border-amber-500/40 bg-amber-500/10 p-3 text-left text-xs text-gray-200">
                 <p>
-                  <span className="font-semibold text-amber-400">Senha temporária:</span>{" "}
+                  <span className="font-semibold text-amber-400">{copy.devPassword}</span>{" "}
                   <code className="break-all text-white">{devPassword}</code>
                 </p>
                 <a
@@ -108,17 +100,15 @@ export function TrialSignupModal({
               onClick={onClose}
               className="w-full rounded-lg bg-[#FF8C42] py-3 text-sm font-bold text-white transition hover:bg-[#FF7A2E]"
             >
-              Entendi
+              {copy.gotIt}
             </button>
           </div>
         ) : (
           <>
             <h2 id={titleId} className="pr-8 text-xl font-bold tracking-wide text-white sm:text-2xl">
-              Comece seus 14 dias grátis
+              {copy.title}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-gray-400">
-              Sem cartão de crédito. Preencha abaixo e enviaremos o link de acesso ao Trackion.
-            </p>
+            <p className="mt-2 text-sm leading-relaxed text-gray-400">{copy.subtitle}</p>
 
             <form
               className="mt-6 space-y-4"
@@ -132,7 +122,7 @@ export function TrialSignupModal({
             >
               <div className="space-y-1.5">
                 <label htmlFor="trial-name" className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                  Nome
+                  {copy.nameLabel}
                 </label>
                 <input
                   ref={nameRef}
@@ -143,13 +133,13 @@ export function TrialSignupModal({
                   minLength={2}
                   maxLength={80}
                   autoComplete="name"
-                  placeholder="Seu nome"
+                  placeholder={copy.namePlaceholder}
                   className="w-full border border-white/15 bg-black px-4 py-3 text-sm text-white placeholder:text-gray-600 outline-none transition focus:border-[#FF8C42]/60 focus:ring-1 focus:ring-[#FF8C42]/40"
                 />
               </div>
               <div className="space-y-1.5">
                 <label htmlFor="trial-email" className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                  E-mail
+                  {copy.emailLabel}
                 </label>
                 <input
                   id="trial-email"
@@ -158,7 +148,7 @@ export function TrialSignupModal({
                   required
                   autoComplete="email"
                   defaultValue={initialEmail}
-                  placeholder="voce@email.com"
+                  placeholder={copy.emailPlaceholder}
                   className="w-full border border-white/15 bg-black px-4 py-3 text-sm text-white placeholder:text-gray-600 outline-none transition focus:border-[#FF8C42]/60 focus:ring-1 focus:ring-[#FF8C42]/40"
                 />
               </div>
@@ -174,7 +164,7 @@ export function TrialSignupModal({
                 disabled={submitting}
                 className="w-full rounded-lg bg-[#FF8C42] py-3 text-sm font-bold text-white transition hover:bg-[#FF7A2E] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {submitting ? "Enviando…" : "Enviar link de acesso"}
+                {submitting ? copy.submitting : copy.submit}
               </button>
             </form>
           </>

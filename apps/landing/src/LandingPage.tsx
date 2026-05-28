@@ -1,149 +1,20 @@
-import {
-  ArrowDownRight,
-  ArrowUpRight,
-  Ban,
-  Brain,
-  ClipboardList,
-  Clock,
-  Compass,
-  LineChart,
-  Link2,
-  PieChart,
-  Plus,
-  RefreshCw,
-  ShieldCheck,
-  Target,
-  Trophy,
-  Zap,
-} from "lucide-react";
-import { useEffect, useState, type ComponentType, type SVGProps } from "react";
+import { ArrowDownRight, ArrowUpRight, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
 import { AnimatedWealthChart } from "./components/AnimatedWealthChart";
 import { HeroWaveCanvas } from "./components/HeroWaveCanvas";
+import { MarketSelector } from "./components/MarketSelector";
 import { TrialSignupModal } from "./components/TrialSignupModal";
+import { useMarket } from "./hooks/useMarket";
+import { getLandingContent } from "./lib/landing-content";
 import { submitTrialSignup } from "./lib/trialSignup";
-import { PRICING_PLANS, formatPlanPrice, TRIAL_DAYS } from "./lib/plans";
+import { formatPlanPrice, getPlansForMarket, TRIAL_DAYS } from "./lib/plans";
 import { useMarketTicker } from "./hooks/useMarketTicker";
 
 export type LandingPageProps = {
   onStartClick?: () => void;
 };
 
-type IconType = ComponentType<SVGProps<SVGSVGElement>>;
-
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-// ============================== DATA ==============================
-
-const NAV_LINKS = [
-  { href: "#recursos", index: "01", label: "Recursos" },
-  { href: "#integracoes", index: "02", label: "Integrações" },
-  { href: "#metodo", index: "03", label: "Método" },
-  { href: "#precos", index: "04", label: "Preços" },
-] as const;
-
-const BIG_STATS = [
-  { label: "Trades importados", value: "1.28M", caption: "via API · 30d", index: "01" },
-  { label: "Métricas calculadas", value: "27+", caption: "win rate · expectancy · DD · R/R", index: "02" },
-  { label: "Setup inicial", value: "< 2min", caption: "conecte sua exchange", index: "03" },
-  { label: "Dias grátis", value: "14", caption: "sem cartão de crédito", index: "04" },
-] as const;
-
-const OFFERINGS: ReadonlyArray<{ icon: IconType; title: string; description: string; tag: string }> = [
-  {
-    tag: "DASHBOARD",
-    icon: LineChart,
-    title: "Performance ao vivo",
-    description:
-      "Win rate, expectancy, drawdown e evolução do capital em um painel claro e objetivo — não em planilhas espalhadas.",
-  },
-  {
-    tag: "JOURNAL",
-    icon: ClipboardList,
-    title: "Registro completo de trades",
-    description:
-      "Cadastre entradas, saídas, tags e notas. Anexe screenshots. Revise o que funciona com contexto real.",
-  },
-  {
-    tag: "GOALS",
-    icon: Trophy,
-    title: "Metas e disciplina",
-    description:
-      "Defina objetivos diários, semanais e mensais. Receba feedback quando passar do limite de risco do dia.",
-  },
-  {
-    tag: "REPORTS",
-    icon: PieChart,
-    title: "Relatórios inteligentes",
-    description:
-      "Filtre por ativo, estratégia, dia da semana ou horário. Enxergue padrões que sua memória esquece.",
-  },
-];
-
-const EXCHANGES: ReadonlyArray<{ name: string; status: "live" | "soon"; pair: string }> = [
-  { name: "MEXC", status: "live", pair: "spot · futures" },
-  { name: "Bitget", status: "live", pair: "spot · futures" },
-  { name: "Binance", status: "live", pair: "spot · futures" },
-  { name: "Bybit", status: "soon", pair: "Q1 2026" },
-  { name: "OKX", status: "soon", pair: "Q1 2026" },
-];
-
-const INTEGRATION_BENEFITS: ReadonlyArray<{ icon: IconType; title: string; description: string }> = [
-  {
-    icon: RefreshCw,
-    title: "Sync automático",
-    description:
-      "Conecte a API da exchange uma vez. O Trackion puxa execuções em tempo real, sem copiar ordem por ordem.",
-  },
-  {
-    icon: Clock,
-    title: "Histórico sempre atualizado",
-    description:
-      "Seu journal reflete o que realmente aconteceu na conta. PnL e métricas prontas no momento que você opera.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Read-only · seguro",
-    description:
-      "Pedimos permissão apenas de leitura — sem withdraw, sem trade. Seu capital permanece intocado.",
-  },
-  {
-    icon: Link2,
-    title: "Multi-exchange",
-    description:
-      "Centralize todas as suas contas em um só lugar. PnL consolidado, métricas globais, zero retrabalho.",
-  },
-];
-
-const STOP_BETTING_POINTS: ReadonlyArray<{ icon: IconType; title: string; description: string; tag: string }> = [
-  {
-    tag: "PROBLEMA",
-    icon: Ban,
-    title: "Operar no feeling é apostar.",
-    description:
-      "Entrar sem plano, dobrar mão após loss, ignorar o histórico — o mercado vira cassino. O Trackion mostra a realidade dos seus números, não a sua memória seletiva.",
-  },
-  {
-    tag: "CAUSA",
-    icon: Brain,
-    title: "Disciplina nasce de dados.",
-    description:
-      "Quando você enxerga win rate, drawdown e expectancy reais, deixa de repetir os mesmos erros. Decisões passam a ter método — não palpite.",
-  },
-  {
-    tag: "REMÉDIO",
-    icon: ShieldCheck,
-    title: "Regras antes da emoção.",
-    description:
-      "Metas, limites de risco e revisão sistemática criam um processo. Você opera como um profissional, não como um apostador esperando sorte.",
-  },
-];
-
-const HERO_PILLS: ReadonlyArray<{ icon: IconType; text: string }> = [
-  { icon: LineChart, text: "Analytics avançado" },
-  { icon: Target, text: "Metas & risco" },
-  { icon: Zap, text: "Sync em tempo real" },
-  { icon: Compass, text: "Foco em método" },
-];
 
 // ============================== UI HELPERS ==============================
 
@@ -217,6 +88,9 @@ function SectionLabel({ index, label, total = "04" }: { index: string; label: st
 // ============================== PAGE ==============================
 
 export default function LandingPage({ onStartClick }: LandingPageProps) {
+  const { market, setMarket } = useMarket();
+  const t = getLandingContent(market);
+  const pricingPlans = getPlansForMarket(market);
   const [scrollY, setScrollY] = useState(0);
   const [footerEmail, setFooterEmail] = useState("");
   const [trialModalOpen, setTrialModalOpen] = useState(false);
@@ -250,7 +124,7 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
   const handleTrialSubmit = async ({ name, email }: { name: string; email: string }) => {
     setTrialSubmitting(true);
     setTrialError(null);
-    const result = await submitTrialSignup(name, email);
+    const result = await submitTrialSignup(name, email, market);
     setTrialSubmitting(false);
     if (!result.ok) {
       setTrialError(result.message);
@@ -298,7 +172,7 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
             </span>
           </a>
           <div className="hidden items-center gap-8 md:flex">
-            {NAV_LINKS.map((link) => (
+            {t.nav.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
@@ -311,20 +185,21 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
               </a>
             ))}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <MarketSelector market={market} onChange={setMarket} />
             <button
               type="button"
               onClick={goStart}
               className="hidden font-mono text-[11px] uppercase tracking-[0.22em] text-gray-400 transition hover:text-white sm:inline-flex"
             >
-              Entrar →
+              {t.navLogin}
             </button>
             <button
               type="button"
               onClick={() => openTrialModal()}
               className="group relative inline-flex items-center gap-2 border border-[#FF8C42] bg-[#FF8C42] px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-black transition hover:bg-transparent hover:text-[#FF8C42]"
             >
-              Start Free
+              {t.navCta}
               <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
             </button>
           </div>
@@ -353,10 +228,10 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
           <div className="tk-rise tk-rise-1 mb-12 flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.08] pb-4 font-mono text-[11px] uppercase tracking-[0.22em] text-gray-500">
             <div className="flex items-center gap-6">
               <span>
-                <span className="text-[#FF8C42]">●</span> Beta privado
+                <span className="text-[#FF8C42]">●</span> {t.heroMeta.beta}
               </span>
-              <span className="hidden sm:inline">14 dias grátis</span>
-              <span className="hidden lg:inline">sem cartão de crédito</span>
+              <span className="hidden sm:inline">{t.heroMeta.trial}</span>
+              <span className="hidden lg:inline">{t.heroMeta.noCard}</span>
             </div>
             <div className="flex items-center gap-6">
               <span className="hidden sm:inline num">VOL.01 — ISSUE {todayISO}</span>
@@ -369,14 +244,14 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
             {/* Coluna esquerda: tipografia massiva */}
             <div className="col-span-12 min-w-0 lg:col-span-6">
               <div className="tk-rise tk-rise-2 mb-6 font-mono text-[11px] uppercase tracking-[0.32em] text-[#FF8C42]">
-                [00 — Trading Journal]
+                {t.heroEyebrow}
               </div>
 
               <h1 className="tk-rise tk-rise-3 font-sans text-[14vw] font-bold leading-[0.86] tracking-[-0.02em] text-white sm:text-[6rem] lg:text-[5rem] xl:text-[6.5rem] 2xl:text-[8rem]">
-                <span className="block">DOMINE</span>
-                <span className="block">SEUS</span>
+                <span className="block">{t.heroTitle[0]}</span>
+                <span className="block">{t.heroTitle[1]}</span>
                 <span className="block">
-                  <span className="font-serif italic font-light text-[#FF8C42] tracking-tight">trades</span>
+                  <span className="font-serif italic font-light text-[#FF8C42] tracking-tight">{t.heroTitle[2]}</span>
                   <span className="text-[#FF8C42]">.</span>
                 </span>
               </h1>
@@ -388,7 +263,7 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                   onClick={() => openTrialModal()}
                   className="group relative inline-flex items-center gap-2.5 border border-[#FF8C42] bg-[#FF8C42] px-6 py-3.5 text-sm font-bold uppercase tracking-[0.22em] text-black transition hover:bg-transparent hover:text-[#FF8C42]"
                 >
-                  <span>$ start --trial=14d</span>
+                  <span>{t.heroCtaPrimary}</span>
                   <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
                 </button>
                 <button
@@ -397,13 +272,13 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                   className="inline-flex items-center gap-2 border border-white/20 bg-transparent px-6 py-3.5 text-sm font-bold uppercase tracking-[0.22em] text-white transition hover:border-white/50 hover:bg-white/[0.04]"
                 >
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-tk-green" />
-                  Watch demo
+                  {t.heroCtaSecondary}
                 </button>
               </div>
 
               {/* Feature row */}
               <ul className="tk-rise tk-rise-6 mt-10 grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-4">
-                {HERO_PILLS.map(({ icon: Icon, text }, i) => (
+                {t.heroPills.map(({ icon: Icon, text }, i) => (
                   <li key={text} className="flex items-center gap-2 text-gray-400">
                     <span className="font-mono text-[10px] text-gray-600">
                       0{i + 1}
@@ -419,11 +294,11 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
             <aside className="tk-rise tk-rise-4 relative col-span-12 min-w-0 self-center lg:col-span-6">
               <div className="absolute -top-7 left-0 z-30 hidden items-center gap-3 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500 lg:flex">
                 <span className="text-[#FF8C42]">↘</span>
-                <span>fig.01 — dashboard.exec</span>
+                <span>{t.heroFig}</span>
                 <span className="h-px w-16 bg-white/10" />
                 <span className="flex items-center gap-1.5 text-tk-green">
                   <span className="h-1 w-1 animate-pulse rounded-full bg-tk-green" />
-                  live
+                  {t.heroLive}
                 </span>
               </div>
 
@@ -455,12 +330,12 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
         <div className="relative mx-auto max-w-[1400px] px-6">
           <div className="flex items-center justify-between border-b border-white/[0.06] py-3 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
             <span>
-              <span className="text-[#FF8C42]">●</span> índices · operação trackion
+              <span className="text-[#FF8C42]">●</span> {t.statsHeader}
             </span>
-            <span className="hidden sm:inline">ATUALIZADO {todayISO}</span>
+            <span className="hidden sm:inline">{t.statsUpdated} {todayISO}</span>
           </div>
           <div className="grid grid-cols-2 divide-x divide-white/[0.06] lg:grid-cols-4">
-            {BIG_STATS.map((s) => (
+            {t.bigStats.map((s) => (
               <div key={s.label} className="relative space-y-3 px-6 py-10 first:pl-0 last:pr-0">
                 <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
                   <span>{s.label}</span>
@@ -481,27 +356,26 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
         <div className="relative mx-auto max-w-[1400px] px-6">
           <div className="grid grid-cols-12 gap-6">
             <div className="col-span-12 lg:col-span-5">
-              <SectionLabel index="01" label="Recursos" />
+              <SectionLabel index="01" label={t.features.sectionLabel} />
               <h2 className="mt-8 text-balance text-5xl font-bold leading-[0.92] tracking-tight text-white sm:text-6xl lg:text-[5rem] xl:text-[5.5rem]">
-                Tudo num{" "}
+                {t.features.title[0]}{" "}
                 <span className="bg-gradient-to-r from-[#FFD0A8] via-[#FF8C42] to-[#BC5C2A] bg-clip-text text-transparent">
-                  só
+                  {market === "us" ? "one" : "só"}
                 </span>{" "}
-                lugar.
+                {t.features.title[1]}
               </h2>
               <p className="mt-8 max-w-md text-base leading-relaxed text-gray-400">
-                Registro, análise e metas em um produto coeso — não em três planilhas e dois apps
-                desconectados.
+                {t.features.subtitle}
               </p>
               <div className="mt-10 flex items-center gap-4 border-t border-white/[0.06] pt-6 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
                 <span className="text-[#FF8C42]">↳</span>
-                <span>4 módulos / 1 dashboard / 0 planilhas</span>
+                <span>{t.features.footer}</span>
               </div>
             </div>
 
             <div className="col-span-12 lg:col-span-7">
               <ol className="divide-y divide-white/[0.08] border-y border-white/[0.08]">
-                {OFFERINGS.map(({ icon: Icon, title, description, tag }, i) => (
+                {t.features.items.map(({ icon: Icon, title, description, tag }, i) => (
                   <li
                     key={title}
                     className="group relative grid grid-cols-[auto_1fr_auto] items-start gap-6 py-8 transition-colors hover:bg-white/[0.02] sm:gap-10 sm:py-10"
@@ -542,36 +416,42 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
       {/* =================== INTEGRAÇÕES — BRUTALIST HEADER ===================== */}
       <section id="integracoes" className="relative z-[1] overflow-hidden bg-black py-32">
         <div className="relative mx-auto max-w-[1400px] px-6">
-          <SectionLabel index="02" label="Integrações via API" />
+          <SectionLabel index="02" label={t.integrations.sectionLabel} />
 
           {/* HEADER MASSIVO */}
           <div className="mt-10">
             <h2 className="text-balance font-sans text-[11vw] font-bold leading-[0.9] tracking-[-0.03em] sm:text-[4.5rem] lg:text-[5.5rem] xl:text-[7rem] 2xl:text-[8rem]">
-              <span className="block text-white">Trades entram</span>
+              <span className="block text-white">{t.integrations.title[0]}</span>
               <span className="block">
-                <span className="text-stroke-orange">sozinhos.</span>
+                <span className="text-stroke-orange">{t.integrations.title[1]}</span>
               </span>
               <span className="block text-gray-700">
-                Você só{" "}
-                <span className="font-serif italic font-light text-white">analisa.</span>
+                {market === "us" ? (
+                  <>
+                    <span className="font-serif italic font-light text-white">{t.integrations.title[2]}</span>
+                  </>
+                ) : (
+                  <>
+                    Você só{" "}
+                    <span className="font-serif italic font-light text-white">analisa.</span>
+                  </>
+                )}
               </span>
             </h2>
             <p className="mt-10 max-w-xl text-base leading-relaxed text-gray-400 sm:text-lg">
-              Conectamos com as principais exchanges para puxar execuções em tempo real. Sem
-              planilha, sem cadastro manual — Trackion monta seu histórico enquanto o mercado se
-              mexe.
+              {t.integrations.subtitle}
             </p>
           </div>
 
           {/* EXCHANGES TABLE */}
           <div className="mt-20 border-y border-white/[0.08]">
             <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-6 border-b border-white/[0.06] px-2 py-3 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
-              <span>EXCHANGE</span>
-              <span className="hidden sm:inline">TIPO</span>
-              <span>STATUS</span>
-              <span>I/O</span>
+              <span>{t.integrations.tableHeaders.exchange}</span>
+              <span className="hidden sm:inline">{t.integrations.tableHeaders.type}</span>
+              <span>{t.integrations.tableHeaders.status}</span>
+              <span>{t.integrations.tableHeaders.io}</span>
             </div>
-            {EXCHANGES.map((ex, i) => (
+            {t.integrations.exchanges.map((ex, i) => (
               <div
                 key={ex.name}
                 className="group grid grid-cols-[1fr_auto_auto_auto] items-center gap-6 border-b border-white/[0.04] px-2 py-5 transition-colors last:border-0 hover:bg-white/[0.02]"
@@ -626,19 +506,19 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                 <div className="grid grid-cols-3 divide-x divide-white/[0.06] border-b border-white/[0.06]">
                   <div className="space-y-1 p-4">
                     <p className="font-mono text-[9px] uppercase tracking-[0.28em] text-gray-500">
-                      PNL
+                      {t.integrations.chartLabels.pnl}
                     </p>
                     <p className="num text-2xl font-bold text-tk-green sm:text-3xl">+147.82%</p>
                   </div>
                   <div className="space-y-1 p-4">
                     <p className="font-mono text-[9px] uppercase tracking-[0.28em] text-gray-500">
-                      TRADES
+                      {t.integrations.chartLabels.trades}
                     </p>
                     <p className="num text-2xl font-bold text-white sm:text-3xl">312</p>
                   </div>
                   <div className="space-y-1 p-4">
                     <p className="font-mono text-[9px] uppercase tracking-[0.28em] text-gray-500">
-                      SHARPE
+                      {t.integrations.chartLabels.sharpe}
                     </p>
                     <p className="num text-2xl font-bold text-white sm:text-3xl">2.14</p>
                   </div>
@@ -651,10 +531,10 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
 
             <div className="col-span-12 space-y-8 lg:col-span-5 lg:pl-6">
               <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-[#FF8C42]">
-                ↳ no que muda
+                {t.integrations.benefitsTitle}
               </p>
               <ul className="space-y-px border-y border-white/[0.08]">
-                {INTEGRATION_BENEFITS.map(({ icon: Icon, title, description }, i) => (
+                {t.integrations.benefits.map(({ icon: Icon, title, description }, i) => (
                   <li
                     key={title}
                     className="group grid grid-cols-[auto_1fr] items-start gap-5 border-b border-white/[0.04] py-5 last:border-0"
@@ -680,14 +560,20 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
       {/* =================== MÉTODO — MANIFESTO BRUTALIST ===================== */}
       <section id="metodo" className="relative z-[1] overflow-hidden bg-black py-32">
         <div className="relative mx-auto max-w-[1400px] px-6">
-          <SectionLabel index="03" label="Manifesto" total="03" />
+          <SectionLabel index="03" label={t.manifesto.sectionLabel} total="03" />
 
           <div className="mt-10">
             <h2 className="text-balance font-sans text-[15vw] font-bold leading-[0.88] tracking-[-0.04em] sm:text-[6rem] lg:text-[7.5rem] xl:text-[9.5rem] 2xl:text-[11rem]">
-              <span className="block text-white">PARE</span>
+              <span className="block text-white">{t.manifesto.title[0]}</span>
               <span className="block">
-                <span className="text-gray-700">DE</span>{" "}
-                <span className="text-[#FF8C42]">APOSTAR.</span>
+                {market === "us" ? (
+                  <span className="text-[#FF8C42]">{t.manifesto.title[1]}</span>
+                ) : (
+                  <>
+                    <span className="text-gray-700">DE</span>{" "}
+                    <span className="text-[#FF8C42]">APOSTAR.</span>
+                  </>
+                )}
               </span>
             </h2>
           </div>
@@ -695,21 +581,23 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
           <div className="mt-12 grid grid-cols-12 items-start gap-6 border-t border-white/[0.08] pt-10">
             <div className="col-span-12 lg:col-span-5">
               <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-[#FF8C42]">
-                ↳ thesis
+                {t.manifesto.thesisLabel}
               </p>
               <p className="mt-4 max-w-md text-base leading-relaxed text-gray-300 sm:text-lg">
-                Trading não é sorte. Quem opera no impulso está apostando o próprio capital.
-                Trackion coloca{" "}
-                <span className="text-white">processo, métricas e consistência</span> no centro —
-                onde sempre deveriam estar.
+                {market === "us" ? (
+                  t.manifesto.thesis
+                ) : (
+                  <>
+                    Trading não é sorte. Quem opera no impulso está apostando o próprio capital.
+                    Trackion coloca{" "}
+                    <span className="text-white">processo, métricas e consistência</span> no centro —
+                    onde sempre deveriam estar.
+                  </>
+                )}
               </p>
             </div>
             <div className="col-span-12 grid grid-cols-3 gap-6 lg:col-span-7">
-              {[
-                { k: "PROBLEMA", v: "Trading no feeling" },
-                { k: "CAUSA", v: "Falta de método" },
-                { k: "REMÉDIO", v: "Dados + disciplina" },
-              ].map((it, i) => (
+              {t.manifesto.pillars.map((it, i) => (
                 <div key={it.k} className="space-y-2 border-l border-white/15 pl-4">
                   <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
                     0{i + 1} · {it.k}
@@ -721,7 +609,7 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
           </div>
 
           <div className="mt-24 space-y-px border-y border-white/[0.1]">
-            {STOP_BETTING_POINTS.map(({ icon: Icon, title, description, tag }, i) => (
+            {t.manifesto.points.map(({ icon: Icon, title, description, tag }, i) => (
               <article
                 key={title}
                 className="group relative grid grid-cols-12 items-start gap-6 border-b border-white/[0.06] py-12 last:border-0 sm:py-16"
@@ -757,11 +645,17 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
           <div className="mt-16 flex flex-col items-start gap-6 border-t border-white/[0.08] pt-10 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
               <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-gray-500">
-                ↳ next step
+                {t.manifesto.nextLabel}
               </p>
               <p className="max-w-md text-base text-white sm:text-lg">
-                Pare de confiar no <span className="font-serif italic text-[#FF8C42]">feeling</span>.{" "}
-                Comece a confiar nos seus dados.
+                {market === "us" ? (
+                  t.manifesto.nextText
+                ) : (
+                  <>
+                    Pare de confiar no <span className="font-serif italic text-[#FF8C42]">feeling</span>.{" "}
+                    Comece a confiar nos seus dados.
+                  </>
+                )}
               </p>
             </div>
             <button
@@ -769,7 +663,7 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
               onClick={() => openTrialModal()}
               className="group inline-flex items-center gap-3 border border-[#FF8C42] bg-[#FF8C42] px-7 py-4 text-xs font-bold uppercase tracking-[0.28em] text-black transition hover:bg-transparent hover:text-[#FF8C42]"
             >
-              Trocar aposta por método
+              {t.manifesto.cta}
               <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
             </button>
           </div>
@@ -779,19 +673,34 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
       {/* =================== CTA / TERMINAL FOOTER ===================== */}
       <section id="precos" className="relative z-[1] overflow-hidden bg-black py-32">
         <div className="relative mx-auto max-w-[1100px] px-6">
-          <SectionLabel index="04" label="Planos · trial Elite 14d" total="04" />
+          <SectionLabel index="04" label={t.pricing.sectionLabel} total="04" />
 
           <h2 className="mt-10 text-balance font-sans text-5xl font-bold leading-[0.92] tracking-tight text-white sm:text-6xl lg:text-[4.5rem]">
-            Planos para cada fase do seu{" "}
-            <span className="font-serif italic font-light text-[#FF8C42]">trading</span>.
+            {market === "us" ? (
+              <>
+                Plans for every stage of your{" "}
+                <span className="font-serif italic font-light text-[#FF8C42]">trading</span>.
+              </>
+            ) : (
+              <>
+                Planos para cada fase do seu{" "}
+                <span className="font-serif italic font-light text-[#FF8C42]">trading</span>.
+              </>
+            )}
           </h2>
           <p className="mt-6 max-w-2xl text-base leading-relaxed text-gray-400 sm:text-lg">
-            Teste <strong className="text-white">todos os recursos Elite por {TRIAL_DAYS} dias</strong>{" "}
-            grátis. Depois do trial, escolha o plano que combina com seu volume e número de contas.
+            {market === "us" ? (
+              t.pricing.subtitle
+            ) : (
+              <>
+                Teste <strong className="text-white">todos os recursos Elite por {TRIAL_DAYS} dias</strong>{" "}
+                grátis. Depois do trial, escolha o plano que combina com seu volume e número de contas.
+              </>
+            )}
           </p>
 
           <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
-            {PRICING_PLANS.map((plan) => {
+            {pricingPlans.map((plan) => {
               const isPro = plan.id === "pro";
               return (
                 <div
@@ -803,14 +712,14 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                   <CornerMarks orange={isPro} />
                   {isPro && (
                     <span className="absolute -top-2.5 left-4 bg-[#FF8C42] px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-black">
-                      Âncora
+                      {t.pricing.anchorBadge}
                     </span>
                   )}
                   <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
                     {plan.name}
                   </p>
                   <p className="mt-2 font-sans text-3xl font-bold text-white">{formatPlanPrice(plan)}</p>
-                  <p className="text-xs text-gray-500">/ mês</p>
+                  <p className="text-xs text-gray-500">{t.pricing.perMonth}</p>
                   <p className="mt-3 text-sm text-gray-400">{plan.tagline}</p>
                   <ul className="mt-5 space-y-2 text-sm text-gray-300">
                     {plan.highlights.map((h) => (
@@ -829,7 +738,7 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                         : "border-white/20 text-white hover:border-[#FF8C42]"
                     }`}
                   >
-                    Trial Elite {TRIAL_DAYS}d
+                    {t.pricing.trialCta}
                   </button>
                 </div>
               );
@@ -839,10 +748,10 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
           <div className="mt-12 relative border border-white/15 bg-black/80 backdrop-blur-sm">
             <CornerMarks orange />
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.28em]">
-              <span className="text-gray-500">trackion.app — signup --trial=elite --days={TRIAL_DAYS}</span>
+              <span className="text-gray-500">{t.pricing.terminalHeader}</span>
               <span className="flex items-center gap-1 text-tk-green">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-tk-green" />
-                ready
+                {t.pricing.terminalReady}
               </span>
             </div>
             <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-[1fr_auto] sm:items-stretch">
@@ -853,7 +762,7 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                   value={footerEmail}
                   onChange={(e) => setFooterEmail(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleFooterCta()}
-                  placeholder="seu@email.com"
+                  placeholder={t.pricing.emailPlaceholder}
                   autoComplete="email"
                   className="min-w-0 flex-1 bg-transparent text-white placeholder:text-gray-600 outline-none"
                 />
@@ -864,12 +773,12 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                 onClick={handleFooterCta}
                 className="group inline-flex items-center justify-center gap-2 border border-[#FF8C42] bg-[#FF8C42] px-7 py-3 text-xs font-bold uppercase tracking-[0.28em] text-black transition hover:bg-transparent hover:text-[#FF8C42]"
               >
-                Iniciar trial
+                {t.pricing.startTrial}
                 <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
               </button>
             </div>
             <div className="border-t border-white/10 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
-              <span className="text-[#FF8C42]">›</span> trial = Elite completo · sem cartão no cadastro
+              <span className="text-[#FF8C42]">›</span> {t.pricing.terminalFooter}
             </div>
           </div>
         </div>
@@ -891,58 +800,58 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                 <span className="text-base font-bold tracking-[0.32em] text-white">TRACKION</span>
               </div>
               <p className="mt-4 max-w-sm text-sm leading-relaxed text-gray-500">
-                Não aposte. Registre.
+                {t.footer.tagline}
               </p>
               <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-600">
                 <Plus className="-mt-0.5 mr-1 inline h-3 w-3 text-[#FF8C42]" aria-hidden />
-                Don&apos;t bet. Track.
+                {t.footer.taglineEn}
               </p>
             </div>
 
             <div className="col-span-6 lg:col-span-2">
               <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
-                Produto
+                {t.footer.product}
               </p>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#recursos" className="transition hover:text-white">Recursos</a></li>
-                <li><a href="#integracoes" className="transition hover:text-white">Integrações</a></li>
-                <li><a href="#metodo" className="transition hover:text-white">Método</a></li>
-                <li><a href="#precos" className="transition hover:text-white">Preços</a></li>
+                <li><a href="#recursos" className="transition hover:text-white">{t.footer.links.product[0]}</a></li>
+                <li><a href="#integracoes" className="transition hover:text-white">{t.footer.links.product[1]}</a></li>
+                <li><a href="#metodo" className="transition hover:text-white">{t.footer.links.product[2]}</a></li>
+                <li><a href="#precos" className="transition hover:text-white">{t.footer.links.product[3]}</a></li>
               </ul>
             </div>
 
             <div className="col-span-6 lg:col-span-2">
               <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
-                Conta
+                {t.footer.account}
               </p>
               <ul className="space-y-2 text-sm text-gray-400">
                 <li>
-                  <button onClick={goStart} className="transition hover:text-white">Entrar</button>
+                  <button onClick={goStart} className="transition hover:text-white">{t.footer.login}</button>
                 </li>
                 <li>
                   <button onClick={() => openTrialModal()} className="transition hover:text-white">
-                    Trial 14d
+                    {t.footer.trial}
                   </button>
                 </li>
-                <li><a href="#" className="transition hover:text-white">Status</a></li>
+                <li><a href="#" className="transition hover:text-white">{t.footer.status}</a></li>
               </ul>
             </div>
 
             <div className="col-span-12 lg:col-span-3">
               <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
-                Last sync
+                {t.footer.lastSync}
               </p>
               <div className="space-y-2 border border-white/10 p-3 font-mono text-[11px] text-gray-400">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-500">timestamp</span>
+                  <span className="text-gray-500">{t.footer.syncLabels.timestamp}</span>
                   <span className="text-white num">{todayISO}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-500">status</span>
-                  <span className="text-tk-green">● online</span>
+                  <span className="text-gray-500">{t.footer.syncLabels.status}</span>
+                  <span className="text-tk-green">{t.footer.online}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-500">version</span>
+                  <span className="text-gray-500">{t.footer.syncLabels.version}</span>
                   <span className="text-white num">v2.0</span>
                 </div>
               </div>
@@ -950,11 +859,11 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
           </div>
 
           <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-white/[0.06] pt-6 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-600 sm:flex-row sm:items-center">
-            <p>© {year} TRACKION · Trading com método, não no achismo</p>
+            <p>© {year} TRACKION · {t.footer.copyright}</p>
             <div className="flex items-center gap-5">
-              <a href="#" className="transition hover:text-white">Privacidade</a>
-              <a href="#" className="transition hover:text-white">Termos</a>
-              <a href="#" className="transition hover:text-white">Contato</a>
+              <a href="#" className="transition hover:text-white">{t.footer.legal[0]}</a>
+              <a href="#" className="transition hover:text-white">{t.footer.legal[1]}</a>
+              <a href="#" className="transition hover:text-white">{t.footer.legal[2]}</a>
             </div>
           </div>
         </div>
@@ -963,6 +872,7 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
       <TrialSignupModal
         open={trialModalOpen}
         initialEmail={footerEmail}
+        copy={t.trialModal}
         onClose={() => {
           setTrialModalOpen(false);
           if (trialSuccess) {

@@ -5,6 +5,8 @@ import { storage } from "../storage";
 import * as billingStorage from "./storage";
 import { activatePaidPlan } from "./subscriptionService";
 
+export type BillingCurrency = "BRL" | "USD";
+
 function stripeCheckoutEnabled(): boolean {
   return !!process.env.STRIPE_SECRET_KEY?.startsWith("sk_");
 }
@@ -20,13 +22,28 @@ async function getStripe() {
   return new Stripe(key, { apiVersion: "2025-02-24.acacia" });
 }
 
-function priceIdForPlan(planId: PlanId): string | undefined {
-  const map: Record<PlanId, string | undefined> = {
+export function parseCheckoutCurrency(body: { currency?: unknown; market?: unknown }): BillingCurrency {
+  const { currency, market } = body;
+  if (currency === "USD" || market === "us") return "USD";
+  if (currency === "BRL" || market === "br") return "BRL";
+  return "BRL";
+}
+
+function priceIdForPlan(planId: PlanId, currency: BillingCurrency): string | undefined {
+  if (currency === "USD") {
+    const us: Record<PlanId, string | undefined> = {
+      starter: process.env.STRIPE_PRICE_STARTER_US,
+      pro: process.env.STRIPE_PRICE_PRO_US,
+      elite: process.env.STRIPE_PRICE_ELITE_US,
+    };
+    return us[planId];
+  }
+  const brl: Record<PlanId, string | undefined> = {
     starter: process.env.STRIPE_PRICE_STARTER,
     pro: process.env.STRIPE_PRICE_PRO,
     elite: process.env.STRIPE_PRICE_ELITE,
   };
-  return map[planId];
+  return brl[planId];
 }
 
 export function registerStripeRoutes(app: Express) {
@@ -56,9 +73,12 @@ export function registerStripeRoutes(app: Express) {
     if (!planId || !PLAN_CATALOG[planId]) {
       return res.status(400).json({ error: "Plano inválido" });
     }
-    const priceId = priceIdForPlan(planId);
+    const currency = parseCheckoutCurrency(req.body);
+    const priceId = priceIdForPlan(planId, currency);
     if (!priceId) {
-      return res.status(503).json({ error: `Price ID Stripe não configurado para ${planId}` });
+      return res.status(503).json({
+        error: `Price ID Stripe não configurado para ${planId} (${currency})`,
+      });
     }
 
     try {
@@ -82,7 +102,7 @@ export function registerStripeRoutes(app: Express) {
         line_items: [{ price: priceId, quantity: 1 }],
         success_url: `${appUrl}/#/billing?success=1`,
         cancel_url: `${appUrl}/#/billing?canceled=1`,
-        metadata: { userId: String(userId), planId },
+        metadata: { userId: String(userId), planId, currency },
       });
 
       res.json({ url: session.url });

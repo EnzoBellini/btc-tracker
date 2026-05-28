@@ -140,3 +140,29 @@ export function useLogout() {
     },
   });
 }
+
+export function useDeleteAccount() {
+  return useMutation({
+    mutationFn: async ({
+      password,
+      confirmEmail,
+    }: {
+      password: string;
+      confirmEmail: string;
+    }) => {
+      const res = await fetch("/api/auth/account", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ password, confirmEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Erro ao excluir conta");
+      return data as { ok: boolean; message?: string };
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(["/api/auth/me"], null);
+      queryClient.clear();
+    },
+  });
+}

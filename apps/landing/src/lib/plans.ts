@@ -1,5 +1,8 @@
-import { formatPlanPrice, PLAN_CATALOG, TRIAL_DAYS, type PlanId } from "./plan-catalog";
+import type { Market } from "./locale";
+import { formatPlanPrice, getPricingPlans, TRIAL_DAYS, type PlanId } from "./plan-catalog";
 
-export const PRICING_PLANS = (["starter", "pro", "elite"] as PlanId[]).map((id) => PLAN_CATALOG[id]);
+export function getPlansForMarket(market: Market) {
+  return getPricingPlans(market);
+}
 
-export { formatPlanPrice, TRIAL_DAYS };
+export { formatPlanPrice, TRIAL_DAYS, type PlanId };

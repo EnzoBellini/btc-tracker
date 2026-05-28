@@ -74,6 +74,7 @@ export interface IStorage {
   getUserById(id: number): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, data: Partial<User>): Promise<User | undefined>;
+  deleteUser(id: number): Promise<boolean>;
 
   createEmailVerificationToken(userId: number, tokenHash: string, expiresAt: Date): Promise<EmailVerificationToken>;
   findValidVerificationToken(tokenHash: string): Promise<(EmailVerificationToken & { user: User }) | undefined>;
@@ -316,6 +317,11 @@ export class DbStorage implements IStorage {
   async updateUser(id: number, data: Partial<User>): Promise<User | undefined> {
     const [updated] = await db!.update(users).set(data).where(eq(users.id, id)).returning();
     return updated;
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    const result = await db!.delete(users).where(eq(users.id, id)).returning();
+    return result.length > 0;
   }
 
   async createEmailVerificationToken(userId: number, tokenHash: string, expiresAt: Date): Promise<EmailVerificationToken> {
@@ -642,6 +648,41 @@ class MemStorage implements IStorage {
     const updated = { ...cur, ...data } as User;
     this.usersMap.set(id, updated);
     return updated;
+  }
+
+  async deleteUser(id: number) {
+    const user = this.usersMap.get(id);
+    if (!user) return false;
+    this.usersMap.delete(id);
+    for (const [tid, t] of Array.from(this.trades.entries())) {
+      if (t.userId === id) this.trades.delete(tid);
+    }
+    for (const [tid, t] of Array.from(this.transfers.entries())) {
+      if (t.userId === id) this.transfers.delete(tid);
+    }
+    for (const [hid, h] of Array.from(this.btcHoldings.entries())) {
+      if (h.userId === id) this.btcHoldings.delete(hid);
+    }
+    this.settingsByUser.delete(id);
+    for (const key of Array.from(this.exchangeByKey.keys())) {
+      if (key.startsWith(`${id}:`)) this.exchangeByKey.delete(key);
+    }
+    for (const [gid, g] of Array.from(this.goalsMap.entries())) {
+      if (g.userId === id) this.goalsMap.delete(gid);
+    }
+    for (const [tid, row] of Array.from(this.verificationTokens.entries())) {
+      if (row.userId === id) this.verificationTokens.delete(tid);
+    }
+    for (const [rid, r] of Array.from(this.userRulesMap.entries())) {
+      if (r.userId === id) this.userRulesMap.delete(rid);
+    }
+    for (const [rid, r] of Array.from(this.roadmapMap.entries())) {
+      if (r.userId === id) this.roadmapMap.delete(rid);
+    }
+    for (const [oid, o] of Array.from(this.onboardingMap.entries())) {
+      if (o.userId === id) this.onboardingMap.delete(oid);
+    }
+    return true;
   }
 
   async createEmailVerificationToken(userId: number, tokenHash: string, expiresAt: Date) {

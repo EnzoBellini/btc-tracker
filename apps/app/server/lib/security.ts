@@ -13,6 +13,12 @@ export function validateSecurityConfig(): void {
     if (!process.env.RESEND_API_KEY) {
       throw new Error("RESEND_API_KEY é obrigatório em produção para envio de e-mail.");
     }
+    const appUrl = process.env.APP_URL?.trim();
+    if (!appUrl || /localhost|127\.0\.0\.1/i.test(appUrl)) {
+      throw new Error(
+        "APP_URL deve apontar para o app em produção (ex: https://app.trackion.app) — links do e-mail de trial dependem disso.",
+      );
+    }
     if (!process.env.DATABASE_URL) {
       throw new Error("DATABASE_URL é obrigatório em produção.");
     }
@@ -26,6 +32,10 @@ export function validateSecurityConfig(): void {
 }
 
 export function logEmailConfigStatus(log: (msg: string, source?: string) => void): void {
+  const appUrl = process.env.APP_URL ?? "(não definido)";
+  log(`APP_URL para links de e-mail: ${appUrl}`, "email");
+  const landing = process.env.LANDING_ORIGIN ?? "(não definido — CORS trial-signup)";
+  log(`LANDING_ORIGIN: ${landing}`, "email");
   if (process.env.RESEND_API_KEY?.trim()) {
     log(`E-mail: Resend ativo (remetente: ${process.env.EMAIL_FROM ?? "padrão"})`, "email");
     return;

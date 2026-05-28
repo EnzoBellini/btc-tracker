@@ -8,7 +8,7 @@ import bcrypt from "bcryptjs";
 import { storage } from "./storage";
 import { generateSecurePassword, validateNewPassword } from "./lib/password";
 import { generateToken, hashToken, verificationExpiresAt } from "./lib/tokens";
-import { sendWelcomeEmail, buildVerifyUrl } from "./lib/email";
+import { sendWelcomeEmail, buildVerifyUrl, parseEmailLocale, type EmailLocale } from "./lib/email";
 import { toAuthUserPayload, type AuthUserPayload } from "./lib/authUser";
 import { getResolvedSubscription } from "./billing/subscriptionService";
 import { createPgPool, getPgConnectionString } from "./lib/pg";
@@ -75,6 +75,7 @@ async function issueVerification(
   userId: number,
   email: string,
   plainPassword: string,
+  locale: EmailLocale = "pt",
 ): Promise<VerificationResult> {
   const token = generateToken();
   const tokenHash = hashToken(token);
@@ -84,6 +85,7 @@ async function issueVerification(
     to: email,
     password: plainPassword,
     verifyUrl,
+    locale,
   });
   return {
     verifyUrl,
@@ -92,13 +94,39 @@ async function issueVerification(
   };
 }
 
-function trialSignupJson(verification: VerificationResult, messageWhenSent: string) {
+const TRIAL_SIGNUP_COPY = {
+  pt: {
+    sentNew:
+      "Enviamos o link de confirmação e a senha temporária. Seu trial Elite de 14 dias começa ao clicar no link do e-mail.",
+    sentResend:
+      "Reenviamos o link de confirmação. O trial de 14 dias começa quando você confirmar o e-mail.",
+    devFallback:
+      "Conta criada. Configure RESEND_API_KEY para enviar e-mail — em dev use o link abaixo para confirmar.",
+    alreadyHasAccount:
+      "Este e-mail já possui conta. Use Entrar no app com sua senha ou recupere o acesso por e-mail.",
+    emailFailed:
+      "Conta criada, mas não foi possível enviar o e-mail. Verifique spam ou tente reenviar pelo app (Entrar).",
+  },
+  en: {
+    sentNew:
+      "We sent a confirmation link and temporary password. Your 14-day Elite trial starts when you click the link in the email.",
+    sentResend:
+      "We resent the confirmation link. Your 14-day trial starts once you confirm your email.",
+    devFallback:
+      "Account created. Configure RESEND_API_KEY to send email — in dev use the link below to confirm.",
+    alreadyHasAccount:
+      "This email already has an account. Log in to the app with your password or recover access via email.",
+    emailFailed:
+      "Account created, but we couldn't send the email. Check spam or try resending from the app (Log in).",
+  },
+} as const;
+
+function trialSignupJson(verification: VerificationResult, locale: EmailLocale, messageKey: "sentNew" | "sentResend") {
+  const copy = TRIAL_SIGNUP_COPY[locale];
   return {
     ok: true as const,
     emailSent: verification.emailSent,
-    message: verification.emailSent
-      ? messageWhenSent
-      : "Conta criada. Configure RESEND_API_KEY para enviar e-mail — em dev use o link abaixo para confirmar.",
+    message: verification.emailSent ? copy[messageKey] : copy.devFallback,
     ...(verification.devVerifyUrl
       ? { devVerifyUrl: verification.devVerifyUrl, devPassword: verification.devPassword }
       : {}),
@@ -155,8 +183,9 @@ export function registerAuthRoutes(app: Express) {
       }
 
       const normalized = normalizeEmail(email);
+      const locale = parseEmailLocale(req.body);
       let user = await storage.getUserByEmail(normalized);
-      const leadProfile = JSON.stringify({ leadName: name });
+      const leadProfile = JSON.stringify({ leadName: name, locale });
 
       if (!user) {
         const plainPassword = generateSecurePassword();
@@ -170,13 +199,14 @@ export function registerAuthRoutes(app: Express) {
           onboardingStep: 0,
           traderProfile: leadProfile,
         });
-        const verification = await issueVerification(user.id, user.email, plainPassword);
-        return res.status(201).json(
-          trialSignupJson(
-            verification,
-            "Enviamos o link de confirmação e a senha temporária. Seu trial Elite de 14 dias começa ao clicar no link do e-mail.",
-          ),
-        );
+        let verification: VerificationResult;
+        try {
+          verification = await issueVerification(user.id, user.email, plainPassword, locale);
+        } catch (emailErr) {
+          await storage.deleteUser(user.id);
+          throw emailErr;
+        }
+        return res.status(201).json(trialSignupJson(verification, locale, "sentNew"));
       }
 
       if (!user.emailVerified) {
@@ -187,13 +217,8 @@ export function registerAuthRoutes(app: Express) {
           mustChangePassword: true,
           traderProfile: leadProfile,
         });
-        const verification = await issueVerification(user.id, user.email, plainPassword);
-        return res.json(
-          trialSignupJson(
-            verification,
-            "Reenviamos o link de confirmação. O trial de 14 dias começa quando você confirmar o e-mail.",
-          ),
-        );
+        const verification = await issueVerification(user.id, user.email, plainPassword, locale);
+        return res.json(trialSignupJson(verification, locale, "sentResend"));
       }
 
       const existingSub = user.trialUsedAt;
@@ -207,10 +232,17 @@ export function registerAuthRoutes(app: Express) {
 
       return res.json({
         ok: true,
-        message: "Este e-mail já possui conta. Use Entrar no app com sua senha ou recupere o acesso por e-mail.",
+        message: TRIAL_SIGNUP_COPY[locale].alreadyHasAccount,
       });
     } catch (err: unknown) {
       console.error("[trial-signup]", err);
+      const msg = err instanceof Error ? err.message : "";
+      const locale = parseEmailLocale(req.body);
+      if (msg.includes("Falha ao enviar e-mail") || msg.includes("RESEND")) {
+        return res.status(503).json({
+          error: TRIAL_SIGNUP_COPY[locale].emailFailed,
+        });
+      }
       res.status(500).json({ error: "Erro interno" });
     }
   });
@@ -410,6 +442,39 @@ export function registerAuthRoutes(app: Express) {
 
   app.post("/api/auth/logout", (req, res) => {
     req.session.destroy(() => res.json({ ok: true }));
+  });
+
+  app.delete("/api/auth/account", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const password = typeof req.body.password === "string" ? req.body.password : "";
+      const confirmEmail =
+        typeof req.body.confirmEmail === "string" ? normalizeEmail(req.body.confirmEmail) : "";
+
+      if (!password) {
+        return res.status(400).json({ error: "Informe sua senha para confirmar a exclusão" });
+      }
+
+      const user = await storage.getUserById(userId);
+      if (!user) return res.status(404).json({ error: "Usuário não encontrado" });
+      if (confirmEmail !== user.email) {
+        return res.status(400).json({ error: "O e-mail de confirmação não confere com sua conta" });
+      }
+
+      const valid = await bcrypt.compare(password, user.passwordHash);
+      if (!valid) return res.status(401).json({ error: "Senha incorreta" });
+
+      const deleted = await storage.deleteUser(userId);
+      if (!deleted) return res.status(500).json({ error: "Não foi possível excluir a conta" });
+
+      req.session.destroy((err) => {
+        if (err) console.error("[auth/account-delete] session destroy", err);
+        res.json({ ok: true, message: "Conta excluída. Você pode se cadastrar novamente com o mesmo e-mail." });
+      });
+    } catch (err: unknown) {
+      console.error("[auth/account-delete]", err);
+      res.status(500).json({ error: "Erro interno" });
+    }
   });
 
   app.get("/api/auth/me", async (req, res) => {

@@ -1,3 +1,5 @@
+export type EmailLocale = "pt" | "en";
+
 const APP_URL = process.env.APP_URL ?? "http://localhost:5000";
 const EMAIL_FROM = process.env.EMAIL_FROM ?? "Trackion <noreply@trackion.app>";
 
@@ -5,16 +7,60 @@ export interface WelcomeEmailParams {
   to: string;
   password: string;
   verifyUrl: string;
+  locale?: EmailLocale;
 }
 
-export function isResendConfigured(): boolean {
-  return Boolean(process.env.RESEND_API_KEY?.trim());
+export function parseEmailLocale(input: { market?: unknown; locale?: unknown }): EmailLocale {
+  const { market, locale } = input;
+  if (market === "us") return "en";
+  if (market === "br") return "pt";
+  if (locale === "en" || locale === "en-US") return "en";
+  if (locale === "pt" || locale === "pt-BR") return "pt";
+  return "pt";
 }
 
-export async function sendWelcomeEmail(params: WelcomeEmailParams): Promise<{ sent: boolean }> {
-  const { to, password, verifyUrl } = params;
-  const subject = "Bem-vindo ao Trackion — sua senha de acesso";
-  const body = [
+function buildWelcomeEmailContent(password: string, verifyUrl: string, locale: EmailLocale) {
+  if (locale === "en") {
+    const subject = "Welcome to Trackion — confirm your email and 14-day trial";
+    const text = [
+      "Hello,",
+      "",
+      "Your Trackion account has been created.",
+      "",
+      `Temporary password: ${password}`,
+      "",
+      "For security, change this password after your first login.",
+      "",
+      "Confirm your email to activate your 14-day Elite trial (link valid for 24 hours):",
+      verifyUrl,
+      "",
+      "If you did not request this signup, please ignore this email.",
+    ].join("\n");
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
+<body style="font-family:system-ui,-apple-system,sans-serif;line-height:1.5;color:#111;max-width:520px;margin:0 auto;padding:24px">
+  <p>Hello,</p>
+  <p>Your <strong>Trackion</strong> account has been created.</p>
+  <p><strong>Temporary password:</strong> <code style="background:#f4f4f5;padding:2px 6px;border-radius:4px">${password}</code></p>
+  <p>For security, change this password after your first login.</p>
+  <p>Confirm your email to activate your <strong>14-day Elite trial</strong> (link valid for 24 hours):</p>
+  <p style="margin:24px 0">
+    <a href="${verifyUrl}" style="display:inline-block;background:#FF8C42;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600">
+      Confirm email and start trial
+    </a>
+  </p>
+  <p style="font-size:13px;color:#666">Or copy the link: <a href="${verifyUrl}">${verifyUrl}</a></p>
+  <p style="font-size:13px;color:#888;margin-top:32px">If you did not request this signup, please ignore this email.</p>
+</body>
+</html>`;
+
+    return { subject, text, html };
+  }
+
+  const subject = "Bem-vindo ao Trackion — confirme seu e-mail e trial de 14 dias";
+  const text = [
     "Olá,",
     "",
     "Sua conta no Trackion foi criada.",
@@ -28,6 +74,36 @@ export async function sendWelcomeEmail(params: WelcomeEmailParams): Promise<{ se
     "",
     "Se você não solicitou este cadastro, ignore este e-mail.",
   ].join("\n");
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
+<body style="font-family:system-ui,-apple-system,sans-serif;line-height:1.5;color:#111;max-width:520px;margin:0 auto;padding:24px">
+  <p>Olá,</p>
+  <p>Sua conta no <strong>Trackion</strong> foi criada.</p>
+  <p><strong>Senha temporária:</strong> <code style="background:#f4f4f5;padding:2px 6px;border-radius:4px">${password}</code></p>
+  <p>Por segurança, altere esta senha após o primeiro login.</p>
+  <p>Confirme seu e-mail para ativar o <strong>trial Elite de 14 dias</strong> (link válido por 24h):</p>
+  <p style="margin:24px 0">
+    <a href="${verifyUrl}" style="display:inline-block;background:#FF8C42;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600">
+      Confirmar e-mail e ativar trial
+    </a>
+  </p>
+  <p style="font-size:13px;color:#666">Ou copie o link: <a href="${verifyUrl}">${verifyUrl}</a></p>
+  <p style="font-size:13px;color:#888;margin-top:32px">Se você não solicitou este cadastro, ignore este e-mail.</p>
+</body>
+</html>`;
+
+  return { subject, text, html };
+}
+
+export function isResendConfigured(): boolean {
+  return Boolean(process.env.RESEND_API_KEY?.trim());
+}
+
+export async function sendWelcomeEmail(params: WelcomeEmailParams): Promise<{ sent: boolean }> {
+  const { to, password, verifyUrl, locale = "pt" } = params;
+  const { subject, text, html } = buildWelcomeEmailContent(password, verifyUrl, locale);
 
   if (!isResendConfigured()) {
     if (process.env.NODE_ENV === "production") {
@@ -49,17 +125,27 @@ export async function sendWelcomeEmail(params: WelcomeEmailParams): Promise<{ se
       from: EMAIL_FROM,
       to: [to],
       subject,
-      text: body,
+      text,
+      html,
     }),
   });
 
   if (!res.ok) {
     const errText = await res.text();
-    console.error("[email] Falha Resend:", res.status, errText);
-    throw new Error("Falha ao enviar e-mail. Verifique RESEND_API_KEY e EMAIL_FROM (domínio verificado).");
+    let detail = errText;
+    try {
+      const parsed = JSON.parse(errText) as { message?: string };
+      if (parsed.message) detail = parsed.message;
+    } catch {
+      /* mantém texto bruto */
+    }
+    console.error("[email] Falha Resend:", res.status, detail);
+    throw new Error(
+      `Falha ao enviar e-mail (${res.status}): ${detail}. Verifique RESEND_API_KEY e EMAIL_FROM (domínio verificado no Resend).`,
+    );
   }
 
-  console.log(`[email] Enviado para ${to} via Resend`);
+  console.log(`[email] Enviado para ${to} via Resend (from: ${EMAIL_FROM}, locale: ${locale})`);
   return { sent: true };
 }
 
