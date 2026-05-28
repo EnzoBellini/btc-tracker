@@ -30,9 +30,6 @@ export type LandingContent = {
   heroPills: { icon: IconType; text: string }[];
   heroFig: string;
   heroLive: string;
-  statsHeader: string;
-  statsUpdated: string;
-  bigStats: { label: string; value: string; caption: string; index: string }[];
   features: {
     sectionLabel: string;
     title: [string, string];
@@ -46,7 +43,6 @@ export type LandingContent = {
     subtitle: string;
     tableHeaders: { exchange: string; type: string; status: string; io: string };
     exchanges: { name: string; status: "live" | "soon"; pair: string }[];
-    chartLabels: { pnl: string; trades: string; sharpe: string };
     benefitsTitle: string;
     benefits: { icon: IconType; title: string; description: string }[];
   };
@@ -137,14 +133,6 @@ const BR: LandingContent = {
   ],
   heroFig: "fig.01 — dashboard.exec",
   heroLive: "live",
-  statsHeader: "índices · operação trackion",
-  statsUpdated: "ATUALIZADO",
-  bigStats: [
-    { label: "Trades importados", value: "1.28M", caption: "via API · 30d", index: "01" },
-    { label: "Métricas calculadas", value: "27+", caption: "win rate · expectancy · DD · R/R", index: "02" },
-    { label: "Setup inicial", value: "< 2min", caption: "conecte sua exchange", index: "03" },
-    { label: "Dias grátis", value: "14", caption: "sem cartão de crédito", index: "04" },
-  ],
   features: {
     sectionLabel: "Recursos",
     title: ["Tudo num", "só lugar."],
@@ -189,7 +177,6 @@ const BR: LandingContent = {
       "Conectamos com as principais exchanges para puxar execuções em tempo real. Sem planilha, sem cadastro manual — Trackion monta seu histórico enquanto o mercado se mexe.",
     tableHeaders: { exchange: "EXCHANGE", type: "TIPO", status: "STATUS", io: "I/O" },
     exchanges: EXCHANGES,
-    chartLabels: { pnl: "PNL", trades: "TRADES", sharpe: "SHARPE" },
     benefitsTitle: "↳ no que muda",
     benefits: [
       {
@@ -330,14 +317,6 @@ const US: LandingContent = {
   ],
   heroFig: "fig.01 — dashboard.exec",
   heroLive: "live",
-  statsHeader: "indices · trackion ops",
-  statsUpdated: "UPDATED",
-  bigStats: [
-    { label: "Trades imported", value: "1.28M", caption: "via API · 30d", index: "01" },
-    { label: "Metrics computed", value: "27+", caption: "win rate · expectancy · DD · R/R", index: "02" },
-    { label: "Initial setup", value: "< 2min", caption: "connect your exchange", index: "03" },
-    { label: "Free days", value: "14", caption: "no credit card", index: "04" },
-  ],
   features: {
     sectionLabel: "Features",
     title: ["Everything in", "one place."],
@@ -382,7 +361,6 @@ const US: LandingContent = {
       "We connect to major exchanges to pull executions in real time. No spreadsheet, no manual entry — Trackion builds your history while the market moves.",
     tableHeaders: { exchange: "EXCHANGE", type: "TYPE", status: "STATUS", io: "I/O" },
     exchanges: EXCHANGES,
-    chartLabels: { pnl: "PNL", trades: "TRADES", sharpe: "SHARPE" },
     benefitsTitle: "↳ what changes",
     benefits: [
       {

@@ -325,32 +325,6 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
         </div>
       </section>
 
-      {/* =================== STATS / NUMBERS ROW ===================== */}
-      <section className="relative z-[1] bg-black">
-        <div className="relative mx-auto max-w-[1400px] px-6">
-          <div className="flex items-center justify-between border-b border-white/[0.06] py-3 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
-            <span>
-              <span className="text-[#FF8C42]">●</span> {t.statsHeader}
-            </span>
-            <span className="hidden sm:inline">{t.statsUpdated} {todayISO}</span>
-          </div>
-          <div className="grid grid-cols-2 divide-x divide-white/[0.06] lg:grid-cols-4">
-            {t.bigStats.map((s) => (
-              <div key={s.label} className="relative space-y-3 px-6 py-10 first:pl-0 last:pr-0">
-                <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
-                  <span>{s.label}</span>
-                  <span className="text-[#FF8C42]/70">[{s.index}]</span>
-                </div>
-                <p className="num text-5xl font-bold leading-none tracking-tight text-white sm:text-6xl">
-                  {s.value}
-                </p>
-                <p className="text-xs text-gray-500 sm:text-sm">{s.caption}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* =================== RECURSOS ===================== */}
       <section id="recursos" className="relative z-[1] bg-black py-32">
         <div className="relative mx-auto max-w-[1400px] px-6">
@@ -502,26 +476,6 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                     equity_curve · 30d
                   </span>
                   <span className="text-gray-600">trackion.app</span>
-                </div>
-                <div className="grid grid-cols-3 divide-x divide-white/[0.06] border-b border-white/[0.06]">
-                  <div className="space-y-1 p-4">
-                    <p className="font-mono text-[9px] uppercase tracking-[0.28em] text-gray-500">
-                      {t.integrations.chartLabels.pnl}
-                    </p>
-                    <p className="num text-2xl font-bold text-tk-green sm:text-3xl">+147.82%</p>
-                  </div>
-                  <div className="space-y-1 p-4">
-                    <p className="font-mono text-[9px] uppercase tracking-[0.28em] text-gray-500">
-                      {t.integrations.chartLabels.trades}
-                    </p>
-                    <p className="num text-2xl font-bold text-white sm:text-3xl">312</p>
-                  </div>
-                  <div className="space-y-1 p-4">
-                    <p className="font-mono text-[9px] uppercase tracking-[0.28em] text-gray-500">
-                      {t.integrations.chartLabels.sharpe}
-                    </p>
-                    <p className="num text-2xl font-bold text-white sm:text-3xl">2.14</p>
-                  </div>
                 </div>
                 <div className="p-2 sm:p-4">
                   <AnimatedWealthChart />

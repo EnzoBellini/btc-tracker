@@ -1,14 +1,10 @@
 import { useEffect, useState } from "react";
-import {
-  fetchMarketTicker,
-  TICKER_PLATFORM_ITEMS,
-  type MarketTickerItem,
-} from "@/lib/marketTicker";
+import { fetchMarketTicker, type MarketTickerItem } from "@/lib/marketTicker";
 
 const REFRESH_MS = 30_000;
 
 export function useMarketTicker() {
-  const [items, setItems] = useState<MarketTickerItem[]>(TICKER_PLATFORM_ITEMS);
+  const [items, setItems] = useState<MarketTickerItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,7 +15,7 @@ export function useMarketTicker() {
         const next = await fetchMarketTicker();
         if (!cancelled) setItems(next);
       } catch {
-        /* mantém último estado ou só platform items */
+        /* mantém último estado ou array vazio */
       } finally {
         if (!cancelled) setLoading(false);
       }
