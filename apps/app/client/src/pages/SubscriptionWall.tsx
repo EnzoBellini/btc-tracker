@@ -7,6 +7,8 @@ function formatOriginalPrice(planId: PlanId): string {
   const reais = LAUNCH_ORIGINAL_PRICE_CENTS[planId] / 100;
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(reais);
 }
+
+export default function SubscriptionWall() {
   const { t } = useAppLocale();
   const { data: sub, isLoading } = useSubscription();
   const checkout = useBillingCheckout();
