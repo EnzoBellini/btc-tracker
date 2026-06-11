@@ -52,15 +52,15 @@ export default function BlogPostPage({ post, market, onBack, onStartClick }: Blo
         ))}
       </div>
 
-      <article className="mt-10 space-y-8">
+      <article className="mt-10 space-y-10 border-t border-white/[0.08] pt-10">
         {post.sections.map((section, i) => (
-          <section key={i}>
+          <section key={i} className="scroll-mt-24">
             {section.heading && (
-              <h2 className="text-lg font-semibold text-white">{section.heading}</h2>
+              <h2 className="text-xl font-bold tracking-tight text-white sm:text-2xl">{section.heading}</h2>
             )}
-            <div className={section.heading ? "mt-3 space-y-3" : "space-y-3"}>
+            <div className={section.heading ? "mt-4 space-y-4" : "space-y-4"}>
               {section.paragraphs.map((p, j) => (
-                <p key={j} className="text-sm leading-relaxed text-gray-300">
+                <p key={j} className="text-base leading-[1.75] text-gray-300">
                   {p}
                 </p>
               ))}
@@ -69,8 +69,9 @@ export default function BlogPostPage({ post, market, onBack, onStartClick }: Blo
         ))}
       </article>
 
-      <aside className="mt-12 border border-[#FF8C42]/20 bg-[#FF8C42]/[0.06] p-6">
-        <p className="text-sm text-gray-300">{copy.inlineCta}</p>
+      <aside className="mt-14 border border-[#FF8C42]/30 bg-[#FF8C42]/[0.08] p-6 sm:p-8">
+        <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-[#FF8C42]">Trackion</p>
+        <p className="mt-3 text-base leading-relaxed text-gray-200">{copy.inlineCta}</p>
         <TrialCtaButton className="mt-4" onClick={onStartClick}>
           {copy.ctaButton}
         </TrialCtaButton>

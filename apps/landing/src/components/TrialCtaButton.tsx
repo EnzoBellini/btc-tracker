@@ -4,7 +4,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 type TrialCtaButtonProps = {
   children: ReactNode;
   variant?: "solid" | "outline" | "solidPro";
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   glow?: boolean;
   ring?: boolean;
   shine?: boolean;
@@ -13,7 +13,8 @@ type TrialCtaButtonProps = {
 } & Pick<ButtonHTMLAttributes<HTMLButtonElement>, "onClick" | "disabled" | "className">;
 
 const SIZE = {
-  sm: "px-4 py-2 text-xs tracking-[0.22em]",
+  xs: "px-3 py-1.5 text-[10px] tracking-[0.14em]",
+  sm: "px-4 py-2 text-xs tracking-[0.2em]",
   md: "px-6 py-3.5 text-sm tracking-[0.22em]",
   lg: "px-8 py-4 text-sm tracking-[0.24em] sm:text-base sm:tracking-[0.22em]",
 } as const;
@@ -67,7 +68,9 @@ export function TrialCtaButton({
         <span className="relative z-[1]">{children}</span>
         {showArrow && (
           <ArrowUpRight
-            className="relative z-[1] h-4 w-4 shrink-0 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+            className={`relative z-[1] shrink-0 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 ${
+              size === "xs" ? "h-3 w-3" : "h-4 w-4"
+            }`}
             aria-hidden
           />
         )}

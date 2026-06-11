@@ -1,5 +1,6 @@
-import { Menu, Plus, X } from "lucide-react";
+import { BookOpen, HelpCircle, Menu, Plus, X } from "lucide-react";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { FeaturedBlogSection } from "./components/FeaturedBlogSection";
 import { HeroWaveCanvas } from "./components/HeroWaveCanvas";
 import { TickerBar } from "./components/TickerBar";
 import { MarketSelector } from "./components/MarketSelector";
@@ -178,8 +179,8 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
 
       {/* =================== NAV ===================== */}
       <nav className="fixed top-0 z-50 w-full border-b border-white/[0.06] bg-black/85 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-3.5">
-          <a href="/" className="group -ml-2 flex min-h-11 min-w-11 items-center gap-2.5 rounded-sm p-2">
+        <div className="mx-auto flex max-w-[1400px] items-center gap-4 px-4 py-3 sm:px-6 lg:gap-6">
+          <a href="/" className="group flex shrink-0 items-center gap-2.5 rounded-sm p-1 sm:gap-3">
             <img
               src="/logo-trackion.webp"
               alt="Trackion"
@@ -188,18 +189,21 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
               className="h-6 w-6 shrink-0 object-contain"
               decoding="async"
             />
-            <span className="text-base font-bold tracking-[0.32em] text-white">TRACKION</span>
-            <span className="hidden font-mono text-[10px] uppercase tracking-[0.22em] text-gray-500 sm:inline">
+            <span className="text-sm font-bold tracking-[0.28em] text-white sm:text-base sm:tracking-[0.32em]">
+              TRACKION
+            </span>
+            <span className="hidden font-mono text-[10px] uppercase tracking-[0.22em] text-gray-500 2xl:inline">
               {t.navBrandSubtitle}
             </span>
           </a>
-          <div className="hidden items-center gap-8 md:flex">
+
+          <div className="hidden min-w-0 flex-1 items-center justify-center gap-5 px-2 md:flex lg:gap-7 xl:gap-9">
             {t.nav.map((link) => (
               <button
                 key={link.href}
                 type="button"
                 onClick={() => scrollToSection(link.href)}
-                className="group flex items-baseline gap-1.5 text-sm text-gray-400 transition hover:text-white"
+                className="group flex shrink-0 items-baseline gap-1.5 text-sm text-gray-400 transition hover:text-white"
               >
                 <span className="font-mono text-[10px] text-[#FF8C42]/70 group-hover:text-[#FF8C42]">
                   {link.index}
@@ -207,13 +211,28 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
                 {link.label}
               </button>
             ))}
+            <span className="h-3.5 w-px shrink-0 bg-white/15" aria-hidden />
+            <a
+              href="/blog"
+              className="shrink-0 font-mono text-[11px] uppercase tracking-[0.2em] text-gray-400 transition hover:text-[#FF8C42]"
+            >
+              {t.navBlog}
+            </a>
+            <button
+              type="button"
+              onClick={() => scrollToSection("#duvidas")}
+              className="shrink-0 font-mono text-[11px] uppercase tracking-[0.2em] text-gray-400 transition hover:text-white"
+            >
+              {t.navFaq}
+            </button>
           </div>
-          <div className="flex items-center gap-3 sm:gap-4">
+
+          <div className="ml-auto flex shrink-0 items-center gap-2.5 sm:gap-3 md:gap-4 md:pl-3 lg:pl-4 md:border-l md:border-white/[0.08]">
             <button
               type="button"
               aria-label={mobileNavOpen ? t.navMenuClose : t.navMenuOpen}
               onClick={() => setMobileNavOpen((v) => !v)}
-              className="inline-flex h-11 w-11 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center border border-white/15 text-gray-400 transition hover:text-white md:hidden"
+              className="inline-flex h-10 w-10 min-h-[40px] min-w-[40px] shrink-0 items-center justify-center border border-white/15 text-gray-400 transition hover:text-white md:hidden"
             >
               {mobileNavOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
@@ -221,11 +240,11 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
             <button
               type="button"
               onClick={goStart}
-              className="hidden font-mono text-[11px] uppercase tracking-[0.22em] text-gray-400 transition hover:text-white sm:inline-flex"
+              className="hidden shrink-0 px-1 font-mono text-[11px] uppercase tracking-[0.2em] text-gray-400 transition hover:text-white lg:inline-flex"
             >
               {t.navLogin}
             </button>
-            <TrialCtaButton size="sm" onClick={() => openTrialModal()}>
+            <TrialCtaButton size="xs" showArrow={false} glow={false} onClick={() => openTrialModal()}>
               {t.navCta}
             </TrialCtaButton>
           </div>
@@ -244,6 +263,21 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
                   {link.label}
                 </button>
               ))}
+              <a
+                href="/blog"
+                className="flex items-center gap-2 py-2 text-left text-sm text-[#FF8C42]"
+              >
+                <BookOpen className="h-4 w-4" aria-hidden />
+                {t.navBlog}
+              </a>
+              <button
+                type="button"
+                onClick={() => scrollToSection("#duvidas")}
+                className="flex items-center gap-2 py-2 text-left text-sm text-gray-300"
+              >
+                <HelpCircle className="h-4 w-4" aria-hidden />
+                {t.navFaq}
+              </button>
               <button type="button" onClick={goStart} className="py-2 text-left text-sm text-gray-400">
                 {t.navLogin}
               </button>
@@ -369,6 +403,59 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
                 </picture>
               </div>
             </aside>
+          </div>
+        </div>
+      </section>
+
+      {/* =================== PAS — PROBLEM / AGITATE / SOLVE ===================== */}
+      <section id="problema" className="relative z-[1] border-y border-white/[0.06] bg-black py-24 sm:py-28">
+        <div className="relative mx-auto max-w-[1400px] px-6">
+          <SectionLabel index="—" label={t.agitate.sectionLabel} total="—" />
+
+          <div className="mt-10 grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-10">
+            {/* PROBLEM */}
+            <div className="lg:col-span-4">
+              <span className="border border-white/15 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.28em] text-gray-400">
+                {t.agitate.problemTag}
+              </span>
+              <h2 className="mt-4 text-balance text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl">
+                {t.agitate.problemTitle}
+              </h2>
+              <p className="mt-4 text-base leading-relaxed text-gray-400">{t.agitate.problemText}</p>
+            </div>
+
+            {/* AGITATE */}
+            <div className="lg:col-span-5">
+              <span className="border border-[#FF8C42]/40 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.28em] text-[#FF8C42]">
+                {t.agitate.agitateTag}
+              </span>
+              <h3 className="mt-4 text-balance text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl">
+                {t.agitate.agitateTitle}
+              </h3>
+              <ul className="mt-6 space-y-4">
+                {t.agitate.agitateItems.map((item, i) => (
+                  <li key={i} className="flex gap-3 border-l border-[#FF8C42]/25 pl-4">
+                    <span className="font-mono text-[10px] text-gray-600">0{i + 1}</span>
+                    <span className="text-sm leading-relaxed text-gray-300 sm:text-base">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* SOLVE */}
+            <div className="relative border border-[#FF8C42]/30 bg-[#FF8C42]/[0.04] p-6 lg:col-span-3">
+              <CornerMarks orange />
+              <span className="border border-[#FF8C42]/50 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.28em] text-[#FF8C42]">
+                {t.agitate.solveTag}
+              </span>
+              <h3 className="mt-4 text-xl font-bold leading-tight tracking-tight text-white sm:text-2xl">
+                {t.agitate.solveTitle}
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-gray-400">{t.agitate.solveText}</p>
+              <TrialCtaButton className="mt-6" size="sm" onClick={() => openTrialModal()}>
+                {t.agitate.cta}
+              </TrialCtaButton>
+            </div>
           </div>
         </div>
       </section>
@@ -547,7 +634,7 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
       {/* =================== MÉTODO — MANIFESTO BRUTALIST ===================== */}
       <section id="metodo" className="relative z-[1] overflow-hidden bg-black py-32">
         <div className="relative mx-auto max-w-[1400px] px-6">
-          <SectionLabel index="03" label={t.manifesto.sectionLabel} total="03" />
+          <SectionLabel index="03" label={t.manifesto.sectionLabel} total="06" />
 
           <div className="mt-10">
             <h2 className="text-balance font-sans text-[15vw] font-bold leading-[0.88] tracking-[-0.04em] sm:text-[6rem] lg:text-[7.5rem] xl:text-[9.5rem] 2xl:text-[11rem]">
@@ -652,11 +739,13 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
         </div>
       </section>
 
+      <FeaturedBlogSection market={market} onFaqClick={() => scrollToSection("#duvidas")} />
+
       {/* =================== LAUNCH PROMO ===================== */}
       <section id="lancamento" className="relative z-[1] overflow-hidden border-y border-[#FF8C42]/20 bg-[#FF8C42]/[0.06] py-24 sm:py-28">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,140,66,0.12),transparent_55%)]" aria-hidden />
         <div className="relative mx-auto max-w-[1100px] px-6">
-          <SectionLabel index="04" label={t.launchPromo.sectionLabel} total="05" />
+          <SectionLabel index="04" label={t.launchPromo.sectionLabel} total="06" />
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <LaunchOfferBadge className="px-4 py-1.5 text-[10px] tracking-[0.28em]">
@@ -712,10 +801,34 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
         </div>
       </section>
 
+      {/* =================== OBJEÇÕES / FAQ ===================== */}
+      <section id="duvidas" className="relative z-[1] scroll-mt-28 border-y border-white/[0.06] bg-black py-24 sm:py-28">
+        <div className="relative mx-auto max-w-[1100px] px-6">
+          <SectionLabel index="05" label={t.objections.sectionLabel} total="06" />
+
+          <h2 className="mt-8 text-balance font-sans text-4xl font-bold leading-[0.95] tracking-tight text-white sm:text-5xl">
+            {t.objections.title}
+          </h2>
+          <p className="mt-5 max-w-2xl text-base leading-relaxed text-gray-400">{t.objections.subtitle}</p>
+
+          <dl className="mt-12 divide-y divide-white/[0.08] border-y border-white/[0.08]">
+            {t.objections.items.map((item, i) => (
+              <div key={i} className="grid grid-cols-1 gap-3 py-8 sm:grid-cols-[1fr_1.2fr] sm:gap-10 sm:py-10">
+                <dt className="flex items-start gap-3">
+                  <span className="font-mono text-[10px] text-[#FF8C42]/80">[0{i + 1}]</span>
+                  <span className="text-lg font-bold tracking-tight text-white">{item.q}</span>
+                </dt>
+                <dd className="text-sm leading-relaxed text-gray-400 sm:text-base">{item.a}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
       {/* =================== PRICING / CTA ===================== */}
       <section id="precos" className="relative z-[1] overflow-hidden bg-black py-32">
         <div className="relative mx-auto max-w-[1100px] px-6">
-          <SectionLabel index="05" label={t.pricing.sectionLabel} total="05" />
+          <SectionLabel index="06" label={t.pricing.sectionLabel} total="06" />
           <div className="mt-6">
             <LaunchOfferBadge className="px-4 py-1.5 text-[10px] tracking-[0.28em]">
               {t.launchPromo.badge}
@@ -844,23 +957,31 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
       {/* =================== SEO / FAQ / GUIAS ===================== */}
       <section id="guia-crypto" className="relative z-[1] border-t border-white/[0.06] bg-black py-24">
         <div className="relative mx-auto max-w-[1100px] px-6">
-          <SectionLabel index="06" label={t.seo.sectionLabel} total="06" />
+          <SectionLabel index="07" label={t.seo.sectionLabel} total="07" />
           <h2 className="mt-8 text-balance font-sans text-4xl font-bold leading-[0.95] tracking-tight text-white sm:text-5xl">
             <span className="block text-white">{t.seo.title[0]}</span>
             <span className="text-[#FF8C42]">{t.seo.title[1]}</span>
           </h2>
           <p className="mt-5 max-w-3xl text-base leading-relaxed text-gray-400">{t.seo.subtitle}</p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-4">
+          <div className="mt-8 flex flex-wrap items-center gap-3">
             <a
               href="/blog"
-              className="inline-flex items-center gap-2 border border-white/15 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.2em] text-gray-300 transition hover:border-[#FF8C42]/50 hover:text-white"
+              className="inline-flex items-center gap-2 border border-[#FF8C42] bg-[#FF8C42]/10 px-5 py-2.5 font-mono text-[11px] uppercase tracking-[0.2em] text-[#FF8C42] transition hover:bg-[#FF8C42] hover:text-black"
             >
               {t.seo.blogCta}
             </a>
+            <button
+              type="button"
+              onClick={() => scrollToSection("#duvidas")}
+              className="inline-flex items-center gap-2 border border-white/20 px-5 py-2.5 font-mono text-[11px] uppercase tracking-[0.2em] text-gray-300 transition hover:border-white/40 hover:text-white"
+            >
+              <HelpCircle className="h-3.5 w-3.5" aria-hidden />
+              {t.navFaq}
+            </button>
             <a
               href="/blog"
-              className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#FF8C42] transition hover:text-white"
+              className="font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500 transition hover:text-[#FF8C42]"
             >
               {t.seo.blogLink}
             </a>
@@ -932,7 +1053,9 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
                   <li><button type="button" onClick={() => scrollToSection("#recursos")} className="transition hover:text-white">{t.footer.links.product[0]}</button></li>
                   <li><button type="button" onClick={() => scrollToSection("#integracoes")} className="transition hover:text-white">{t.footer.links.product[1]}</button></li>
                   <li><button type="button" onClick={() => scrollToSection("#metodo")} className="transition hover:text-white">{t.footer.links.product[2]}</button></li>
-                  <li><button type="button" onClick={() => scrollToSection("#precos")} className="transition hover:text-white">{t.footer.links.product[3]}</button></li>
+                  <li><a href="/blog" className="transition hover:text-white">{t.footer.links.product[3]}</a></li>
+                  <li><button type="button" onClick={() => scrollToSection("#duvidas")} className="transition hover:text-white">{t.footer.links.product[4]}</button></li>
+                  <li><button type="button" onClick={() => scrollToSection("#precos")} className="transition hover:text-white">{t.footer.links.product[5]}</button></li>
                 </ul>
               </div>
 

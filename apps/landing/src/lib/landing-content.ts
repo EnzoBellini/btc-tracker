@@ -20,8 +20,19 @@ type IconType = ComponentType<SVGProps<SVGSVGElement>>;
 
 export type LandingContent = {
   nav: { href: string; index: string; label: string }[];
+  navBlog: string;
+  navFaq: string;
   navLogin: string;
   navCta: string;
+  blogPromo: {
+    sectionLabel: string;
+    title: string;
+    subtitle: string;
+    viewAll: string;
+    readArticle: string;
+    faqCta: string;
+    faqCtaHint: string;
+  };
   heroMeta: { beta: string; trial: string; noCard: string };
   heroEyebrow: string;
   heroTitle: [string, string, string];
@@ -30,6 +41,25 @@ export type LandingContent = {
   heroPills: { icon: IconType; text: string }[];
   heroFig: string;
   heroLive: string;
+  agitate: {
+    sectionLabel: string;
+    problemTag: string;
+    problemTitle: string;
+    problemText: string;
+    agitateTag: string;
+    agitateTitle: string;
+    agitateItems: string[];
+    solveTag: string;
+    solveTitle: string;
+    solveText: string;
+    cta: string;
+  };
+  objections: {
+    sectionLabel: string;
+    title: string;
+    subtitle: string;
+    items: { q: string; a: string }[];
+  };
   features: {
     sectionLabel: string;
     title: [string, string];
@@ -178,8 +208,20 @@ const BR: LandingContent = {
     { href: "#metodo", index: "03", label: "Método" },
     { href: "#precos", index: "04", label: "Preços" },
   ],
+  navBlog: "Blog",
+  navFaq: "FAQ",
+  blogPromo: {
+    sectionLabel: "Blog · método",
+    title: "Artigos para operar com dados, não com hype.",
+    subtitle:
+      "Guias didáticos sobre psicologia, risco, sync de exchange e métricas — com exemplos práticos de como um journal profissional acelera sua revisão.",
+    viewAll: "Ver todos os artigos",
+    readArticle: "Ler artigo",
+    faqCta: "Dúvidas sobre segurança, preço e exchanges",
+    faqCtaHint: "Respostas diretas antes de assinar →",
+  },
   navLogin: "Entrar →",
-  navCta: "Trial grátis 14d",
+  navCta: "Trial 14d",
   navBrandSubtitle: "— trading journal · crypto",
   heroMeta: { beta: "Beta privado", trial: "14 dias Elite grátis", noCard: "sem cartão de crédito" },
   heroEyebrow: "[00 — Journal · BTCUSDT futures]",
@@ -188,18 +230,62 @@ const BR: LandingContent = {
   heroCtaPrimary: "Começar trial 14 dias",
   heroCtaSecondary: "Ver recursos",
   heroPills: [
-    { icon: LineChart, text: "Analytics avançado" },
-    { icon: Target, text: "Metas & risco" },
-    { icon: Zap, text: "Sync em tempo real" },
-    { icon: Compass, text: "Foco em método" },
+    { icon: LineChart, text: "PnL real em 30s" },
+    { icon: Target, text: "Metas & risco diário" },
+    { icon: Zap, text: "Sync em ~2 segundos" },
+    { icon: Compass, text: "8h/mês sem planilha" },
   ],
   heroFig: "fig.01 — dashboard.exec",
   heroLive: "live",
+  agitate: {
+    sectionLabel: "O problema",
+    problemTag: "PROBLEM",
+    problemTitle: "Sua planilha não é um journal.",
+    problemText:
+      "Você anota trades, mas em Excel que quebra, fórmulas desalinhadas e linhas duplicadas. O registro existe — a confiança no número, não.",
+    agitateTag: "AGITATE",
+    agitateTitle: "Enquanto o PnL real fica escondido, você paga em tempo e stress.",
+    agitateItems: [
+      "8+ horas/mês copiando ordens manualmente — tempo que deveria ir para análise",
+      "Erros de rastreamento que inflam win rate ou escondem losses reais",
+      "Zero visibilidade consolidada quando opera em 2 ou 3 exchanges",
+      "Stress diário de não saber se está ganhando ou só achando que está",
+    ],
+    solveTag: "SOLVE",
+    solveTitle: "Trackion responde em segundos — não em horas de planilha.",
+    solveText:
+      "Sync automático via API read-only, PnL consolidado multi-exchange e métricas que você confia. Método nos dados, não no feeling.",
+    cta: "Começar trial 14 dias",
+  },
+  objections: {
+    sectionLabel: "Dúvidas",
+    title: "Objeções que travam — respondidas.",
+    subtitle:
+      "Segurança, preço e compatibilidade. Sem rodeio, antes de você assinar.",
+    items: [
+      {
+        q: "É seguro conectar minha exchange?",
+        a: "Sim. Usamos API read-only — sem permissão de saque, sem execução de ordens. Suas chaves ficam criptografadas e você pode revogar o acesso na exchange a qualquer momento. O Trackion só lê execuções para montar seu journal.",
+      },
+      {
+        q: "Quanto custa?",
+        a: "Trial Elite de 14 dias grátis, sem cartão. Depois: Starter R$20 · Pro R$40 · Elite R$60/mês com preço promocional de lançamento. Você escolhe o plano após o trial — sem cobrança automática no cadastro.",
+      },
+      {
+        q: "Funciona com minha exchange?",
+        a: "Binance, MEXC e Bitget estão live hoje (spot e futuros). Bybit e OKX chegam em Q1 2026. Se opera em uma das três live, conecta em minutos e o histórico começa a entrar automaticamente.",
+      },
+      {
+        q: "Preciso de cartão para testar?",
+        a: "Não. Cadastro com e-mail, trial Elite completo por 14 dias. Cartão só se você decide assinar depois do trial.",
+      },
+    ],
+  },
   features: {
     sectionLabel: "Recursos",
     title: ["Tudo num", "só lugar."],
     subtitle:
-      "Registro, análise e metas em um produto coeso — não em três planilhas e dois apps desconectados.",
+      "Registro, análise e metas em um produto coeso — não em três planilhas que consomem 8 horas por mês e dois apps que nunca batem o PnL.",
     footer: "4 módulos / 1 dashboard / 0 planilhas",
     items: [
       {
@@ -243,27 +329,27 @@ const BR: LandingContent = {
     benefits: [
       {
         icon: RefreshCw,
-        title: "Sync automático",
+        title: "Sync em ~2 segundos",
         description:
-          "Conecte a API da exchange uma vez. O Trackion puxa execuções em tempo real, sem copiar ordem por ordem.",
+          "Conecte a API uma vez — economize 8 horas/mês em entrada manual. Execuções entram automaticamente, sem copiar ordem por ordem.",
       },
       {
         icon: Clock,
-        title: "Histórico sempre atualizado",
+        title: "PnL visível em <30s",
         description:
-          "Seu journal reflete o que realmente aconteceu na conta. PnL e métricas prontas no momento que você opera.",
+          "Histórico atualizado em tempo real. Win rate, drawdown e expectancy prontos no momento em que você opera — sem recalcular planilha.",
       },
       {
         icon: ShieldCheck,
-        title: "Read-only · seguro",
+        title: "API 100% read-only",
         description:
-          "Pedimos permissão apenas de leitura — sem withdraw, sem trade. Seu capital permanece intocado.",
+          "Zero permissão de saque ou trade. Chaves criptografadas — seu capital permanece intocado enquanto o journal se atualiza.",
       },
       {
         icon: Link2,
-        title: "Multi-exchange",
+        title: "3 exchanges · 1 PnL",
         description:
-          "Centralize todas as suas contas em um só lugar. PnL consolidado, métricas globais, zero retrabalho.",
+          "Binance, MEXC e Bitget consolidados. Um painel, métricas globais, zero retrabalho entre contas.",
       },
     ],
   },
@@ -342,7 +428,7 @@ const BR: LandingContent = {
     account: "Conta",
     lastSync: "Última sync",
     links: {
-      product: ["Recursos", "Integrações", "Método", "Preços"],
+      product: ["Recursos", "Integrações", "Método", "Blog", "Dúvidas", "Preços"],
       account: ["Entrar", "Trial 14d", "Status"],
     },
     login: "Entrar",
@@ -398,6 +484,18 @@ const BR: LandingContent = {
       "Em 2026, buscas por Bitcoin e crypto bateram máximas no Google Trends — mas volume de busca não é método. Journal, sync de exchange, psicologia de trade e gestão de risco separam quem acumula de quem aposta.",
     faqTitle: "Perguntas frequentes",
     faq: [
+      {
+        q: "É seguro conectar minha exchange?",
+        a: "Sim. API read-only, sem saque ou execução de ordens. Chaves criptografadas e revogáveis na exchange a qualquer momento.",
+      },
+      {
+        q: "Quanto custa o Trackion?",
+        a: "Trial Elite 14 dias grátis, sem cartão. Depois: Starter R$20 · Pro R$40 · Elite R$60/mês com preço promocional de lançamento.",
+      },
+      {
+        q: "Funciona com minha exchange?",
+        a: "Binance, MEXC e Bitget live (spot e futuros). Bybit e OKX em Q1 2026.",
+      },
       {
         q: "O que é um trading journal para criptomoedas?",
         a: "É um diário estruturado de operações em Bitcoin, altcoins e futuros. O Trackion sincroniza trades via API read-only das exchanges e calcula win rate, expectancy e drawdown automaticamente.",
@@ -464,8 +562,20 @@ const US: LandingContent = {
     { href: "#metodo", index: "03", label: "Method" },
     { href: "#precos", index: "04", label: "Pricing" },
   ],
+  navBlog: "Blog",
+  navFaq: "FAQ",
+  blogPromo: {
+    sectionLabel: "Blog · method",
+    title: "Articles to trade on data, not hype.",
+    subtitle:
+      "Educational guides on psychology, risk, exchange sync and metrics — with practical examples of how a pro journal speeds up your review.",
+    viewAll: "Browse all articles",
+    readArticle: "Read article",
+    faqCta: "Security, pricing & exchange questions",
+    faqCtaHint: "Straight answers before you subscribe →",
+  },
   navLogin: "Log in →",
-  navCta: "Free 14-day trial",
+  navCta: "Free 14d",
   navBrandSubtitle: "— trading journal · crypto",
   heroMeta: { beta: "Private beta", trial: "14-day Elite trial", noCard: "no credit card" },
   heroEyebrow: "[00 — Journal · BTCUSDT futures]",
@@ -474,18 +584,62 @@ const US: LandingContent = {
   heroCtaPrimary: "Start 14-day trial",
   heroCtaSecondary: "See features",
   heroPills: [
-    { icon: LineChart, text: "Advanced analytics" },
-    { icon: Target, text: "Goals & risk" },
-    { icon: Zap, text: "Real-time sync" },
-    { icon: Compass, text: "Method-first" },
+    { icon: LineChart, text: "Real PnL in 30s" },
+    { icon: Target, text: "Daily risk goals" },
+    { icon: Zap, text: "Sync in ~2 seconds" },
+    { icon: Compass, text: "8h/mo off spreadsheets" },
   ],
   heroFig: "fig.01 — dashboard.exec",
   heroLive: "live",
+  agitate: {
+    sectionLabel: "The problem",
+    problemTag: "PROBLEM",
+    problemTitle: "Your spreadsheet isn't a journal.",
+    problemText:
+      "You log trades — but in Excel that breaks, misaligned formulas, and duplicate rows. The record exists; trust in the number doesn't.",
+    agitateTag: "AGITATE",
+    agitateTitle: "While real PnL stays hidden, you pay in time and stress.",
+    agitateItems: [
+      "8+ hours/month copying orders manually — time that should go to analysis",
+      "Tracking errors that inflate win rate or hide real losses",
+      "No consolidated view when you trade across 2 or 3 exchanges",
+      "Daily stress of not knowing if you're winning or just thinking you are",
+    ],
+    solveTag: "SOLVE",
+    solveTitle: "Trackion answers in seconds — not hours in a spreadsheet.",
+    solveText:
+      "Automatic read-only API sync, multi-exchange consolidated PnL, and metrics you can trust. Method in the data, not gut feel.",
+    cta: "Start 14-day trial",
+  },
+  objections: {
+    sectionLabel: "FAQ",
+    title: "Objections answered upfront.",
+    subtitle:
+      "Security, pricing, and compatibility — straight answers before you subscribe.",
+    items: [
+      {
+        q: "Is it safe to connect my exchange?",
+        a: "Yes. We use read-only API — no withdrawal or trading permissions. Keys are encrypted and you can revoke access on the exchange anytime. Trackion only reads executions to build your journal.",
+      },
+      {
+        q: "How much does it cost?",
+        a: "14-day Elite trial free, no card required. After that: Starter $20 · Pro $40 · Elite $60/mo at launch promo pricing. You pick a plan after the trial — no automatic charge at signup.",
+      },
+      {
+        q: "Does it work with my exchange?",
+        a: "Binance, MEXC, and Bitget are live today (spot and futures). Bybit and OKX arrive Q1 2026. If you trade on any of the three live exchanges, connect in minutes and history starts flowing automatically.",
+      },
+      {
+        q: "Do I need a card to try it?",
+        a: "No. Sign up with email, full Elite trial for 14 days. Card only if you choose to subscribe after the trial.",
+      },
+    ],
+  },
   features: {
     sectionLabel: "Features",
     title: ["Everything in", "one place."],
     subtitle:
-      "Logging, analysis, and goals in one cohesive product — not three spreadsheets and two disconnected apps.",
+      "Logging, analysis, and goals in one cohesive product — not three spreadsheets eating 8 hours a month and two apps that never match PnL.",
     footer: "4 modules / 1 dashboard / 0 spreadsheets",
     items: [
       {
@@ -529,27 +683,27 @@ const US: LandingContent = {
     benefits: [
       {
         icon: RefreshCw,
-        title: "Automatic sync",
+        title: "Sync in ~2 seconds",
         description:
-          "Connect your exchange API once. Trackion pulls executions in real time — no copying order by order.",
+          "Connect the API once — save 8 hours/month on manual entry. Executions flow in automatically, no copying order by order.",
       },
       {
         icon: Clock,
-        title: "Always up-to-date history",
+        title: "PnL visible in <30s",
         description:
-          "Your journal reflects what actually happened in the account. PnL and metrics ready when you trade.",
+          "History updated in real time. Win rate, drawdown, and expectancy ready when you trade — no spreadsheet recalc.",
       },
       {
         icon: ShieldCheck,
-        title: "Read-only · secure",
+        title: "100% read-only API",
         description:
-          "We only request read permission — no withdraw, no trading. Your capital stays untouched.",
+          "Zero withdrawal or trading permissions. Encrypted keys — your capital stays untouched while the journal updates.",
       },
       {
         icon: Link2,
-        title: "Multi-exchange",
+        title: "3 exchanges · 1 PnL",
         description:
-          "Centralize all your accounts in one place. Consolidated PnL, global metrics, zero rework.",
+          "Binance, MEXC, and Bitget consolidated. One dashboard, global metrics, zero rework across accounts.",
       },
     ],
   },
@@ -628,7 +782,7 @@ const US: LandingContent = {
     account: "Account",
     lastSync: "Last sync",
     links: {
-      product: ["Features", "Integrations", "Method", "Pricing"],
+      product: ["Features", "Integrations", "Method", "Blog", "FAQ", "Pricing"],
       account: ["Log in", "14-day trial", "Status"],
     },
     login: "Log in",
@@ -684,6 +838,18 @@ const US: LandingContent = {
       "In 2026, Bitcoin and crypto searches hit Google Trends highs — but search volume isn't a method. Journaling, exchange sync, trading psychology and risk management separate accumulators from gamblers.",
     faqTitle: "Frequently asked questions",
     faq: [
+      {
+        q: "Is it safe to connect my exchange?",
+        a: "Yes. Read-only API, no withdrawals or order execution. Encrypted keys, revocable on the exchange anytime.",
+      },
+      {
+        q: "How much does Trackion cost?",
+        a: "14-day Elite trial free, no card. After that: Starter $20 · Pro $40 · Elite $60/mo at launch promo pricing.",
+      },
+      {
+        q: "Does it work with my exchange?",
+        a: "Binance, MEXC, and Bitget live (spot and futures). Bybit and OKX coming Q1 2026.",
+      },
       {
         q: "What is a crypto trading journal?",
         a: "A structured log of Bitcoin, altcoin and futures trades. Trackion syncs via read-only exchange API and computes win rate, expectancy and drawdown automatically.",

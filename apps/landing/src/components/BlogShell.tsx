@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, HelpCircle } from "lucide-react";
 import type { ReactNode } from "react";
 import { getLandingContent } from "../lib/landing-content";
 import type { Market } from "../lib/locale";
@@ -11,8 +11,9 @@ type BlogShellProps = {
 };
 
 export default function BlogShell({ market, onBack, children, backLabel }: BlogShellProps) {
-  const nav = getLandingContent(market).static.back;
-  const blog = getLandingContent(market).blog;
+  const t = getLandingContent(market);
+  const nav = t.static.back;
+  const blog = t.blog;
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -27,12 +28,19 @@ export default function BlogShell({ market, onBack, children, backLabel }: BlogS
             <ArrowLeft className="h-4 w-4" aria-hidden />
             {backLabel ?? nav}
           </button>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <a
+              href="/#duvidas"
+              className="hidden items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-gray-500 transition hover:text-white sm:inline-flex"
+            >
+              <HelpCircle className="h-3.5 w-3.5" aria-hidden />
+              {t.navFaq}
+            </a>
             <a
               href="/blog"
-              className="font-mono text-[10px] uppercase tracking-[0.22em] text-gray-500 transition hover:text-[#FF8C42]"
+              className="border border-[#FF8C42]/40 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-[#FF8C42] transition hover:border-[#FF8C42]"
             >
-              {blog.indexTitle}
+              {t.navBlog}
             </a>
             <a href="/" className="flex items-center gap-2">
               <img src="/logo-trackion.png" alt="Trackion" width={22} height={22} className="h-5 w-5" />

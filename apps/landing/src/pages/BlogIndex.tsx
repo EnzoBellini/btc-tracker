@@ -1,4 +1,4 @@
-import { Clock } from "lucide-react";
+import { ArrowUpRight, Clock } from "lucide-react";
 import { TrialCtaButton } from "../components/TrialCtaButton";
 import { useMemo } from "react";
 import BlogShell from "../components/BlogShell";
@@ -25,12 +25,13 @@ export default function BlogIndex({ market, onBack, onStartClick }: BlogIndexPro
       <h1 className="mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl">{copy.indexTitle}</h1>
       <p className="mt-4 text-base leading-relaxed text-gray-400">{copy.indexSubtitle}</p>
 
-      <div className="mt-12 space-y-6">
-        {posts.map((post) => (
+      <div className="mt-12 space-y-5">
+        {posts.map((post, i) => (
           <article
             key={post.slug}
-            className="group border border-white/10 bg-black/50 p-6 transition hover:border-[#FF8C42]/30"
+            className="group relative border border-white/10 bg-black/50 p-6 transition hover:border-[#FF8C42]/35 hover:bg-black/70 sm:p-8"
           >
+            <span className="font-mono text-[10px] text-gray-600">[0{i + 1}]</span>
             <div className="flex flex-wrap items-center gap-3 font-mono text-[10px] uppercase tracking-[0.2em] text-gray-500">
               <time dateTime={post.publishedAt}>{formatBlogDate(post.publishedAt, market)}</time>
               <span className="inline-flex items-center gap-1">

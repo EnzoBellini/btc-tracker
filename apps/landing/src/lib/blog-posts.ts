@@ -1,4 +1,5 @@
 import type { Market } from "./locale";
+import { EXPANDED_BLOG } from "./blog-expanded-content";
 import {
   buildArticleJsonLd,
   buildBreadcrumbJsonLd,
@@ -509,6 +510,14 @@ const POSTS: BlogPost[] = [
     relatedSlugs: ["crypto-futures-risk-management", "trading-journal-vs-gut-feel", "sync-exchange-trading-journal"],
   },
 ];
+
+for (const post of POSTS) {
+  const expanded = EXPANDED_BLOG[`${post.market}:${post.slug}`];
+  if (expanded) {
+    post.readMinutes = expanded.readMinutes;
+    post.sections = expanded.sections;
+  }
+}
 
 const SLUG_INDEX = new Map<string, BlogPost>();
 for (const post of POSTS) {

@@ -55,7 +55,7 @@ function HomeSeo({ market }: { market: ReturnType<typeof useMarket>["market"] })
         buildOrganizationJsonLd(),
         buildWebSiteJsonLd(),
         buildSoftwareAppJsonLd(market),
-        buildFaqJsonLd(t.seo.faq),
+        buildFaqJsonLd([...t.objections.items, ...t.seo.faq]),
       ],
     }),
     [market, t.seo.faq],
