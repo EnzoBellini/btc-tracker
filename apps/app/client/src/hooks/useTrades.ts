@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import type { Trade, InsertTrade } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+import { getT } from "@/lib/locale-runtime";
 
 export function useTrades() {
   return useQuery<Trade[]>({
@@ -17,9 +18,9 @@ export function useCreateTrade() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/trades"] });
       qc.invalidateQueries({ queryKey: ["/api/stats"] });
-      toast.success("Trade registrado");
+      toast.success(getT().toasts.tradeRegistered);
     },
-    onError: () => toast.error("Erro ao registrar trade"),
+    onError: () => toast.error(getT().toasts.tradeError),
   });
 }
 
@@ -31,9 +32,9 @@ export function useUpdateTrade() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/trades"] });
       qc.invalidateQueries({ queryKey: ["/api/stats"] });
-      toast.success("Trade atualizado");
+      toast.success(getT().toasts.tradeUpdated);
     },
-    onError: () => toast.error("Erro ao atualizar trade"),
+    onError: () => toast.error(getT().toasts.tradeUpdateError),
   });
 }
 
@@ -44,9 +45,9 @@ export function useDeleteTrade() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/trades"] });
       qc.invalidateQueries({ queryKey: ["/api/stats"] });
-      toast.success("Trade removido");
+      toast.success(getT().toasts.tradeRemoved);
     },
-    onError: () => toast.error("Erro ao remover trade"),
+    onError: () => toast.error(getT().toasts.tradeRemoveError),
   });
 }
 

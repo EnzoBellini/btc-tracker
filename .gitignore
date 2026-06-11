@@ -3,7 +3,6 @@ dist/
 .DS_Store
 *.tsbuildinfo
 
-# ── Segredos e ambiente (NUNCA commitar) ─────────────────────────────────────
 .env
 .env.*
 !.env.example
@@ -11,6 +10,8 @@ dist/
 apps/app/.env
 apps/landing/.env
 apps/admin/.env
+docs
+imagens-do-site
 
 # Chaves / certificados
 *.pem
@@ -21,7 +22,7 @@ credentials.json
 secrets.json
 service-account*.json
 
-# Relatórios e logs de pentest (podem conter URLs, tokens, dumps)
+# logs de pentest
 security/reports/
 security/*.log
 security/zap.out
@@ -41,5 +42,5 @@ apps/admin/dist/
 .vite/
 coverage/
 
-# ZAP local (dados da máquina, não do projeto)
+# ZAP local 
 ZAP/

@@ -15,6 +15,7 @@ import {
 import UpgradeCard from "@/components/UpgradeCard";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
+import { useAppLocale } from "@/lib/locale-context";
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -36,12 +37,14 @@ function ReportTable({
   data: Record<string, { wins: number; losses: number; pnl: number; count: number }>;
   period: "month" | "week";
 }) {
+  const { t } = useAppLocale();
+  const r = t.reports;
   const entries = Object.entries(data).sort((a, b) => b[0].localeCompare(a[0]));
   if (entries.length === 0) {
     return (
       <div className="px-4 py-12 text-center">
         <p className="font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground/50">[empty]</p>
-        <p className="mt-2 text-sm text-muted-foreground">Nenhum dado disponível ainda</p>
+        <p className="mt-2 text-sm text-muted-foreground">{r.emptyNoData}</p>
       </div>
     );
   }
@@ -50,7 +53,7 @@ function ReportTable({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border">
-            {[period === "month" ? "Mês" : "Semana", "Trades", "Wins", "Losses", "Win Rate", "PnL"].map(h => (
+            {[period === "month" ? r.tableMonth : r.tableWeek, r.tableTrades, r.tableWins, r.tableLosses, r.tableWinRate, r.tablePnl].map(h => (
               <th key={h} className="px-4 py-3 text-left font-mono-tk text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
                 {h}
               </th>
@@ -82,15 +85,17 @@ function ReportTable({
 }
 
 function BreakdownTable({ rows, labelCol }: { rows: AggRow[]; labelCol: string }) {
+  const { t } = useAppLocale();
+  const r = t.reports;
   if (!rows.length) {
-    return <p className="p-6 text-sm text-muted-foreground">Sem dados para este recorte.</p>;
+    return <p className="p-6 text-sm text-muted-foreground">{r.emptyNoSlice}</p>;
   }
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border">
-            {[labelCol, "Trades", "Wins", "Losses", "PnL"].map(h => (
+            {[labelCol, r.tableTrades, r.tableWins, r.tableLosses, r.tablePnl].map(h => (
               <th key={h} className="px-4 py-3 text-left font-mono-tk text-[10px] uppercase tracking-[0.22em] text-muted-foreground">{h}</th>
             ))}
           </tr>
@@ -137,6 +142,7 @@ function BreakdownChart({ rows }: { rows: AggRow[] }) {
 }
 
 export default function Reports() {
+  const { t } = useAppLocale();
   const { data: stats, isLoading } = useStats();
   const { data: sub } = useSubscription();
   const [tab, setTab] = useState<"monthly" | "weekly">("monthly");
@@ -214,10 +220,10 @@ export default function Reports() {
       <div className="relative space-y-10">
         <PageHeader
           index="05"
-          total="08"
-          eyebrow="Reports · performance"
-          title="Análise temporal."
-          subtitle="Performance agregada por semana e mês — disciplina é repetir o que funciona."
+          total="09"
+          eyebrow={t.reports.eyebrow}
+          title={t.reports.title}
+          subtitle={t.reports.subtitle}
           actions={
             isElite ? (
               <TerminalButton variant="outline" icon={Download} onClick={handleExport}>
@@ -431,7 +437,7 @@ export default function Reports() {
             {monthChartData.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <TerminalFrame title="fig.01 · pnl_por_mes" status="live" statusTone="live" orangeCorners>
+                  <TerminalFrame title={t.reports.chartPnlMonth} status="live" statusTone="live" orangeCorners>
                     <div className="p-4">
                       <ResponsiveContainer width="100%" height={220}>
                         <BarChart data={monthChartData} barSize={20}>
@@ -448,7 +454,7 @@ export default function Reports() {
                       </ResponsiveContainer>
                     </div>
                   </TerminalFrame>
-                  <TerminalFrame title="fig.02 · win_rate_por_mes" status="live" statusTone="live" orangeCorners>
+                  <TerminalFrame title={t.reports.chartWinRateMonth} status="live" statusTone="live" orangeCorners>
                     <div className="p-4">
                       <ResponsiveContainer width="100%" height={220}>
                         <LineChart data={monthChartData}>
@@ -482,7 +488,7 @@ export default function Reports() {
             {weekChartData.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <TerminalFrame title="fig.03 · pnl_ultimas_12_semanas" status="live" statusTone="live" orangeCorners>
+                  <TerminalFrame title={t.reports.chartPnlWeeks} status="live" statusTone="live" orangeCorners>
                     <div className="p-4">
                       <ResponsiveContainer width="100%" height={220}>
                         <BarChart data={weekChartData} barSize={14}>
@@ -499,7 +505,7 @@ export default function Reports() {
                       </ResponsiveContainer>
                     </div>
                   </TerminalFrame>
-                  <TerminalFrame title="fig.04 · trades_por_semana" status="live" statusTone="live" orangeCorners>
+                  <TerminalFrame title={t.reports.chartTradesWeek} status="live" statusTone="live" orangeCorners>
                     <div className="p-4">
                       <ResponsiveContainer width="100%" height={220}>
                         <BarChart data={weekChartData} barSize={14}>
@@ -535,10 +541,11 @@ export default function Reports() {
 }
 
 function EmptyReport() {
+  const { t } = useAppLocale();
   return (
     <div className="border border-border bg-card py-16 text-center">
       <p className="font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground/50">[no data]</p>
-      <p className="mt-2 text-sm text-muted-foreground">Nenhum trade fechado ainda para gerar relatório</p>
+      <p className="mt-2 text-sm text-muted-foreground">{t.reports.emptyNoTrades}</p>
     </div>
   );
 }

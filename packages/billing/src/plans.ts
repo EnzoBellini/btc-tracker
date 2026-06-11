@@ -14,12 +14,19 @@ export interface PlanDefinition {
 
 export const TRIAL_DAYS = 14;
 
+/** Preços regulares (exibidos riscados na promo de lançamento). */
+export const LAUNCH_ORIGINAL_PRICE_CENTS: Record<PlanId, number> = {
+  starter: 4900,
+  pro: 9900,
+  elite: 19900,
+};
+
 export const PLAN_CATALOG: Record<PlanId, PlanDefinition> = {
   starter: {
     id: "starter",
     name: "Starter Lite",
     tagline: "Traders iniciantes ou capital menor",
-    priceCents: 4900,
+    priceCents: 2000,
     currency: "BRL",
     isPaid: true,
     sortOrder: 1,
@@ -44,7 +51,7 @@ export const PLAN_CATALOG: Record<PlanId, PlanDefinition> = {
     id: "pro",
     name: "Pro Trader",
     tagline: "Trader ativo — sincronização e risco diário",
-    priceCents: 9900,
+    priceCents: 4000,
     currency: "BRL",
     isPaid: true,
     sortOrder: 2,
@@ -72,7 +79,7 @@ export const PLAN_CATALOG: Record<PlanId, PlanDefinition> = {
     id: "elite",
     name: "Elite / Fund",
     tagline: "Multi-conta, fundos e operação em escala",
-    priceCents: 19900,
+    priceCents: 6000,
     currency: "BRL",
     isPaid: true,
     sortOrder: 3,

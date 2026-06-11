@@ -61,12 +61,15 @@ async function main() {
     if (existing?.startsWith("price_")) {
       try {
         const price = await stripe.prices.retrieve(existing);
-        const ok = price.active && price.currency === "brl";
+        const expectedCents = PLAN_CATALOG[planId].priceCents;
+        const ok = price.active && price.currency === "brl" && price.unit_amount === expectedCents;
         priceIds[planId] = existing;
         results.push({
           name: `Price ${planId} (${envKey})`,
           ok,
-          detail: `${existing} · ${price.unit_amount} ${price.currency}/mo`,
+          detail: ok
+            ? `${existing} · ${price.unit_amount} ${price.currency}/mo`
+            : `${existing} · ${price.unit_amount} ${price.currency}/mo (esperado ${expectedCents} brl)`,
         });
       } catch (e) {
         results.push({

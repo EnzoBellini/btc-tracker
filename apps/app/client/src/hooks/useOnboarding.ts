@@ -35,12 +35,12 @@ export function useSaveOnboardingProgress() {
 
 export function useCompleteOnboarding() {
   return useMutation({
-    mutationFn: async (answers: QuizAnswers) => {
+    mutationFn: async ({ answers, locale }: { answers: QuizAnswers; locale: "pt" | "en" }) => {
       const res = await fetch("/api/onboarding/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(answers),
+        body: JSON.stringify({ ...answers, locale }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erro ao finalizar");

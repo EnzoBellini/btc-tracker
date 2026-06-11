@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import type { BtcHolding, InsertBtcHolding } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+import { getT } from "@/lib/locale-runtime";
 
 export function useHoldings() {
   return useQuery<BtcHolding[]>({
@@ -17,9 +18,9 @@ export function useCreateHolding() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/btc-holdings"] });
       qc.invalidateQueries({ queryKey: ["/api/stats"] });
-      toast.success("Snapshot registrado");
+      toast.success(getT().toasts.snapshotRegistered);
     },
-    onError: () => toast.error("Erro ao registrar snapshot"),
+    onError: () => toast.error(getT().toasts.snapshotError),
   });
 }
 
@@ -30,8 +31,8 @@ export function useDeleteHolding() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/btc-holdings"] });
       qc.invalidateQueries({ queryKey: ["/api/stats"] });
-      toast.success("Snapshot removido");
+      toast.success(getT().toasts.snapshotRemoved);
     },
-    onError: () => toast.error("Erro ao remover snapshot"),
+    onError: () => toast.error(getT().toasts.snapshotRemoveError),
   });
 }

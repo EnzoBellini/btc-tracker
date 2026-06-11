@@ -1,15 +1,20 @@
-import { formatPlanPrice, PLAN_CATALOG, type PlanId } from "@trackion/billing";
+import { formatPlanPrice, LAUNCH_ORIGINAL_PRICE_CENTS, PLAN_CATALOG, type PlanId } from "@trackion/billing";
 import { useSubscription, useBillingCheckout } from "@/hooks/useSubscription";
 import { cn } from "@/lib/utils";
+import { useAppLocale } from "@/lib/locale-context";
 
-export default function SubscriptionWall() {
+function formatOriginalPrice(planId: PlanId): string {
+  const reais = LAUNCH_ORIGINAL_PRICE_CENTS[planId] / 100;
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(reais);
+}
+  const { t } = useAppLocale();
   const { data: sub, isLoading } = useSubscription();
   const checkout = useBillingCheckout();
 
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="font-mono-tk text-sm text-muted-foreground">Carregando planos…</p>
+        <p className="font-mono-tk text-sm text-muted-foreground">{t.subscriptionWall.loading}</p>
       </div>
     );
   }
@@ -21,17 +26,17 @@ export default function SubscriptionWall() {
     <div className="min-h-screen bg-background px-4 py-12">
       <div className="mx-auto max-w-4xl">
         <p className="font-mono-tk text-[10px] uppercase tracking-[0.28em] text-primary">
-          [billing] · assinatura
+          {t.subscriptionWall.eyebrow}
         </p>
         <h1 className="mt-3 font-display text-3xl font-bold tracking-tight">
-          {trialEnded ? "Seu trial Elite terminou" : "Escolha seu plano"}
+          {trialEnded ? t.subscriptionWall.trialEndedTitle : t.subscriptionWall.choosePlanTitle}
         </h1>
         <p className="mt-3 max-w-xl text-muted-foreground">
           {trialEnded
-            ? "Você usou 14 dias com todos os recursos Elite. Assine um plano para continuar usando o Trackion."
+            ? t.subscriptionWall.trialEndedDesc
             : daysLeft != null
-              ? `Você ainda tem ${daysLeft} dia(s) de trial Elite. Assine agora para não perder o acesso.`
-              : "Assinatura necessária para continuar."}
+              ? t.subscriptionWall.daysLeftDesc(daysLeft)
+              : t.subscriptionWall.subscriptionRequired}
         </p>
 
         <div className="mt-10 grid gap-4 md:grid-cols-3">
@@ -48,14 +53,18 @@ export default function SubscriptionWall() {
               >
                 {isAnchor && (
                   <span className="absolute -top-2.5 left-4 bg-primary px-2 py-0.5 font-mono-tk text-[9px] font-bold uppercase tracking-widest text-primary-foreground">
-                    Recomendado
+                    {t.subscriptionWall.recommended}
                   </span>
                 )}
                 <p className="font-mono-tk text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
                   {plan.name}
                 </p>
                 <p className="mt-2 font-display text-2xl font-bold">{formatPlanPrice(plan)}</p>
-                <p className="text-xs text-muted-foreground">/ mês</p>
+                <p className="text-xs text-muted-foreground">
+                  {t.subscriptionWall.originalPrice}{" "}
+                  <span className="line-through">{formatOriginalPrice(id)}</span>
+                </p>
+                <p className="text-xs text-muted-foreground">{t.subscriptionWall.perMonth}</p>
                 <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
                   {plan.highlights.slice(0, 4).map((h) => (
                     <li key={h} className="flex gap-2">
@@ -75,7 +84,7 @@ export default function SubscriptionWall() {
                       : "border-border hover:border-primary/50",
                   )}
                 >
-                  Assinar
+                  {t.subscriptionWall.subscribe}
                 </button>
               </div>
             );
@@ -83,7 +92,7 @@ export default function SubscriptionWall() {
         </div>
 
         <p className="mt-8 text-center font-mono-tk text-[10px] text-muted-foreground">
-          Pagamento seguro via Stripe · cancele quando quiser
+          {t.subscriptionWall.footer}
         </p>
       </div>
     </div>

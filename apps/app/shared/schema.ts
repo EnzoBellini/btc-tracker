@@ -13,8 +13,32 @@ export const users = pgTable("users", {
   traderProfile: text("trader_profile"),
   passwordChangedAt: timestamp("password_changed_at"),
   trialUsedAt: timestamp("trial_used_at"),
+  affiliateRef: text("affiliate_ref"),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const affiliates = pgTable(
+  "affiliates",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    couponCode: text("coupon_code").notNull(),
+    discountPct: integer("discount_pct").notNull().default(20),
+    stripeCouponId: text("stripe_coupon_id"),
+    stripePromoId: text("stripe_promo_id"),
+    fpPromoterId: text("fp_promoter_id"),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("affiliates_slug_unique").on(t.slug),
+    uniqueIndex("affiliates_coupon_code_unique").on(t.couponCode),
+  ],
+);
+
+export type Affiliate = typeof affiliates.$inferSelect;
+export type InsertAffiliate = typeof affiliates.$inferInsert;
 
 // ── Billing: plan catalog ─────────────────────────────────────────────────────
 export const plans = pgTable("plans", {

@@ -20,6 +20,12 @@ export interface PlanDefinition {
 
 export const TRIAL_DAYS = 14;
 
+/** Preços regulares (riscados na promo de lançamento). */
+export const LAUNCH_ORIGINAL_PRICE_CENTS: Record<Market, Record<PlanId, number>> = {
+  br: { starter: 4900, pro: 9900, elite: 19900 },
+  us: { starter: 2000, pro: 5000, elite: 10000 },
+};
+
 const BR_PLANS: Record<PlanId, Omit<PlanDefinition, "currency" | "priceCents">> = {
   starter: {
     id: "starter",
@@ -116,14 +122,14 @@ const US_PLANS: Record<PlanId, Omit<PlanDefinition, "currency" | "priceCents">> 
 
 const REGIONAL_PRICING: Record<Market, Record<PlanId, { priceCents: number; currency: Currency }>> = {
   br: {
-    starter: { priceCents: 4900, currency: "BRL" },
-    pro: { priceCents: 9900, currency: "BRL" },
-    elite: { priceCents: 19900, currency: "BRL" },
+    starter: { priceCents: 2000, currency: "BRL" },
+    pro: { priceCents: 4000, currency: "BRL" },
+    elite: { priceCents: 6000, currency: "BRL" },
   },
   us: {
     starter: { priceCents: 2000, currency: "USD" },
-    pro: { priceCents: 5000, currency: "USD" },
-    elite: { priceCents: 10000, currency: "USD" },
+    pro: { priceCents: 4000, currency: "USD" },
+    elite: { priceCents: 6000, currency: "USD" },
   },
 };
 
@@ -148,4 +154,17 @@ export function formatPlanPrice(plan: PlanDefinition): string {
   const locale = plan.currency === "USD" ? "en-US" : "pt-BR";
   const amount = plan.priceCents / 100;
   return new Intl.NumberFormat(locale, { style: "currency", currency: plan.currency }).format(amount);
+}
+
+export function formatOriginalPlanPrice(market: Market, planId: PlanId): string {
+  const plan = getPlanCatalog(market)[planId];
+  const locale = plan.currency === "USD" ? "en-US" : "pt-BR";
+  const amount = LAUNCH_ORIGINAL_PRICE_CENTS[market][planId] / 100;
+  return new Intl.NumberFormat(locale, { style: "currency", currency: plan.currency }).format(amount);
+}
+
+export function launchSavingsPct(market: Market, planId: PlanId): number {
+  const original = LAUNCH_ORIGINAL_PRICE_CENTS[market][planId];
+  const current = getPlanCatalog(market)[planId].priceCents;
+  return Math.round((1 - current / original) * 100);
 }

@@ -1,0 +1,15 @@
+# Variáveis de ambiente com credenciais reais
+.env
+
+# Ambientes virtuais Python
+venv/
+.venv/
+env/
+
+# Cache do Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Logs
+*.log

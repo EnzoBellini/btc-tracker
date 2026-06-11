@@ -3,9 +3,22 @@
  * Never scatter .toFixed() across the codebase — always go through here.
  */
 
+import type { Market } from "./locale";
+import { marketToLocaleTag } from "./locale";
+
+let formatMarket: Market = "br";
+
+export function setFormatMarket(market: Market): void {
+  formatMarket = market;
+}
+
+function localeTag(): string {
+  return marketToLocaleTag(formatMarket);
+}
+
 export function fmtUsdt(n: number, decimals = 2): string {
   const abs = Math.abs(n);
-  const formatted = abs.toLocaleString("pt-BR", {
+  const formatted = abs.toLocaleString(localeTag(), {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
@@ -24,7 +37,7 @@ export function fmtDate(dateStr: string): string {
   if (!dateStr) return "—";
   try {
     const [year, month, day] = dateStr.split("-");
-    return `${day}/${month}/${year}`;
+    return formatMarket === "us" ? `${month}/${day}/${year}` : `${day}/${month}/${year}`;
   } catch {
     return dateStr;
   }
@@ -33,7 +46,7 @@ export function fmtDate(dateStr: string): string {
 export function fmtDatetime(isoStr: string | null | undefined): string {
   if (!isoStr) return "—";
   try {
-    return new Date(isoStr).toLocaleString("pt-BR", {
+    return new Date(isoStr).toLocaleString(localeTag(), {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",

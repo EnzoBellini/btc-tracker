@@ -14,6 +14,7 @@ import { fmtUsdt, fmtBtc } from "@/lib/format";
 import {
   PageHeader, KpiTerminal, TerminalFrame, TerminalButton,
 } from "@/components/tk";
+import { useAppLocale } from "@/lib/locale-context";
 
 const formSchema = insertTransferSchema.extend({
   amountUsdt: z.coerce.number().positive("Valor obrigatório"),
@@ -108,6 +109,7 @@ function TransferForm({ onClose }: { onClose: () => void }) {
 }
 
 export default function Transfers() {
+  const { t } = useAppLocale();
   const [open, setOpen] = useState(false);
   const { data: transfers = [], isLoading } = useTransfers();
   const deleteTransfer = useDeleteTransfer();
@@ -133,10 +135,10 @@ export default function Transfers() {
       <div className="relative space-y-10">
         <PageHeader
           index="03"
-          total="08"
-          eyebrow="Transfers · futuros → spot"
-          title="Conversões para BTC."
-          subtitle="A cada +10 USDT de lucro nos futuros, transfira para BTC spot. Repita."
+          total="09"
+          eyebrow={t.transfers.eyebrow}
+          title={t.transfers.title}
+          subtitle={t.transfers.subtitle}
           actions={
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
@@ -176,7 +178,7 @@ export default function Transfers() {
         {/* Chart */}
         {chartData.length > 0 && (
           <section>
-            <TerminalFrame title="fig.01 · btc_acumulado_ao_longo_do_tempo" status="live" statusTone="live" orangeCorners>
+            <TerminalFrame title={t.transfers.chartBtcOverTime} status="live" statusTone="live" orangeCorners>
               <div className="p-4">
                 <ResponsiveContainer width="100%" height={220}>
                   <AreaChart data={chartData}>
@@ -200,8 +202,8 @@ export default function Transfers() {
         {/* Table */}
         <section className="border border-border bg-card">
           <div className="flex items-center justify-between border-b border-border px-4 py-2 font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
-            <span>table · transfers</span>
-            <span>{transfers.length} rows</span>
+            <span>{t.transfers.tableTransfers}</span>
+            <span>{t.transfers.tableRows(transfers.length)}</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -225,7 +227,7 @@ export default function Transfers() {
                   <tr>
                     <td colSpan={7} className="px-4 py-16 text-center">
                       <p className="font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground/50">[empty]</p>
-                      <p className="mt-2 text-sm text-muted-foreground">Nenhuma transferência registrada</p>
+                      <p className="mt-2 text-sm text-muted-foreground">{t.transfers.emptyTransfers}</p>
                     </td>
                   </tr>
                 ) : transfers.map((t, idx) => (

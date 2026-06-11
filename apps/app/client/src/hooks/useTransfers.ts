@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import type { Transfer, InsertTransfer } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+import { getT } from "@/lib/locale-runtime";
 
 export function useTransfers() {
   return useQuery<Transfer[]>({
@@ -17,9 +18,9 @@ export function useCreateTransfer() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/transfers"] });
       qc.invalidateQueries({ queryKey: ["/api/stats"] });
-      toast.success("Transferência registrada");
+      toast.success(getT().toasts.transferRegistered);
     },
-    onError: () => toast.error("Erro ao registrar transferência"),
+    onError: () => toast.error(getT().toasts.transferError),
   });
 }
 
@@ -30,8 +31,8 @@ export function useDeleteTransfer() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/transfers"] });
       qc.invalidateQueries({ queryKey: ["/api/stats"] });
-      toast.success("Transferência removida");
+      toast.success(getT().toasts.transferRemoved);
     },
-    onError: () => toast.error("Erro ao remover transferência"),
+    onError: () => toast.error(getT().toasts.transferRemoveError),
   });
 }

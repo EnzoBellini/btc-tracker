@@ -8,6 +8,7 @@ import { setupSession, registerAuthRoutes } from "./auth";
 import { registerOnboardingRoutes } from "./onboarding";
 import { registerBillingRoutes } from "./billing/routes";
 import { registerAdminRoutes } from "./admin/routes";
+import { registerAffiliateRoutes } from "./affiliates/routes";
 import { startSubscriptionCron } from "./billing/cron";
 import { db } from "./db";
 import { validateSecurityConfig, logEmailConfigStatus, redactForLog } from "./lib/security";
@@ -93,6 +94,7 @@ app.use((req, res, next) => {
   if (
     req.method === "OPTIONS" &&
     (req.path.startsWith("/api/trial-signup") ||
+      req.path.startsWith("/api/affiliates") ||
       req.path.startsWith("/api/market") ||
       req.path.startsWith("/api/billing/webhook") ||
       req.path.startsWith("/api/admin"))
@@ -108,6 +110,7 @@ registerAuthRoutes(app);
 registerOnboardingRoutes(app);
 registerBillingRoutes(app);
 registerAdminRoutes(app);
+registerAffiliateRoutes(app);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {

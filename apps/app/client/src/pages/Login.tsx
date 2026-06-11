@@ -6,16 +6,12 @@ import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { CornerMarks, TerminalButton, Eyebrow } from "@/components/tk";
 import { cn } from "@/lib/utils";
-
-const FEATURES = [
-  { icon: TrendingUp, index: "01", label: "Rastreie trades BTCUSDT em tempo real" },
-  { icon: Shield, index: "02", label: "Gerencie risco com regras personalizadas" },
-  { icon: Zap, index: "03", label: "Sincronize MEXC, Binance e Bitget via API" },
-];
+import { useAppLocale } from "@/lib/locale-context";
 
 type Step = "email" | "check_email" | "password";
 
 function TrackionBrand({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
+  const { t } = useAppLocale();
   const img = size === "sm" ? "h-7 w-7" : size === "lg" ? "h-10 w-10" : "h-8 w-8";
   const word = size === "lg" ? "text-lg" : "text-base";
   return (
@@ -31,7 +27,7 @@ function TrackionBrand({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
       <div>
         <p className={cn("font-bold tracking-[0.28em] text-foreground", word)}>TRACKION</p>
         <p className="font-mono-tk text-[9px] uppercase tracking-[0.22em] text-muted-foreground">
-          trading journal · v2
+          {t.shell.brandSubtitle}
         </p>
       </div>
     </div>
@@ -39,6 +35,7 @@ function TrackionBrand({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
 }
 
 export default function LoginPage() {
+  const { t } = useAppLocale();
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,13 +54,13 @@ export default function LoginPage() {
       const result = await enter.mutateAsync({ email: email.trim() });
       if (result.status === "password_required") {
         setStep("password");
-        toast.success("Informe a senha enviada ao seu e-mail");
+        toast.success(t.login.toastPasswordRequired);
       } else {
         setStep("check_email");
-        toast.success(result.message ?? "Verifique seu e-mail");
+        toast.success(result.message ?? t.login.toastCheckEmail);
       }
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Erro");
+      toast.error(err instanceof Error ? err.message : t.login.toastError);
     }
   }
 
@@ -71,44 +68,25 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       await login.mutateAsync({ email: email.trim(), password });
-      toast.success("Bem-vindo ao Trackion!");
+      toast.success(t.login.toastWelcome);
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Erro ao entrar");
+      toast.error(err instanceof Error ? err.message : t.login.toastLoginError);
     }
   }
 
   async function handleResend() {
     try {
       await resend.mutateAsync({ email: email.trim() });
-      toast.success("E-mail reenviado");
+      toast.success(t.login.toastResent);
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Erro");
+      toast.error(err instanceof Error ? err.message : t.login.toastError);
     }
   }
 
-  const stepMeta: Record<Step, { index: string; title: string; hint: string }> = {
-    email: {
-      index: "01",
-      title: "Identifique-se.",
-      hint: "Digite seu e-mail para entrar ou criar conta",
-    },
-    check_email: {
-      index: "02",
-      title: "Confirme o e-mail.",
-      hint: "Enviamos instruções para sua caixa de entrada",
-    },
-    password: {
-      index: "03",
-      title: "Acesso seguro.",
-      hint: "Use a senha enviada ao seu e-mail",
-    },
-  };
-
-  const meta = stepMeta[step];
+  const meta = t.login.stepMeta[step];
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* ── Painel editorial (desktop) ─────────────────────────────────── */}
       <aside className="relative hidden w-[44%] shrink-0 flex-col justify-between overflow-hidden border-r border-border bg-card lg:flex">
         <div className="pointer-events-none absolute inset-0 bg-grid-fine opacity-60" aria-hidden />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-ambient-orange" aria-hidden />
@@ -124,22 +102,25 @@ export default function LoginPage() {
           <div className="space-y-4">
             <Eyebrow tone="primary">auth · terminal access</Eyebrow>
             <h1 className="font-display text-4xl font-bold leading-[0.92] tracking-tight text-foreground xl:text-5xl">
-              Controle total da sua{" "}
-              <span className="font-serif-tk italic font-normal text-primary">estratégia</span>{" "}
-              Bitcoin.
+              {t.login.heroTitle[0]}{" "}
+              <span className="font-serif-tk italic font-normal text-primary">{t.login.heroTitle[1]}</span>{" "}
+              {t.login.heroTitle[2]}
             </h1>
           </div>
 
           <ul className="space-y-4 border-t border-border pt-8">
-            {FEATURES.map(({ icon: Icon, index, label }) => (
-              <li key={index} className="grid grid-cols-[auto_auto_1fr] items-start gap-4">
-                <span className="font-mono-tk text-[10px] tracking-[0.28em] text-primary">{index}</span>
-                <div className="flex h-8 w-8 items-center justify-center border border-primary/30 bg-primary/[0.06]">
-                  <Icon className="h-3.5 w-3.5 text-primary" />
-                </div>
-                <span className="pt-1 text-sm leading-relaxed text-muted-foreground">{label}</span>
-              </li>
-            ))}
+            {t.login.features.map(({ index, label }) => {
+              const Icon = [TrendingUp, Shield, Zap][Number(index) - 1] ?? TrendingUp;
+              return (
+                <li key={index} className="grid grid-cols-[auto_auto_1fr] items-start gap-4">
+                  <span className="font-mono-tk text-[10px] tracking-[0.28em] text-primary">{index}</span>
+                  <div className="flex h-8 w-8 items-center justify-center border border-primary/30 bg-primary/[0.06]">
+                    <Icon className="h-3.5 w-3.5 text-primary" />
+                  </div>
+                  <span className="pt-1 text-sm leading-relaxed text-muted-foreground">{label}</span>
+                </li>
+              );
+            })}
           </ul>
         </div>
 
@@ -148,7 +129,6 @@ export default function LoginPage() {
         </p>
       </aside>
 
-      {/* ── Formulário ─────────────────────────────────────────────────── */}
       <main className="relative flex flex-1 flex-col items-center justify-center p-6 sm:p-10">
         <div className="pointer-events-none absolute inset-0 bg-grid-fine opacity-30" aria-hidden />
 
@@ -165,7 +145,6 @@ export default function LoginPage() {
           <div className="relative border border-border bg-card">
             <CornerMarks orange />
 
-            {/* Header do card */}
             <div className="border-b border-border px-6 py-4">
               <div className="flex items-center justify-between gap-3 font-mono-tk text-[10px] uppercase tracking-[0.28em]">
                 <span className="text-muted-foreground">
@@ -199,14 +178,14 @@ export default function LoginPage() {
                         htmlFor="email"
                         className="font-mono-tk text-[10px] uppercase tracking-[0.22em] text-muted-foreground"
                       >
-                        $ email
+                        {t.login.emailLabel}
                       </label>
                       <div className="flex items-center gap-3 border border-border bg-background px-4 py-2.5 font-mono-tk text-sm">
                         <span className="select-none text-primary">›</span>
                         <Input
                           id="email"
                           type="email"
-                          placeholder="seu@email.com"
+                          placeholder={t.login.emailPlaceholder}
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           required
@@ -222,7 +201,7 @@ export default function LoginPage() {
                       icon={Mail}
                       data-testid="button-enter"
                     >
-                      {enter.isPending ? "enviando…" : "continuar"}
+                      {enter.isPending ? t.login.sending : t.login.continue}
                     </TerminalButton>
                   </motion.form>
                 )}
@@ -237,11 +216,7 @@ export default function LoginPage() {
                     className="space-y-5"
                   >
                     <div className="border border-border bg-background p-4 text-sm leading-relaxed text-muted-foreground">
-                      <p>
-                        Enviamos um e-mail para{" "}
-                        <strong className="font-mono-tk text-foreground">{email}</strong> com sua senha
-                        temporária e o link de confirmação.
-                      </p>
+                      <p>{t.login.checkEmailBody(email)}</p>
                     </div>
                     <TerminalButton
                       variant="outline"
@@ -249,13 +224,13 @@ export default function LoginPage() {
                       onClick={handleResend}
                       disabled={resend.isPending}
                     >
-                      {resend.isPending ? "reenviando…" : "reenviar e-mail"}
+                      {resend.isPending ? t.login.resending : t.login.resend}
                     </TerminalButton>
                     <TerminalButton variant="outline" className="w-full" onClick={() => setStep("password")}>
-                      já confirmei — inserir senha
+                      {t.login.confirmedEnterPassword}
                     </TerminalButton>
                     <TerminalButton variant="ghost" className="w-full" onClick={() => setStep("email")}>
-                      usar outro e-mail
+                      {t.login.useOtherEmail}
                     </TerminalButton>
                   </motion.div>
                 )}
@@ -278,7 +253,7 @@ export default function LoginPage() {
                         htmlFor="password"
                         className="font-mono-tk text-[10px] uppercase tracking-[0.22em] text-muted-foreground"
                       >
-                        $ password
+                        {t.login.passwordLabel}
                       </label>
                       <div className="relative flex items-center gap-3 border border-border bg-background px-4 py-2.5 font-mono-tk text-sm">
                         <span className="select-none text-primary">›</span>
@@ -296,7 +271,7 @@ export default function LoginPage() {
                           onClick={() => setShowPwd((v) => !v)}
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground"
                           tabIndex={-1}
-                          aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"}
+                          aria-label={showPwd ? t.login.hidePassword : t.login.showPassword}
                         >
                           {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
@@ -308,10 +283,10 @@ export default function LoginPage() {
                       disabled={login.isPending}
                       data-testid="button-login"
                     >
-                      {login.isPending ? "entrando…" : "entrar"}
+                      {login.isPending ? t.login.entering : t.login.enter}
                     </TerminalButton>
                     <TerminalButton type="button" variant="ghost" className="w-full" onClick={() => setStep("email")}>
-                      voltar
+                      {t.login.back}
                     </TerminalButton>
                   </motion.form>
                 )}
@@ -319,7 +294,7 @@ export default function LoginPage() {
             </div>
 
             <div className="border-t border-border px-6 py-3 font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
-              ↳ step {meta.index} / 03 · read-only api recommended
+              {t.login.stepFooter.replace("{step}", meta.index)}
             </div>
           </div>
         </motion.div>

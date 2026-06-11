@@ -63,12 +63,27 @@ export type LandingContent = {
     subtitle: string;
     perMonth: string;
     anchorBadge: string;
+    launchBadge: string;
+    originalPriceLabel: string;
     trialCta: string;
+    afterTrialNote: string;
+    planTrialNote: (planName: string, price: string) => string;
     terminalHeader: string;
     terminalReady: string;
     emailPlaceholder: string;
     startTrial: string;
     terminalFooter: string;
+    emailInvalid: string;
+  };
+  launchPromo: {
+    sectionLabel: string;
+    badge: string;
+    title: string;
+    subtitle: string;
+    priceRowLabel: string;
+    savingsBadge: (pct: number) => string;
+    cta: string;
+    finePrint: string;
   };
   footer: {
     tagline: string;
@@ -101,6 +116,46 @@ export type LandingContent = {
     submitting: string;
     submit: string;
   };
+  navBrandSubtitle: string;
+  heroMarketPulse: string;
+  affiliate: {
+    loading: string;
+    partner: string;
+    coupon: string;
+    discount: (pct: number) => string;
+  };
+  static: { back: string };
+  footerPaths: {
+    privacy: string;
+    terms: string;
+    contact: string;
+    status: string;
+  };
+  navMenuOpen: string;
+  navMenuClose: string;
+  seo: {
+    sectionLabel: string;
+    title: [string, string];
+    subtitle: string;
+    faqTitle: string;
+    faq: { q: string; a: string }[];
+    guidesTitle: string;
+    guides: { label: string; path: string }[];
+    blogLink: string;
+    blogCta: string;
+  };
+  blog: {
+    eyebrow: string;
+    indexTitle: string;
+    indexSubtitle: string;
+    readMore: string;
+    readTime: (min: number) => string;
+    backToBlog: string;
+    relatedTitle: string;
+    ctaText: string;
+    ctaButton: string;
+    inlineCta: string;
+  };
 };
 
 const EXCHANGES = [
@@ -119,12 +174,14 @@ const BR: LandingContent = {
     { href: "#precos", index: "04", label: "Preços" },
   ],
   navLogin: "Entrar →",
-  navCta: "Start Free",
-  heroMeta: { beta: "Beta privado", trial: "14 dias grátis", noCard: "sem cartão de crédito" },
-  heroEyebrow: "[00 — Trading Journal]",
+  navCta: "Trial grátis 14d",
+  navBrandSubtitle: "— trading journal · crypto",
+  heroMeta: { beta: "Beta privado", trial: "14 dias Elite grátis", noCard: "sem cartão de crédito" },
+  heroEyebrow: "[00 — Journal · BTCUSDT futures]",
   heroTitle: ["DOMINE", "SEUS", "trades"],
-  heroCtaPrimary: "$ start --trial=14d",
-  heroCtaSecondary: "Watch demo",
+  heroMarketPulse: "BTC · futuros USDT · stack spot",
+  heroCtaPrimary: "Começar trial 14 dias",
+  heroCtaSecondary: "Ver recursos",
   heroPills: [
     { icon: LineChart, text: "Analytics avançado" },
     { icon: Target, text: "Metas & risco" },
@@ -244,25 +301,41 @@ const BR: LandingContent = {
     cta: "Trocar aposta por método",
   },
   pricing: {
-    sectionLabel: "Planos · trial Elite 14d",
+    sectionLabel: "Planos · promo de lançamento",
     title: "Planos para cada fase do seu trading.",
     subtitle:
-      "Teste todos os recursos Elite por 14 dias grátis. Depois do trial, escolha o plano que combina com seu volume e número de contas.",
+      "Teste todos os recursos Elite por 14 dias grátis. Depois do trial, assine com preço de lançamento — Starter R$20 · Pro R$40 · Elite R$60/mês.",
     perMonth: "/ mês",
-    anchorBadge: "Âncora",
+    anchorBadge: "Recomendado",
+    launchBadge: "Lançamento",
+    originalPriceLabel: "De",
     trialCta: "Trial Elite 14d",
+    afterTrialNote: "Preço promocional de lançamento válido para novas assinaturas após o trial.",
+    planTrialNote: (planName, price) => `Após o trial: ${planName} · ${price}/mês`,
     terminalHeader: "trackion.app — signup --trial=elite --days=14",
     terminalReady: "ready",
     emailPlaceholder: "seu@email.com",
     startTrial: "Iniciar trial",
     terminalFooter: "› trial = Elite completo · sem cartão no cadastro",
+    emailInvalid: "Informe um e-mail válido para continuar.",
+  },
+  launchPromo: {
+    sectionLabel: "Promo · lançamento Trackion",
+    badge: "Oferta de lançamento",
+    title: "Preço de estreia para quem começa com método.",
+    subtitle:
+      "Celebramos o lançamento com valores especiais: Starter, Pro e Elite por R$20, R$40 e R$60/mês. Trial Elite de 14 dias grátis — sem cartão.",
+    priceRowLabel: "Starter · Pro · Elite",
+    savingsBadge: (pct) => `−${pct}% vs. preço regular`,
+    cta: "Garantir preço de lançamento",
+    finePrint: "Valores promocionais aplicados na assinatura após o trial de 14 dias.",
   },
   footer: {
     tagline: "Não aposte. Registre.",
     taglineEn: "Don't bet. Track.",
     product: "Produto",
     account: "Conta",
-    lastSync: "Last sync",
+    lastSync: "Última sync",
     links: {
       product: ["Recursos", "Integrações", "Método", "Preços"],
       account: ["Entrar", "Trial 14d", "Status"],
@@ -293,6 +366,85 @@ const BR: LandingContent = {
     submitting: "Enviando…",
     submit: "Enviar link de acesso",
   },
+  affiliate: {
+    loading: "Carregando oferta do parceiro…",
+    partner: "Parceiro",
+    coupon: "Cupom",
+    discount: (pct) => `${pct}% off na assinatura`,
+  },
+  static: { back: "Voltar ao site" },
+  footerPaths: {
+    privacy: "/privacidade",
+    terms: "/termos",
+    contact: "/contato",
+    status: "/status",
+  },
+  navMenuOpen: "Abrir menu",
+  navMenuClose: "Fechar menu",
+  seo: {
+    sectionLabel: "Guia · Crypto",
+    title: ["Trading de", "criptomoedas"],
+    subtitle:
+      "Em 2026, buscas por Bitcoin e crypto bateram máximas no Google Trends — mas volume de busca não é método. Journal, sync de exchange, psicologia de trade e gestão de risco separam quem acumula de quem aposta.",
+    faqTitle: "Perguntas frequentes",
+    faq: [
+      {
+        q: "O que é um trading journal para criptomoedas?",
+        a: "É um diário estruturado de operações em Bitcoin, altcoins e futuros. O Trackion sincroniza trades via API read-only das exchanges e calcula win rate, expectancy e drawdown automaticamente.",
+      },
+      {
+        q: "Qual a melhor ferramenta para registrar trades de crypto?",
+        a: "Uma que conecta Binance, MEXC e Bitget sem planilha, com metas de risco e foco em psicologia de trading. O Trackion foi feito para futuros USDT e stack BTC.",
+      },
+      {
+        q: "Como melhorar psicologia no trading de crypto?",
+        a: "Registre cada trade, defina limite diário de perda, revise padrões semanais e marque entradas por FOMO. Dados expõem vieses que emoção esconde.",
+      },
+      {
+        q: "Trackion sincroniza com quais exchanges?",
+        a: "Binance, MEXC e Bitget via API read-only (sem saque). Bybit e OKX em desenvolvimento para Q1 2026.",
+      },
+      {
+        q: "Preciso de cartão para testar?",
+        a: "Não. Trial Elite de 14 dias grátis, sem cartão de crédito no cadastro.",
+      },
+      {
+        q: "Serve para futuros e spot?",
+        a: "Sim. BTCUSDT perpétuo, altcoins e acumulação spot no mesmo dashboard, com PnL consolidado multi-exchange.",
+      },
+    ],
+    guidesTitle: "Guias por tema",
+    guides: [
+      { label: "Trading journal crypto", path: "/trading-journal-crypto" },
+      { label: "Diário de trades", path: "/diario-de-trades" },
+      { label: "Psicologia do trading", path: "/psicologia-do-trading" },
+      { label: "Gestão de risco", path: "/gestao-de-risco-crypto" },
+      { label: "Futuros crypto", path: "/futuros-crypto" },
+      { label: "Sync exchange", path: "/sincronizar-exchange-crypto" },
+      { label: "Journal Binance", path: "/journal-binance" },
+      { label: "Acumular Bitcoin", path: "/acumular-bitcoin" },
+      { label: "Análise de performance", path: "/analise-performance-trading" },
+      { label: "FOMO trading", path: "/fomo-trading" },
+      { label: "Substituir planilha", path: "/planilha-trades-crypto" },
+      { label: "Trading criptomoedas", path: "/criptomoeda-trading" },
+    ],
+    blogLink: "Ver todos os artigos →",
+    blogCta: "Blog · trading crypto",
+  },
+  blog: {
+    eyebrow: "Blog · Trackion",
+    indexTitle: "Trading crypto com método",
+    indexSubtitle:
+      "Artigos sobre Google Trends, psicologia de trade, gestão de risco, sync de exchange e por que journal vence planilha — escrito para quem opera Bitcoin e futuros de verdade.",
+    readMore: "Ler artigo",
+    readTime: (min) => `${min} min de leitura`,
+    backToBlog: "Voltar ao blog",
+    relatedTitle: "Artigos relacionados",
+    ctaText: "Registre trades com sync automático de exchange, metas de risco e analytics profissional.",
+    ctaButton: "Trial Elite 14 dias grátis",
+    inlineCta:
+      "Pare de confiar na memória. O Trackion sincroniza Binance, MEXC e Bitget, calcula win rate e expectancy e ajuda você a operar com método — não no feeling.",
+  },
 };
 
 const US: LandingContent = {
@@ -303,12 +455,14 @@ const US: LandingContent = {
     { href: "#precos", index: "04", label: "Pricing" },
   ],
   navLogin: "Log in →",
-  navCta: "Start Free",
-  heroMeta: { beta: "Private beta", trial: "14-day free trial", noCard: "no credit card" },
-  heroEyebrow: "[00 — Trading Journal]",
+  navCta: "Free 14-day trial",
+  navBrandSubtitle: "— trading journal · crypto",
+  heroMeta: { beta: "Private beta", trial: "14-day Elite trial", noCard: "no credit card" },
+  heroEyebrow: "[00 — Journal · BTCUSDT futures]",
   heroTitle: ["MASTER", "YOUR", "trades"],
-  heroCtaPrimary: "$ start --trial=14d",
-  heroCtaSecondary: "Watch demo",
+  heroMarketPulse: "BTC · USDT futures · spot stack",
+  heroCtaPrimary: "Start 14-day trial",
+  heroCtaSecondary: "See features",
   heroPills: [
     { icon: LineChart, text: "Advanced analytics" },
     { icon: Target, text: "Goals & risk" },
@@ -410,7 +564,7 @@ const US: LandingContent = {
       },
       {
         icon: Brain,
-        tag: "CAUSA",
+        tag: "CAUSE",
         title: "Discipline comes from data.",
         description:
           "When you see real win rate, drawdown, and expectancy, you stop repeating the same mistakes. Decisions get a method — not a guess.",
@@ -428,18 +582,34 @@ const US: LandingContent = {
     cta: "Replace gambling with method",
   },
   pricing: {
-    sectionLabel: "Plans · 14-day Elite trial",
+    sectionLabel: "Plans · launch promo",
     title: "Plans for every stage of your trading.",
     subtitle:
-      "Try all Elite features free for 14 days. After the trial, pick the plan that fits your volume and number of accounts.",
+      "Try all Elite features free for 14 days. After the trial, subscribe at launch pricing — Starter $20 · Pro $40 · Elite $60/mo.",
     perMonth: "/ mo",
     anchorBadge: "Popular",
+    launchBadge: "Launch",
+    originalPriceLabel: "Was",
     trialCta: "Elite trial 14d",
+    afterTrialNote: "Launch promo pricing applies to new subscriptions after the trial.",
+    planTrialNote: (planName, price) => `After trial: ${planName} · ${price}/mo`,
     terminalHeader: "trackion.app — signup --trial=elite --days=14",
     terminalReady: "ready",
     emailPlaceholder: "you@email.com",
     startTrial: "Start trial",
     terminalFooter: "› trial = full Elite · no card at signup",
+    emailInvalid: "Enter a valid email to continue.",
+  },
+  launchPromo: {
+    sectionLabel: "Promo · Trackion launch",
+    badge: "Launch offer",
+    title: "Intro pricing for traders who lead with data.",
+    subtitle:
+      "Celebrate our launch with special rates: Starter, Pro, and Elite at $20, $40, and $60/mo. 14-day Elite trial — no card required.",
+    priceRowLabel: "Starter · Pro · Elite",
+    savingsBadge: (pct) => `−${pct}% vs. regular price`,
+    cta: "Lock in launch pricing",
+    finePrint: "Promo rates apply when you subscribe after the 14-day trial.",
   },
   footer: {
     tagline: "Don't bet. Track.",
@@ -476,6 +646,84 @@ const US: LandingContent = {
     emailPlaceholder: "you@email.com",
     submitting: "Sending…",
     submit: "Send access link",
+  },
+  affiliate: {
+    loading: "Loading partner offer…",
+    partner: "Partner",
+    coupon: "Coupon",
+    discount: (pct) => `${pct}% off subscription`,
+  },
+  static: { back: "Back to site" },
+  footerPaths: {
+    privacy: "/privacy",
+    terms: "/terms",
+    contact: "/contact",
+    status: "/status",
+  },
+  navMenuOpen: "Open menu",
+  navMenuClose: "Close menu",
+  seo: {
+    sectionLabel: "Guide · Crypto",
+    title: ["Cryptocurrency", "trading"],
+    subtitle:
+      "In 2026, Bitcoin and crypto searches hit Google Trends highs — but search volume isn't a method. Journaling, exchange sync, trading psychology and risk management separate accumulators from gamblers.",
+    faqTitle: "Frequently asked questions",
+    faq: [
+      {
+        q: "What is a crypto trading journal?",
+        a: "A structured log of Bitcoin, altcoin and futures trades. Trackion syncs via read-only exchange API and computes win rate, expectancy and drawdown automatically.",
+      },
+      {
+        q: "What's the best tool to log crypto trades?",
+        a: "One that connects Binance, MEXC and Bitget without spreadsheets, with risk goals and trading psychology built in. Trackion is built for USDT futures and BTC stacking.",
+      },
+      {
+        q: "How to improve trading psychology in crypto?",
+        a: "Log every trade, set a daily loss limit, review weekly patterns and tag FOMO entries. Data exposes biases emotion hides.",
+      },
+      {
+        q: "Which exchanges does Trackion sync?",
+        a: "Binance, MEXC and Bitget via read-only API (no withdrawals). Bybit and OKX coming Q1 2026.",
+      },
+      {
+        q: "Do I need a card to try it?",
+        a: "No. 14-day Elite trial free, no credit card at signup.",
+      },
+      {
+        q: "Does it work for futures and spot?",
+        a: "Yes. BTCUSDT perps, altcoins and spot accumulation in one dashboard with multi-exchange consolidated PnL.",
+      },
+    ],
+    guidesTitle: "Topic guides",
+    guides: [
+      { label: "Crypto trading journal", path: "/crypto-trading-journal" },
+      { label: "Trading psychology", path: "/trading-psychology-crypto" },
+      { label: "Crypto futures journal", path: "/crypto-futures-journal" },
+      { label: "Exchange API sync", path: "/exchange-api-sync" },
+      { label: "Risk management", path: "/crypto-risk-management" },
+      { label: "Binance journal", path: "/binance-trading-journal" },
+      { label: "Bitcoin stack tracker", path: "/bitcoin-stack-tracker" },
+      { label: "Trade analytics", path: "/crypto-trade-analytics" },
+      { label: "FOMO trading", path: "/fomo-crypto-trading" },
+      { label: "Replace spreadsheet", path: "/crypto-trading-spreadsheet" },
+      { label: "Retail crypto trading", path: "/retail-crypto-trading" },
+    ],
+    blogLink: "Browse all articles →",
+    blogCta: "Blog · crypto trading",
+  },
+  blog: {
+    eyebrow: "Blog · Trackion",
+    indexTitle: "Crypto trading with method",
+    indexSubtitle:
+      "Articles on Google Trends, trading psychology, risk management, exchange sync and why journals beat spreadsheets — for traders who actually operate Bitcoin and futures.",
+    readMore: "Read article",
+    readTime: (min) => `${min} min read`,
+    backToBlog: "Back to blog",
+    relatedTitle: "Related articles",
+    ctaText: "Log trades with automatic exchange sync, risk goals and pro analytics.",
+    ctaButton: "Free 14-day Elite trial",
+    inlineCta:
+      "Stop trusting memory. Trackion syncs Binance, MEXC and Bitget, computes win rate and expectancy, and helps you trade with method — not gut feel.",
   },
 };
 

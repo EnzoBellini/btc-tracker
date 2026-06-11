@@ -38,14 +38,17 @@ export function useAuth() {
   return { user: user ?? null, isLoading };
 }
 
+import { getAffiliateSignupPayload } from "@/lib/affiliate";
+
 export function useAuthEnter() {
   return useMutation({
     mutationFn: async ({ email }: { email: string }) => {
+      const affiliate = getAffiliateSignupPayload();
       const res = await fetch("/api/auth/enter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, ...affiliate }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erro ao continuar");

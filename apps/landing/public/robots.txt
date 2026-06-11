@@ -1,4 +1,10 @@
 User-agent: *
 Allow: /
+Allow: /trading-journal-crypto
+Allow: /diario-de-trades
+Allow: /psicologia-do-trading
+Allow: /crypto-trading-journal
+Allow: /exchange-api-sync
+Allow: /blog
 
 Sitemap: https://trackion.app/sitemap.xml

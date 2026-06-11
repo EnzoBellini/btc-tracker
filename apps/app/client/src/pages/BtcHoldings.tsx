@@ -15,6 +15,7 @@ import {
   PageHeader, KpiTerminal, TerminalFrame, TerminalButton,
 } from "@/components/tk";
 import { cn } from "@/lib/utils";
+import { useAppLocale } from "@/lib/locale-context";
 
 const formSchema = insertBtcHoldingSchema.extend({
   btcAmount:   z.coerce.number().positive(),
@@ -101,6 +102,7 @@ function HoldingForm({ onClose }: { onClose: () => void }) {
 }
 
 export default function BtcHoldings() {
+  const { t } = useAppLocale();
   const [open, setOpen] = useState(false);
   const { data: holdings = [], isLoading } = useHoldings();
   const deleteHolding = useDeleteHolding();
@@ -127,10 +129,10 @@ export default function BtcHoldings() {
       <div className="relative space-y-10">
         <PageHeader
           index="04"
-          total="08"
-          eyebrow="BTC.STACK · holdings"
-          title="Acompanhe o stack."
-          subtitle="Snapshots periódicos do saldo BTC e custo médio — porque o objetivo final é acumular bitcoin."
+          total="09"
+          eyebrow={t.btcHoldings.eyebrow}
+          title={t.btcHoldings.title}
+          subtitle={t.btcHoldings.subtitle}
           actions={
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
@@ -175,7 +177,7 @@ export default function BtcHoldings() {
         {/* Charts */}
         {chartData.length > 0 && (
           <section className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <TerminalFrame title="fig.01 · btc_acumulado" status="live" statusTone="live" orangeCorners>
+            <TerminalFrame title={t.btcHoldings.chartBtcAccumulated} status="live" statusTone="live" orangeCorners>
               <div className="p-4">
                 <ResponsiveContainer width="100%" height={200}>
                   <AreaChart data={chartData}>
@@ -194,7 +196,7 @@ export default function BtcHoldings() {
               </div>
             </TerminalFrame>
 
-            <TerminalFrame title="fig.02 · price_vs_avg_cost" status="live" statusTone="live" orangeCorners>
+            <TerminalFrame title={t.btcHoldings.chartPriceVsCost} status="live" statusTone="live" orangeCorners>
               <div className="p-4">
                 <ResponsiveContainer width="100%" height={200}>
                   <LineChart data={chartData}>
@@ -202,8 +204,8 @@ export default function BtcHoldings() {
                     <YAxis tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10 }} axisLine={false} tickLine={false} width={70} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} />
                     <Tooltip content={<CustomTooltip />} cursor={{ stroke: "hsl(var(--primary))", strokeOpacity: 0.3 }} />
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <Line type="monotone" dataKey="price"   name="Preço BTC"   stroke="hsl(var(--primary))" strokeWidth={2}   dot={{ fill: "hsl(var(--primary))", r: 3 }} />
-                    <Line type="monotone" dataKey="avgCost" name="Custo médio" stroke="rgba(255,255,255,0.4)"  strokeWidth={1.5} strokeDasharray="4 4" dot={false} />
+                    <Line type="monotone" dataKey="price"   name={t.btcHoldings.chartPriceLabel}   stroke="hsl(var(--primary))" strokeWidth={2}   dot={{ fill: "hsl(var(--primary))", r: 3 }} />
+                    <Line type="monotone" dataKey="avgCost" name={t.btcHoldings.chartCostLabel} stroke="rgba(255,255,255,0.4)"  strokeWidth={1.5} strokeDasharray="4 4" dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -214,8 +216,8 @@ export default function BtcHoldings() {
         {/* Table */}
         <section className="border border-border bg-card">
           <div className="flex items-center justify-between border-b border-border px-4 py-2 font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
-            <span>table · snapshots</span>
-            <span>{holdings.length} rows</span>
+            <span>{t.btcHoldings.tableSnapshots}</span>
+            <span>{t.btcHoldings.tableRows(holdings.length)}</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -239,7 +241,7 @@ export default function BtcHoldings() {
                   <tr>
                     <td colSpan={9} className="px-4 py-16 text-center">
                       <p className="font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground/50">[empty]</p>
-                      <p className="mt-2 text-sm text-muted-foreground">Nenhum snapshot registrado</p>
+                      <p className="mt-2 text-sm text-muted-foreground">{t.btcHoldings.emptySnapshots}</p>
                     </td>
                   </tr>
                 ) : [...holdings].reverse().map((h, idx) => {

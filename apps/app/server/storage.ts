@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, desc } from "drizzle-orm";
 import {
   Trade, InsertTrade,
   Transfer, InsertTransfer,
@@ -23,6 +23,7 @@ import {
   userRules,
   roadmapItems,
 } from "@shared/schema";
+import { mergeTraderProfile } from "./lib/affiliateAttribution";
 import { db } from "./db";
 import { encrypt, decrypt } from "./crypto";
 
@@ -352,7 +353,9 @@ export class DbStorage implements IStorage {
   }
 
   async saveOnboardingProgress(userId: number, step: number, answers: Record<string, unknown>): Promise<void> {
-    await db!.update(users).set({ onboardingStep: step, traderProfile: JSON.stringify({ answers }) }).where(eq(users.id, userId));
+    const user = await this.getUserById(userId);
+    const traderProfile = mergeTraderProfile(user?.traderProfile, { answers });
+    await db!.update(users).set({ onboardingStep: step, traderProfile }).where(eq(users.id, userId));
   }
 
   async getOnboardingAnswers(userId: number): Promise<Record<string, unknown> | null> {
@@ -367,6 +370,8 @@ export class DbStorage implements IStorage {
   }
 
   async completeOnboarding(userId: number, answers: Record<string, unknown>, scores: Record<string, unknown>): Promise<void> {
+    const user = await this.getUserById(userId);
+    const traderProfile = mergeTraderProfile(user?.traderProfile, scores);
     await db!.delete(onboardingResponses).where(eq(onboardingResponses.userId, userId));
     await db!.insert(onboardingResponses).values({
       userId,
@@ -376,7 +381,7 @@ export class DbStorage implements IStorage {
     await db!.update(users).set({
       onboardingCompleted: true,
       onboardingStep: 0,
-      traderProfile: JSON.stringify(scores),
+      traderProfile,
     }).where(eq(users.id, userId));
   }
 
@@ -636,6 +641,7 @@ class MemStorage implements IStorage {
       traderProfile: u.traderProfile ?? null,
       passwordChangedAt: u.passwordChangedAt ?? null,
       trialUsedAt: u.trialUsedAt ?? null,
+      affiliateRef: u.affiliateRef ?? null,
       createdAt: new Date(),
     } as User;
     this.usersMap.set(user.id, user);
@@ -721,7 +727,10 @@ class MemStorage implements IStorage {
   }
 
   async saveOnboardingProgress(userId: number, step: number, answers: Record<string, unknown>) {
-    await this.updateUser(userId, { onboardingStep: step, traderProfile: JSON.stringify({ answers }) });
+    const user = await this.getUserById(userId);
+    if (!user) return;
+    const traderProfile = mergeTraderProfile(user.traderProfile, { answers });
+    await this.updateUser(userId, { onboardingStep: step, traderProfile });
   }
 
   async getOnboardingAnswers(userId: number) {
@@ -736,6 +745,8 @@ class MemStorage implements IStorage {
   }
 
   async completeOnboarding(userId: number, answers: Record<string, unknown>, scores: Record<string, unknown>) {
+    const user = await this.getUserById(userId);
+    const traderProfile = mergeTraderProfile(user?.traderProfile, scores);
     const row = {
       id: this.nextId.onboarding++,
       userId,
@@ -747,7 +758,7 @@ class MemStorage implements IStorage {
     await this.updateUser(userId, {
       onboardingCompleted: true,
       onboardingStep: 0,
-      traderProfile: JSON.stringify(scores),
+      traderProfile,
     });
   }
 

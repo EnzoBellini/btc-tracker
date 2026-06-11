@@ -13,6 +13,7 @@ import { useUserRules } from "@/hooks/useOnboarding";
 import {
   PageHeader, TerminalFrame, TerminalButton, StatPill, Eyebrow,
 } from "@/components/tk";
+import { useAppLocale } from "@/lib/locale-context";
 
 const settingsFormSchema = insertSettingsSchema.extend({
   totalCapital:            z.coerce.number().positive(),
@@ -26,6 +27,8 @@ const settingsFormSchema = insertSettingsSchema.extend({
 type SettingsFormValues = z.infer<typeof settingsFormSchema>;
 
 function SettingsForm({ settings }: { settings: Settings }) {
+  const { t } = useAppLocale();
+  const r = t.rules;
   const updateSettings = useUpdateSettings();
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsFormSchema),
@@ -37,13 +40,13 @@ function SettingsForm({ settings }: { settings: Settings }) {
       <form onSubmit={form.handleSubmit(d => updateSettings.mutate(d))} className="space-y-6">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {[
-            { name: "totalCapital" as const,            label: "Capital Total (USDT)" },
-            { name: "futuresCapital" as const,          label: "Capital Futuros (USDT)" },
-            { name: "spotCapital" as const,             label: "Capital Spot BTC (USDT)" },
-            { name: "riskPerTrade" as const,            label: "Risco por Trade (USDT)" },
-            { name: "profitTransferThreshold" as const, label: "Transferir a cada +X USDT" },
-            { name: "defaultLeverage" as const,         label: "Alavancagem padrão (x)" },
-            { name: "stopTradingDrawdown" as const,     label: "Parar com drawdown (%)" },
+            { name: "totalCapital" as const,            label: r.capitalTotal },
+            { name: "futuresCapital" as const,          label: r.futuresCapital },
+            { name: "spotCapital" as const,             label: r.spotCapital },
+            { name: "riskPerTrade" as const,            label: r.riskPerTrade },
+            { name: "profitTransferThreshold" as const, label: r.transferThreshold },
+            { name: "defaultLeverage" as const,         label: r.defaultLeverage },
+            { name: "stopTradingDrawdown" as const,     label: r.stopDrawdown },
           ].map(({ name, label }, i) => (
             <FormField key={name} control={form.control} name={name} render={({ field }) => (
               <FormItem>
@@ -58,7 +61,7 @@ function SettingsForm({ settings }: { settings: Settings }) {
           ))}
         </div>
         <TerminalButton type="submit" disabled={updateSettings.isPending} data-testid="button-save-settings">
-          {updateSettings.isPending ? "Salvando…" : "Salvar configurações"}
+          {updateSettings.isPending ? r.saving : r.saveSettings}
         </TerminalButton>
       </form>
     </Form>
@@ -143,6 +146,7 @@ function toneClasses(tone: RuleBlock["tone"]) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function Rules() {
+  const { t } = useAppLocale();
   const { data: settings, isLoading } = useSettings();
   const { data: userRules } = useUserRules();
 
@@ -161,15 +165,15 @@ export default function Rules() {
       <div className="relative space-y-12">
         <PageHeader
           index="06"
-          total="08"
-          eyebrow="Rules · doctrine"
-          title="Manual de trading."
-          subtitle="Leia antes de operar. Disciplina nasce de regras escritas, não de palpite."
+          total="09"
+          eyebrow={t.rules.eyebrow}
+          title={t.rules.title}
+          subtitle={t.rules.subtitle}
         />
 
         {/* Rules grid */}
         <section className="space-y-4">
-          <Eyebrow>doutrina · 4 pilares</Eyebrow>
+          <Eyebrow>{t.rules.doctrineEyebrow}</Eyebrow>
           <ol className="grid grid-cols-1 gap-px overflow-hidden border border-border bg-border md:grid-cols-2">
             {displayRules.map(({ icon: Icon, title, tone, items }, i) => {
               const t = toneClasses(tone);
@@ -185,7 +189,7 @@ export default function Rules() {
                       </div>
                     </div>
                     <span className="font-mono-tk text-[9px] uppercase tracking-[0.28em] text-muted-foreground">
-                      pilar {i + 1} / {displayRules.length}
+                      {t.rules.pillar(i + 1, displayRules.length)}
                     </span>
                   </div>
                   <h3 className="font-display mt-4 text-2xl font-bold leading-tight tracking-tight">{title}</h3>
@@ -207,7 +211,7 @@ export default function Rules() {
 
         {/* Position sizing — editorial */}
         <section>
-          <TerminalFrame title="position_sizing · exemplo" status="docs" statusTone="info" orangeCorners>
+          <TerminalFrame title={t.rules.positionSizingTitle} status="docs" statusTone="info" orangeCorners>
             <div className="divide-y divide-border">
               {positionSizingExample.map((row, i) => (
                 <div key={i} className="grid grid-cols-[auto_1fr_auto] items-center gap-4 px-5 py-4">
@@ -226,12 +230,12 @@ export default function Rules() {
         <section className="space-y-4">
           <div className="flex items-end justify-between border-b border-border pb-3">
             <div className="space-y-1">
-              <Eyebrow>scenarios · playbook</Eyebrow>
-              <h2 className="font-display text-2xl font-bold tracking-tight">O que fazer quando…</h2>
+              <Eyebrow>{t.rules.scenariosEyebrow}</Eyebrow>
+              <h2 className="font-display text-2xl font-bold tracking-tight">{t.rules.scenariosTitle}</h2>
             </div>
             <span className="font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
               <AlertTriangle className="-mt-0.5 mr-1 inline h-3 w-3 text-[hsl(var(--neutral))]" />
-              decision tree
+              {t.rules.decisionTree}
             </span>
           </div>
           <div className="divide-y divide-border border border-border bg-card">
@@ -252,7 +256,7 @@ export default function Rules() {
 
         {/* Plan Tracker */}
         <section className="space-y-4">
-          <Eyebrow>goals · plan tracker</Eyebrow>
+          <Eyebrow>{t.rules.configStrategyEyebrow}</Eyebrow>
           <GoalsSection />
         </section>
 
@@ -260,8 +264,8 @@ export default function Rules() {
         <section className="space-y-4">
           <div className="flex items-end justify-between border-b border-border pb-3">
             <div className="space-y-1">
-              <Eyebrow>config · strategy</Eyebrow>
-              <h2 className="font-display text-2xl font-bold tracking-tight">Configurações da estratégia.</h2>
+              <Eyebrow>{t.rules.settingsEyebrow}</Eyebrow>
+              <h2 className="font-display text-2xl font-bold tracking-tight">{t.rules.settingsSectionTitle}</h2>
             </div>
           </div>
           {isLoading ? (

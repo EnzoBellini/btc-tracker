@@ -16,6 +16,7 @@ import {
   PageHeader, TerminalFrame, TerminalButton, StatPill, Eyebrow, CornerMarks,
 } from "@/components/tk";
 import { cn } from "@/lib/utils";
+import { useAppLocale } from "@/lib/locale-context";
 
 const EXCHANGES: { id: ExchangeId; label: string; needsPassphrase: boolean }[] = [
   { id: "mexc", label: "MEXC", needsPassphrase: false },
@@ -311,6 +312,7 @@ function CredentialField({
 }
 
 export default function ApiSettings() {
+  const { t } = useAppLocale();
   const [active, setActive] = useState<ExchangeId>("mexc");
   const { data: summary } = useExchangesSummary();
   const connectedCount = summary?.filter((s) => s.isConnected).length ?? 0;
@@ -322,10 +324,10 @@ export default function ApiSettings() {
       <div className="relative max-w-3xl space-y-10">
         <PageHeader
           index="07"
-          total="08"
-          eyebrow="API · Multi-exchange"
-          title="Conecte suas exchanges."
-          subtitle="MEXC, Binance e Bitget — importe trades de várias fontes ao mesmo tempo. Somente leitura."
+          total="09"
+          eyebrow={t.apiSettings.eyebrow}
+          title={t.apiSettings.title}
+          subtitle={t.apiSettings.subtitle}
         />
 
         <div className="flex flex-wrap gap-2 border border-border bg-card p-2">

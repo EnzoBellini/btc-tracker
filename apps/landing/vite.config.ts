@@ -26,6 +26,10 @@ export default defineConfig({
         target: "http://127.0.0.1:5000",
         changeOrigin: true,
       },
+      "/api/affiliates": {
+        target: "http://127.0.0.1:5000",
+        changeOrigin: true,
+      },
       "/api/auth": {
         target: "http://127.0.0.1:5000",
         changeOrigin: true,

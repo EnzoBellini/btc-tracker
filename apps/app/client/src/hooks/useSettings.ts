@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import type { Settings, InsertSettings } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+import { getT } from "@/lib/locale-runtime";
 
 export function useSettings() {
   return useQuery<Settings>({
@@ -18,8 +19,8 @@ export function useUpdateSettings() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/settings"] });
       qc.invalidateQueries({ queryKey: ["/api/stats"] });
-      toast.success("Configurações salvas");
+      toast.success(getT().toasts.settingsSaved);
     },
-    onError: () => toast.error("Erro ao salvar configurações"),
+    onError: () => toast.error(getT().toasts.settingsError),
   });
 }

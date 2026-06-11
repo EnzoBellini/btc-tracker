@@ -30,13 +30,16 @@ export function registerOnboardingRoutes(app: Express) {
   });
 
   app.post("/api/onboarding/complete", requireAuth, async (req, res) => {
-    const answers = req.body as QuizAnswers;
+    const body = req.body as QuizAnswers & { locale?: string };
+    const locale = body.locale === "en" ? "en" : "pt";
+    const answers = { ...body };
+    delete answers.locale;
     if (!answers || typeof answers !== "object") {
       return res.status(400).json({ error: "Respostas do quiz obrigatórias" });
     }
 
     const userId = uid(req);
-    const result = applyPersonalization(answers);
+    const result = applyPersonalization(answers, locale);
 
     await storage.updateSettings(userId, result.settings);
     await storage.replaceUserRules(userId, result.rules);

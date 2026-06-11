@@ -15,6 +15,7 @@ import { useRoadmap } from "@/hooks/useOnboarding";
 import {
   PageHeader, KpiTerminal, TerminalFrame, StatPill, KeyValueRow, Eyebrow,
 } from "@/components/tk";
+import { useAppLocale } from "@/lib/locale-context";
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -33,6 +34,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function Dashboard() {
+  const { t } = useAppLocale();
   const { data: stats, isLoading: statsLoading } = useStats();
   const { data: trades = [], isLoading: tradesLoading } = useTrades();
 
@@ -76,24 +78,24 @@ export default function Dashboard() {
         {/* HEADER */}
         <PageHeader
           index="01"
-          total="08"
-          eyebrow="Dashboard · overview"
-          title="Visão geral da estratégia BTC."
-          subtitle="Performance, regras e plano de execução — tudo num só painel."
+          total="09"
+          eyebrow={t.dashboard.eyebrow}
+          title={t.dashboard.title}
+          subtitle={t.dashboard.subtitle}
           actions={
             <>
               {canTrade ? (
                 <StatPill tone="profit" pulse>
-                  PODE OPERAR
+                  {t.dashboard.canTrade}
                 </StatPill>
               ) : (
                 <StatPill tone="loss" pulse>
-                  PARAR OPERAÇÕES
+                  {t.dashboard.stopTrading}
                 </StatPill>
               )}
               {shouldTransfer && (
                 <StatPill tone="info">
-                  TRANSFERIR P/ BTC
+                  {t.dashboard.transferToBtc}
                 </StatPill>
               )}
             </>
@@ -103,60 +105,65 @@ export default function Dashboard() {
         {/* KPIs */}
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-px md:bg-border md:[&>*]:bg-background">
           <KpiTerminal
-            label="PNL TOTAL"
+            label={t.dashboard.totalPnl}
             index="01"
             value={`${totalPnl >= 0 ? "+" : ""}${fmtUsdt(totalPnl)}`}
             tone={totalPnl >= 0 ? "profit" : "loss"}
             delta={
               <span className={pnlColor(totalPnl)}>
-                {totalPnl >= 0 ? "▲" : "▼"} {closedTrades} trades
+                {totalPnl >= 0 ? "▲" : "▼"} {t.dashboard.tradesCount(closedTrades)}
               </span>
             }
-            caption="USDT realizado"
+            caption={t.dashboard.captionRealizedUsdt}
             loading={isLoading}
           />
           <KpiTerminal
-            label="WIN RATE"
+            label={t.dashboard.winRate}
             index="02"
             value={fmtPct(winRate)}
             tone={winRate >= 50 ? "profit" : "loss"}
             delta={<span className="text-muted-foreground">{wins}W / {losses}L</span>}
-            caption="taxa de acerto"
+            caption={t.dashboard.captionWinRate}
             loading={isLoading}
           />
           <KpiTerminal
-            label="BTC ACUMULADO"
+            label={t.dashboard.btcAccumulated}
             index="03"
             value={btcAcc.toFixed(6)}
             tone="orange"
             delta={<span className="text-muted-foreground">{fmtUsdt(stats?.totalUsdtTransferred ?? 0)} USDT</span>}
-            caption="spot · convertido"
+            caption={t.dashboard.captionSpotConverted}
             loading={isLoading}
           />
           <KpiTerminal
-            label="TRADES ABERTOS"
+            label={t.dashboard.openTrades}
             index="04"
             value={String(openTrades)}
             tone="neutral"
             icon={Activity}
             delta={<span className="text-muted-foreground">{totalTrades} total</span>}
-            caption="posições live"
+            caption={t.dashboard.livePositions}
             loading={isLoading}
           />
         </section>
 
         {/* Goals */}
         <section className="space-y-4">
-          <Eyebrow>plan tracker · metas ativas</Eyebrow>
+          <Eyebrow>{t.dashboard.planTrackerEyebrow}</Eyebrow>
           <GoalsSection />
         </section>
 
         {/* Charts */}
         <section className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <TerminalFrame title="equity_curve · pnl acumulado" status={pnlChartData.length ? "live" : "no data"} statusTone={pnlChartData.length ? "live" : "off"} orangeCorners>
+          <TerminalFrame title={t.dashboard.equityCurve} status={pnlChartData.length ? "live" : "no data"} statusTone={pnlChartData.length ? "live" : "off"} orangeCorners>
             <div className="px-2 py-4">
               {pnlChartData.length === 0 ? (
-                <EmptyChartState message="Nenhum trade fechado ainda" />
+                <EmptyChartState
+                  message={t.dashboard.noClosedTrades}
+                  hint={t.dashboard.emptyConnectHint}
+                  ctaLabel={t.dashboard.emptyConnectCta}
+                  onCta={() => { window.location.hash = "#/api-settings"; }}
+                />
               ) : (
                 <ResponsiveContainer width="100%" height={200}>
                   <AreaChart data={pnlChartData}>
@@ -176,17 +183,22 @@ export default function Dashboard() {
               )}
             </div>
             <div className="flex items-center justify-between border-t border-border px-4 py-2 font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
-              <span>fig.01 — equity</span>
+              <span>{t.dashboard.figEquity}</span>
               <span className={pnlColor(totalPnl)}>
                 {totalPnl >= 0 ? "+" : ""}{fmtUsdt(totalPnl)} USDT
               </span>
             </div>
           </TerminalFrame>
 
-          <TerminalFrame title="last_10 · trades" status={recentTradesData.length ? "live" : "no data"} statusTone={recentTradesData.length ? "live" : "off"} orangeCorners>
+          <TerminalFrame title={t.dashboard.lastTrades} status={recentTradesData.length ? "live" : "no data"} statusTone={recentTradesData.length ? "live" : "off"} orangeCorners>
             <div className="px-2 py-4">
               {recentTradesData.length === 0 ? (
-                <EmptyChartState message="Nenhum trade fechado ainda" />
+                <EmptyChartState
+                  message={t.dashboard.noClosedTrades}
+                  hint={t.dashboard.emptyConnectHint}
+                  ctaLabel={t.dashboard.emptyConnectCta}
+                  onCta={() => { window.location.hash = "#/api-settings"; }}
+                />
               ) : (
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={recentTradesData} barSize={14}>
@@ -204,8 +216,8 @@ export default function Dashboard() {
               )}
             </div>
             <div className="flex items-center justify-between border-t border-border px-4 py-2 font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
-              <span>fig.02 — last_10</span>
-              <span>{recentTradesData.length} samples</span>
+              <span>{t.dashboard.figLastTrades}</span>
+              <span>{t.dashboard.samples(recentTradesData.length)}</span>
             </div>
           </TerminalFrame>
         </section>
@@ -213,26 +225,26 @@ export default function Dashboard() {
         {/* Strategy rules quick ref */}
         <section className="border border-border bg-card">
           <div className="flex items-center justify-between border-b border-border px-5 py-3 font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
-            <span><span className="text-primary">[06]</span> · strategy.config</span>
-            <span>read-only</span>
+            <span><span className="text-primary">{t.dashboard.configSection}</span></span>
+            <span>{t.dashboard.configReadOnly}</span>
           </div>
           <div className="grid grid-cols-1 divide-y divide-border md:grid-cols-2 md:divide-x">
             <div className="px-6 py-2">
               {[
-                { label: "Capital Total",     value: `${fmtUsdt(stats?.settings?.totalCapital ?? 200)} USDT` },
-                { label: "Capital Futuros",   value: `${fmtUsdt(stats?.settings?.futuresCapital ?? 100)} USDT` },
-                { label: "Capital Spot BTC",  value: `${fmtUsdt(stats?.settings?.spotCapital ?? 100)} USDT` },
-                { label: "Risco / Trade",     value: `${fmtUsdt(stats?.settings?.riskPerTrade ?? 2.5)} USDT` },
+                { label: t.dashboard.labelTotalCapital,     value: `${fmtUsdt(stats?.settings?.totalCapital ?? 200)} USDT` },
+                { label: t.dashboard.labelFuturesCapital,   value: `${fmtUsdt(stats?.settings?.futuresCapital ?? 100)} USDT` },
+                { label: t.dashboard.labelSpotCapital,  value: `${fmtUsdt(stats?.settings?.spotCapital ?? 100)} USDT` },
+                { label: t.dashboard.labelRiskPerTrade,     value: `${fmtUsdt(stats?.settings?.riskPerTrade ?? 2.5)} USDT` },
               ].map((r, i) => (
                 <KeyValueRow key={r.label} index={String(i + 1).padStart(2, "0")} label={r.label} value={r.value} />
               ))}
             </div>
             <div className="px-6 py-2">
               {[
-                { label: "Alavancagem padrão",     value: `${stats?.settings?.defaultLeverage ?? 3}x` },
-                { label: "Transferir quando",      value: `+${fmtUsdt(stats?.settings?.profitTransferThreshold ?? 10)} USDT`, tone: "orange" as const },
-                { label: "Parar c/ drawdown",      value: `−${stats?.settings?.stopTradingDrawdown ?? 20}%`, tone: "loss" as const },
-                { label: "Total trades",           value: String(totalTrades) },
+                { label: t.dashboard.defaultLeverage,     value: `${stats?.settings?.defaultLeverage ?? 3}x` },
+                { label: t.dashboard.labelTransferWhen,      value: `+${fmtUsdt(stats?.settings?.profitTransferThreshold ?? 10)} USDT`, tone: "orange" as const },
+                { label: t.dashboard.labelStopDrawdown,      value: `−${stats?.settings?.stopTradingDrawdown ?? 20}%`, tone: "loss" as const },
+                { label: t.dashboard.labelTotalTrades,           value: String(totalTrades) },
               ].map((r, i) => (
                 <KeyValueRow key={r.label} index={String(i + 5).padStart(2, "0")} label={r.label} value={r.value} tone={r.tone} />
               ))}
@@ -246,13 +258,23 @@ export default function Dashboard() {
   );
 }
 
-function EmptyChartState({ message }: { message: string }) {
+function EmptyChartState({ message, hint, ctaLabel, onCta }: { message: string; hint?: string; ctaLabel?: string; onCta?: () => void }) {
   return (
-    <div className="flex h-48 flex-col items-center justify-center gap-2">
+    <div className="flex h-48 flex-col items-center justify-center gap-2 px-4 text-center">
       <span className="font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground/50">
         [no data]
       </span>
       <p className="text-sm text-muted-foreground">{message}</p>
+      {hint && <p className="text-xs text-muted-foreground/80">{hint}</p>}
+      {ctaLabel && onCta && (
+        <button
+          type="button"
+          onClick={onCta}
+          className="mt-2 border border-primary px-3 py-1.5 font-mono-tk text-[10px] uppercase tracking-[0.2em] text-primary transition hover:bg-primary/10"
+        >
+          {ctaLabel}
+        </button>
+      )}
     </div>
   );
 }
@@ -266,6 +288,7 @@ type RoadmapPhase = {
 };
 
 function RoadmapSection() {
+  const { t } = useAppLocale();
   const { data: items, isLoading } = useRoadmap();
   const phases = (items ?? []) as RoadmapPhase[];
   if (isLoading || phases.length === 0) return null;
@@ -274,11 +297,11 @@ function RoadmapSection() {
     <section className="space-y-4">
       <div className="flex items-end justify-between border-b border-border pb-4">
         <div className="space-y-1">
-          <Eyebrow>seu plano de ação · roadmap</Eyebrow>
-          <h2 className="font-display text-2xl font-bold tracking-tight">Próximas fases.</h2>
+          <Eyebrow>{t.dashboard.roadmapEyebrow}</Eyebrow>
+          <h2 className="font-display text-2xl font-bold tracking-tight">{t.dashboard.roadmapTitle}</h2>
         </div>
         <span className="font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
-          {phases.length} phases
+          {t.dashboard.roadmapPhases(phases.length)}
         </span>
       </div>
 

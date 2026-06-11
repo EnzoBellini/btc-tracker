@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS admin_audit_log (
 );
 
 INSERT INTO plans (id, name, price_cents, currency, sort_order, highlights) VALUES
-  ('starter', 'Starter Lite', 4900, 'BRL', 1, '["1 conta de exchange","Histórico 30 dias","Dashboard essencial"]'),
-  ('pro', 'Pro Trader', 9900, 'BRL', 2, '["Até 3 exchanges","Histórico ilimitado","Sync 2 min"]'),
-  ('elite', 'Elite / Fund', 19900, 'BRL', 3, '["Exchanges ilimitadas","Sync webhook","Multi-conta"]')
+  ('starter', 'Starter Lite', 2000, 'BRL', 1, '["1 conta de exchange","Histórico 30 dias","Dashboard essencial"]'),
+  ('pro', 'Pro Trader', 4000, 'BRL', 2, '["Até 3 exchanges","Histórico ilimitado","Sync 2 min"]'),
+  ('elite', 'Elite / Fund', 6000, 'BRL', 3, '["Exchanges ilimitadas","Sync webhook","Multi-conta"]')
 ON CONFLICT (id) DO NOTHING;

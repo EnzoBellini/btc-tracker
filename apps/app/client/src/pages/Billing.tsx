@@ -3,8 +3,10 @@ import { formatPlanPrice, PLAN_CATALOG, type PlanId } from "@trackion/billing";
 import { useSubscription, useBillingCheckout, useBillingPortal } from "@/hooks/useSubscription";
 import { PageHeader, Eyebrow } from "@/components/tk";
 import { cn } from "@/lib/utils";
+import { useAppLocale } from "@/lib/locale-context";
 
 export default function Billing() {
+  const { t } = useAppLocale();
   const [location] = useHashLocation();
   const params = new URLSearchParams(location.split("?")[1] ?? "");
   const { data: sub, isLoading, refetch } = useSubscription();
@@ -18,31 +20,31 @@ export default function Billing() {
       <PageHeader
         index="08"
         total="09"
-        eyebrow="billing · assinatura"
-        title="Assinatura"
-        subtitle="Gerencie seu plano Trackion"
+        eyebrow={t.billing.eyebrow}
+        title={t.billing.title}
+        subtitle={t.billing.subtitle}
       />
       {success && (
         <div className="border border-profit/40 bg-profit/10 px-4 py-3 text-sm text-profit">
-          Pagamento recebido. Atualizando assinatura…
+          {t.billing.paymentReceived}
           <button type="button" className="ml-2 underline" onClick={() => refetch()}>
-            Atualizar
+            {t.billing.refresh}
           </button>
         </div>
       )}
 
       {isLoading ? (
-        <p className="text-muted-foreground">Carregando…</p>
+        <p className="text-muted-foreground">{t.billing.loading}</p>
       ) : (
         <>
           <section className="border border-border bg-card p-6">
-            <Eyebrow>plano atual</Eyebrow>
+            <Eyebrow>{t.billing.currentPlan}</Eyebrow>
             <p className="mt-2 font-display text-xl font-bold">
-              {sub?.plan?.name ?? (sub?.hasAccess ? "Trial Elite" : "Sem acesso")}
+              {sub?.plan?.name ?? (sub?.hasAccess ? t.billing.trialElite : t.billing.noAccess)}
             </p>
             <p className="mt-1 font-mono-tk text-xs text-muted-foreground">
-              Status: {sub?.status}
-              {sub?.daysLeftInTrial != null && ` · ${sub.daysLeftInTrial} dia(s) de trial`}
+              {t.billing.status}: {sub?.status}
+              {sub?.daysLeftInTrial != null && ` · ${t.billing.trialDays(sub.daysLeftInTrial)}`}
             </p>
             {sub?.hasAccess && sub.status === "active" && (
               <button
@@ -50,13 +52,13 @@ export default function Billing() {
                 onClick={() => portal.mutate()}
                 className="mt-4 border border-border px-4 py-2 font-mono-tk text-[11px] uppercase tracking-widest hover:border-primary"
               >
-                Gerenciar no Stripe
+                {t.billing.manageStripe}
               </button>
             )}
           </section>
 
           <section>
-            <Eyebrow>planos disponíveis</Eyebrow>
+            <Eyebrow>{t.billing.availablePlans}</Eyebrow>
             <div className="mt-4 grid gap-4 md:grid-cols-3">
               {(["starter", "pro", "elite"] as PlanId[]).map((id) => {
                 const plan = PLAN_CATALOG[id];
@@ -71,7 +73,7 @@ export default function Billing() {
                       onClick={() => checkout.mutate(id)}
                       className="mt-4 w-full border border-primary px-3 py-2 font-mono-tk text-[10px] uppercase tracking-widest hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
                     >
-                      {current ? "Plano atual" : "Assinar"}
+                      {current ? t.billing.currentPlanBtn : t.billing.subscribe}
                     </button>
                   </div>
                 );

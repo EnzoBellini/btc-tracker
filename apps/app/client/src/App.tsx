@@ -13,11 +13,17 @@ import { useSyncAllTrades } from "@/hooks/useTrades";
 import { useExchangesSummary } from "@/hooks/useExchanges";
 import { useSubscription } from "@/hooks/useSubscription";
 import TopTicker from "@/components/tk/TopTicker";
+import { MarketSelector } from "@/components/MarketSelector";
+import { useAppLocale } from "@/lib/locale-context";
+import { getT } from "@/lib/locale-runtime";
+import { getOnboardingWelcomeArchetype } from "@/pages/OnboardingWelcome";
 
 const LoginPage = lazy(() => import("@/pages/Login"));
 const VerifyEmailPage = lazy(() => import("@/pages/VerifyEmail"));
 const ChangePasswordPage = lazy(() => import("@/pages/ChangePassword"));
 const OnboardingQuizPage = lazy(() => import("@/pages/OnboardingQuiz"));
+const PendingEmailPage = lazy(() => import("@/pages/PendingEmail"));
+const OnboardingWelcomePage = lazy(() => import("@/pages/OnboardingWelcome"));
 
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Trades = lazy(() => import("@/pages/Trades"));
@@ -59,7 +65,7 @@ function AutoSync() {
       if (res.ok && data.totalImported > 0) {
         qc.invalidateQueries({ queryKey: ["/api/trades"] });
         qc.invalidateQueries({ queryKey: ["/api/stats"] });
-        toast.success(`${data.totalImported} trade(s) importado(s)`);
+        toast.success(getT().shell.tradesImported(data.totalImported));
       }
     } catch {
       /* ignore background sync errors */
@@ -86,17 +92,17 @@ function AutoSync() {
 }
 
 // ── Nav config ────────────────────────────────────────────────────────────────
-const navItems = [
-  { href: "/",             index: "01", label: "Dashboard",      mono: "DASHBOARD",  icon: LayoutDashboard },
-  { href: "/trades",       index: "02", label: "Trades",         mono: "TRADES",     icon: TrendingUp },
-  { href: "/transfers",    index: "03", label: "Transferências", mono: "TRANSFERS",  icon: ArrowLeftRight },
-  { href: "/btc-holdings", index: "04", label: "BTC Stack",      mono: "BTC.STACK",  icon: Bitcoin },
-  { href: "/reports",      index: "05", label: "Relatórios",     mono: "REPORTS",    icon: BarChart2 },
-  { href: "/rules",        index: "06", label: "Regras & Metas", mono: "RULES",      icon: BookOpen },
-  { href: "/api-settings", index: "07", label: "API Exchanges",  mono: "API.EXCH",   icon: Plug },
-  { href: "/billing",      index: "08", label: "Assinatura",     mono: "BILLING",    icon: CreditCard },
-  { href: "/conta",        index: "09", label: "Conta",          mono: "ACCOUNT",    icon: User },
-];
+const NAV_ICONS: Record<string, typeof LayoutDashboard> = {
+  "/": LayoutDashboard,
+  "/trades": TrendingUp,
+  "/transfers": ArrowLeftRight,
+  "/btc-holdings": Bitcoin,
+  "/reports": BarChart2,
+  "/rules": BookOpen,
+  "/api-settings": Plug,
+  "/billing": CreditCard,
+  "/conta": User,
+};
 
 // ── Page loading fallback ─────────────────────────────────────────────────────
 function PageSkeleton() {
@@ -132,13 +138,14 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   render() {
     if (this.state.hasError) {
       const needsReload = isChunkLoadError(this.state.error);
+      const t = getT().shell;
       return (
         <div className="flex h-full items-center justify-center p-8">
           <div className="relative max-w-md border border-loss/40 bg-card p-8 text-center">
             <p className="font-mono-tk text-[10px] uppercase tracking-[0.28em] text-loss">
               [ERR] · runtime exception
             </p>
-            <p className="mt-3 font-display text-2xl font-bold">Algo deu errado</p>
+            <p className="mt-3 font-display text-2xl font-bold">{t.errorTitle}</p>
             <p className="mt-3 break-all font-mono-tk text-xs text-muted-foreground">
               {(this.state.error as Error | undefined)?.message}
             </p>
@@ -146,7 +153,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
               className="mt-6 inline-flex items-center gap-2 border border-primary bg-primary px-4 py-2 font-mono-tk text-[11px] font-bold uppercase tracking-[0.22em] text-primary-foreground transition hover:bg-transparent hover:text-primary"
               onClick={() => needsReload ? window.location.reload() : this.setState({ hasError: false })}
             >
-              {needsReload ? "Recarregar" : "Tentar novamente"}
+              {needsReload ? t.errorReload : t.errorRetry}
             </button>
           </div>
         </div>
@@ -162,7 +169,9 @@ function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
   const { user } = useAuth();
   const logout = useLogout();
   const { data: summary } = useExchangesSummary();
+  const { t, market, setMarket } = useAppLocale();
   const connectedCount = summary?.filter((s) => s.isConnected).length ?? 0;
+  const navItems = t.shell.nav.map((item) => ({ ...item, icon: NAV_ICONS[item.href] }));
 
   const todayISO = new Date().toISOString().slice(0, 10);
 
@@ -183,7 +192,7 @@ function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
           <div className="min-w-0">
             <p className="text-base font-bold tracking-[0.28em] text-foreground">TRACKION</p>
             <p className="font-mono-tk text-[9px] uppercase tracking-[0.22em] text-muted-foreground">
-              trading journal · v2
+              {t.shell.brandSubtitle}
             </p>
           </div>
         </div>
@@ -191,14 +200,14 @@ function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
           <span className="num">{todayISO}</span>
           <span className="flex items-center gap-1.5">
             <span className={cn("h-1.5 w-1.5 rounded-full", connectedCount > 0 ? "bg-profit animate-pulse" : "bg-muted-foreground/40")} />
-            {connectedCount > 0 ? `${connectedCount} EXCH LIVE` : "EXCH OFF"}
+            {connectedCount > 0 ? t.shell.exchLive(connectedCount) : t.shell.exchOff}
           </span>
         </div>
       </div>
 
       {/* Eyebrow */}
       <p className="mt-5 px-5 pb-2 font-mono-tk text-[9px] uppercase tracking-[0.28em] text-muted-foreground">
-        ↳ navigation · 08 modules
+        {t.shell.navigationEyebrow}
       </p>
 
       {/* Nav */}
@@ -230,7 +239,10 @@ function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
       </nav>
 
       {/* Bottom — user info + logout */}
-      <div className="border-t border-border px-3 py-3">
+      <div className="border-t border-border px-3 py-3 space-y-3">
+        <div className="px-2">
+          <MarketSelector market={market} onChange={setMarket} compact />
+        </div>
         {user && (
           <>
             <div className="flex items-center gap-2 px-2 py-1">
@@ -240,12 +252,12 @@ function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs text-foreground" title={user.email}>{user.email}</p>
                 <p className="font-mono-tk text-[9px] uppercase tracking-[0.22em] text-muted-foreground">
-                  ● online
+                  {t.shell.online}
                 </p>
               </div>
               <button
                 onClick={() => logout.mutate()}
-                title="Sair"
+                title={t.shell.logout}
                 data-testid="button-logout"
                 className="flex h-7 w-7 shrink-0 items-center justify-center border border-transparent text-muted-foreground transition hover:border-loss/40 hover:bg-loss/10 hover:text-loss"
               >
@@ -263,6 +275,8 @@ function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
 function Layout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [location] = useHashLocation();
+  const { t, market, setMarket } = useAppLocale();
+  const navItems = t.shell.nav.map((item) => ({ ...item, icon: NAV_ICONS[item.href] }));
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -275,7 +289,7 @@ function Layout({ children }: { children: React.ReactNode }) {
       {/* Backdrop (mobile) */}
       <button
         type="button"
-        aria-label="Fechar menu"
+        aria-label={t.shell.closeMenu}
         className={cn(
           "fixed inset-0 z-40 bg-black/70 backdrop-blur-sm transition-opacity md:hidden",
           sidebarOpen ? "opacity-100" : "pointer-events-none opacity-0",
@@ -291,7 +305,7 @@ function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex h-12 items-center gap-3 px-4 md:hidden">
             <button
               type="button"
-              aria-label={sidebarOpen ? "Fechar menu" : "Abrir menu"}
+              aria-label={sidebarOpen ? t.shell.closeMenu : t.shell.openMenu}
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="flex h-8 w-8 items-center justify-center border border-border text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
             >
@@ -301,8 +315,11 @@ function Layout({ children }: { children: React.ReactNode }) {
               <img src="/logo-trackion.png" alt="" className="h-6 w-6 object-contain" decoding="async" />
               <span className="text-sm font-bold tracking-[0.22em] text-foreground">TRACKION</span>
             </div>
-            <div className="ml-auto flex items-center gap-2 font-mono-tk text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-              <span className="text-primary">/{currentNav.mono}</span>
+            <div className="ml-auto flex items-center gap-2">
+              <MarketSelector market={market} onChange={setMarket} compact />
+              <span className="font-mono-tk text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                <span className="text-primary">/{currentNav.mono}</span>
+              </span>
             </div>
           </div>
 
@@ -315,7 +332,7 @@ function Layout({ children }: { children: React.ReactNode }) {
             <span className="text-muted-foreground">{currentNav.index} / {String(navItems.length).padStart(2, "0")}</span>
             <span className="ml-auto flex items-center gap-2">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-profit" />
-              <span className="text-profit">OPERATIONAL</span>
+              <span className="text-profit">{t.shell.operational}</span>
             </span>
           </div>
 
@@ -338,7 +355,11 @@ function Layout({ children }: { children: React.ReactNode }) {
 // ── Auth guard ───────────────────────────────────────────────────────────────
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
-  const [location] = useHashLocation();
+  const [location, setLocation] = useHashLocation();
+  const { t, market, setMarket } = useAppLocale();
+  const [welcomeDismissed, setWelcomeDismissed] = useState(false);
+
+  const showWelcome = !welcomeDismissed && !!getOnboardingWelcomeArchetype();
 
   if (location.startsWith("/verify-email")) {
     return (
@@ -358,7 +379,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
               <p className="font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
                 [SYS] · boot
               </p>
-              <p className="font-display text-sm font-semibold text-foreground">Carregando sessão…</p>
+              <p className="font-display text-sm font-semibold text-foreground">{t.shell.loadingSession}</p>
             </div>
           </div>
         </div>
@@ -369,7 +390,12 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   if (!user) {
     return (
       <Suspense fallback={<div className="min-h-screen bg-background" />}>
-        <LoginPage />
+        <div className="relative min-h-screen">
+          <div className="absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
+            <MarketSelector market={market} onChange={setMarket} />
+          </div>
+          <LoginPage />
+        </div>
       </Suspense>
     );
   }
@@ -377,7 +403,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   if (!user.emailVerified) {
     return (
       <Suspense fallback={<div className="min-h-screen bg-background" />}>
-        <LoginPage />
+        <PendingEmailPage email={user.email} />
       </Suspense>
     );
   }
@@ -394,6 +420,19 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     return (
       <Suspense fallback={<div className="min-h-screen bg-background" />}>
         <OnboardingQuizPage />
+      </Suspense>
+    );
+  }
+
+  if (showWelcome) {
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-background" />}>
+        <OnboardingWelcomePage
+          onNavigate={(path) => {
+            setWelcomeDismissed(true);
+            setLocation(path);
+          }}
+        />
       </Suspense>
     );
   }

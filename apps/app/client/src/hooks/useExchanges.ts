@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { getT } from "@/lib/locale-runtime";
 
 export type ExchangeId = "mexc" | "binance" | "bitget";
 
@@ -49,9 +50,9 @@ export function useUpdateExchangeCredentials(exchange: ExchangeId) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [`/api/exchanges/${exchange}/credentials`] });
       qc.invalidateQueries({ queryKey: ["/api/exchanges"] });
-      toast.success("Credenciais salvas");
+      toast.success(getT().toasts.credentialsSaved);
     },
-    onError: () => toast.error("Erro ao salvar credenciais"),
+    onError: () => toast.error(getT().toasts.credentialsError),
   });
 }
 
@@ -63,10 +64,10 @@ export function useTestExchange(exchange: ExchangeId) {
     onSuccess: (data: { success?: boolean; message?: string }) => {
       qc.invalidateQueries({ queryKey: [`/api/exchanges/${exchange}/credentials`] });
       qc.invalidateQueries({ queryKey: ["/api/exchanges"] });
-      if (data?.success) toast.success(data.message ?? "Conexão OK");
-      else toast.error(data?.message ?? "Falha no teste");
+      if (data?.success) toast.success(data.message ?? getT().toasts.connectionOk);
+      else toast.error(data?.message ?? getT().toasts.connectionFailed);
     },
-    onError: () => toast.error("Erro ao testar conexão"),
+    onError: () => toast.error(getT().toasts.connectionTestError),
   });
 }
 
@@ -80,10 +81,10 @@ export function useSyncExchange(exchange: ExchangeId) {
       qc.invalidateQueries({ queryKey: ["/api/stats"] });
       qc.invalidateQueries({ queryKey: [`/api/exchanges/${exchange}/credentials`] });
       qc.invalidateQueries({ queryKey: ["/api/exchanges"] });
-      if (data?.success) toast.success(data.message ?? "Sincronizado");
-      else toast.error(data?.message ?? "Falha na sincronização");
+      if (data?.success) toast.success(data.message ?? getT().toasts.synced);
+      else toast.error(data?.message ?? getT().toasts.syncFailed);
     },
-    onError: () => toast.error("Erro ao sincronizar"),
+    onError: () => toast.error(getT().toasts.syncError),
   });
 }
 
@@ -113,12 +114,12 @@ export function useSyncAllTrades() {
         .map((r) => `${r.exchange}: ${r.imported}`)
         .join(", ");
       if (data.totalImported > 0) {
-        toast.success(parts ? `Importados: ${parts}` : `${data.totalImported} trade(s) importado(s)`);
+        toast.success(parts ? getT().toasts.tradesImportedParts(parts) : getT().toasts.tradesImported(data.totalImported));
       } else {
         const errs = data.results?.filter((r) => r.error).map((r) => r.error).join("; ");
-        toast(errs ? errs : "Nenhum trade novo para importar", { icon: "ℹ️" });
+        toast(errs ? errs : getT().toasts.noNewTrades, { icon: "ℹ️" });
       }
     },
-    onError: () => toast.error("Erro ao sincronizar exchanges"),
+    onError: () => toast.error(getT().toasts.exchangeSyncError),
   });
 }

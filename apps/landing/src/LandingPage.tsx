@@ -1,4 +1,4 @@
-import { ArrowDownRight, ArrowUpRight, Plus } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Menu, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AnimatedWealthChart } from "./components/AnimatedWealthChart";
 import { HeroWaveCanvas } from "./components/HeroWaveCanvas";
@@ -7,11 +7,16 @@ import { TrialSignupModal } from "./components/TrialSignupModal";
 import { useMarket } from "./hooks/useMarket";
 import { getLandingContent } from "./lib/landing-content";
 import { submitTrialSignup } from "./lib/trialSignup";
-import { formatPlanPrice, getPlansForMarket, TRIAL_DAYS } from "./lib/plans";
+import { formatPlanPrice, formatOriginalPlanPrice, getPlansForMarket, launchSavingsPct } from "./lib/plans";
 import { useMarketTicker } from "./hooks/useMarketTicker";
 
 export type LandingPageProps = {
   onStartClick?: () => void;
+  affiliateBanner?: {
+    name: string;
+    couponCode: string;
+    discountPct: number;
+  } | null;
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -87,7 +92,7 @@ function SectionLabel({ index, label, total = "04" }: { index: string; label: st
 
 // ============================== PAGE ==============================
 
-export default function LandingPage({ onStartClick }: LandingPageProps) {
+export default function LandingPage({ onStartClick, affiliateBanner }: LandingPageProps) {
   const { market, setMarket } = useMarket();
   const t = getLandingContent(market);
   const pricingPlans = getPlansForMarket(market);
@@ -100,7 +105,18 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
   const [trialDevVerifyUrl, setTrialDevVerifyUrl] = useState<string | null>(null);
   const [trialDevPassword, setTrialDevPassword] = useState<string | null>(null);
   const [trialEmailSent, setTrialEmailSent] = useState(true);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [footerEmailError, setFooterEmailError] = useState<string | null>(null);
   const goStart = onStartClick ?? (() => {});
+
+  const scrollToSection = (href: string) => {
+    const id = href.replace(/^#/, "");
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    setMobileNavOpen(false);
+  };
 
   const openTrialModal = (email?: string) => {
     if (email?.trim()) setFooterEmail(email.trim());
@@ -115,9 +131,11 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
   const handleFooterCta = () => {
     const trimmed = footerEmail.trim();
     if (!trimmed || !EMAIL_RE.test(trimmed)) {
+      setFooterEmailError(t.pricing.emailInvalid);
       openTrialModal();
       return;
     }
+    setFooterEmailError(null);
     openTrialModal(trimmed);
   };
 
@@ -157,10 +175,10 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
       {/* =================== NAV ===================== */}
       <nav className="fixed top-0 z-50 w-full border-b border-white/[0.06] bg-black/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-3.5">
-          <a href="#" className="group flex items-center gap-2.5">
+          <a href="/" className="group flex items-center gap-2.5">
             <img
               src="/logo-trackion.png"
-              alt=""
+              alt="Trackion"
               width={26}
               height={26}
               className="h-6 w-6 shrink-0 object-contain"
@@ -168,24 +186,33 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
             />
             <span className="text-base font-bold tracking-[0.32em] text-white">TRACKION</span>
             <span className="hidden font-mono text-[10px] uppercase tracking-[0.22em] text-gray-500 sm:inline">
-              ─ trading journal v2
+              {t.navBrandSubtitle}
             </span>
           </a>
           <div className="hidden items-center gap-8 md:flex">
             {t.nav.map((link) => (
-              <a
+              <button
                 key={link.href}
-                href={link.href}
+                type="button"
+                onClick={() => scrollToSection(link.href)}
                 className="group flex items-baseline gap-1.5 text-sm text-gray-400 transition hover:text-white"
               >
                 <span className="font-mono text-[10px] text-[#FF8C42]/70 group-hover:text-[#FF8C42]">
                   {link.index}
                 </span>
                 {link.label}
-              </a>
+              </button>
             ))}
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              aria-label={mobileNavOpen ? t.navMenuClose : t.navMenuOpen}
+              onClick={() => setMobileNavOpen((v) => !v)}
+              className="inline-flex h-9 w-9 items-center justify-center border border-white/15 text-gray-400 transition hover:text-white md:hidden"
+            >
+              {mobileNavOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            </button>
             <MarketSelector market={market} onChange={setMarket} />
             <button
               type="button"
@@ -204,15 +231,46 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
             </button>
           </div>
         </div>
+        {mobileNavOpen && (
+          <div className="border-t border-white/[0.06] bg-black/95 px-6 py-4 md:hidden">
+            <div className="flex flex-col gap-3">
+              {t.nav.map((link) => (
+                <button
+                  key={link.href}
+                  type="button"
+                  onClick={() => scrollToSection(link.href)}
+                  className="flex items-baseline gap-2 py-2 text-left text-sm text-gray-300"
+                >
+                  <span className="font-mono text-[10px] text-[#FF8C42]">{link.index}</span>
+                  {link.label}
+                </button>
+              ))}
+              <button type="button" onClick={goStart} className="py-2 text-left text-sm text-gray-400">
+                {t.navLogin}
+              </button>
+            </div>
+          </div>
+        )}
       </nav>
 
+      {affiliateBanner && (
+        <div className="fixed top-[57px] z-40 w-full border-b border-orange-500/30 bg-orange-500/10 px-4 py-2 text-center font-mono text-[11px] tracking-wide text-orange-100">
+          {t.affiliate.partner}{" "}
+          <span className="font-bold text-white">{affiliateBanner.name}</span>
+          {" · "}
+          {t.affiliate.coupon}{" "}
+          <span className="font-bold text-orange-300">{affiliateBanner.couponCode}</span>
+          {" "}({t.affiliate.discount(affiliateBanner.discountPct)})
+        </div>
+      )}
+
       {/* TICKER abaixo do nav */}
-      <div className="fixed top-[57px] z-40 w-full">
+      <div className={`fixed z-40 w-full ${affiliateBanner ? "top-[89px]" : "top-[57px]"}`}>
         <TickerBar />
       </div>
 
       {/* =================== HERO ===================== */}
-      <section className="relative z-[1] pt-[8.5rem] pb-24 sm:pt-[10rem] sm:pb-32">
+      <section className={`relative z-[1] pb-24 sm:pb-32 ${affiliateBanner ? "pt-[11rem] sm:pt-[12.5rem]" : "pt-[8.5rem] sm:pt-[10rem]"}`}>
         {/* Onda animada no rodapé do hero */}
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[60vh] opacity-50"
@@ -224,21 +282,6 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
         </div>
 
         <div className="relative z-10 mx-auto max-w-[1400px] px-6">
-          {/* Linha superior: metadata editorial */}
-          <div className="tk-rise tk-rise-1 mb-12 flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.08] pb-4 font-mono text-[11px] uppercase tracking-[0.22em] text-gray-500">
-            <div className="flex items-center gap-6">
-              <span>
-                <span className="text-[#FF8C42]">●</span> {t.heroMeta.beta}
-              </span>
-              <span className="hidden sm:inline">{t.heroMeta.trial}</span>
-              <span className="hidden lg:inline">{t.heroMeta.noCard}</span>
-            </div>
-            <div className="flex items-center gap-6">
-              <span className="hidden sm:inline num">VOL.01 — ISSUE {todayISO}</span>
-              <span className="num text-white">SP-500 +0.42% · NDX +1.18%</span>
-            </div>
-          </div>
-
           {/* Grid hero assimétrico */}
           <div className="grid grid-cols-12 gap-6 lg:gap-10">
             {/* Coluna esquerda: tipografia massiva */}
@@ -268,7 +311,7 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                 </button>
                 <button
                   type="button"
-                  onClick={goStart}
+                  onClick={() => scrollToSection("#recursos")}
                   className="inline-flex items-center gap-2 border border-white/20 bg-transparent px-6 py-3.5 text-sm font-bold uppercase tracking-[0.22em] text-white transition hover:border-white/50 hover:bg-white/[0.04]"
                 >
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-tk-green" />
@@ -292,16 +335,6 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
 
             {/* Coluna direita: PC + mobile soltos com drop-shadow (estilo V1) */}
             <aside className="tk-rise tk-rise-4 relative col-span-12 min-w-0 self-center lg:col-span-6">
-              <div className="absolute -top-7 left-0 z-30 hidden items-center gap-3 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500 lg:flex">
-                <span className="text-[#FF8C42]">↘</span>
-                <span>{t.heroFig}</span>
-                <span className="h-px w-16 bg-white/10" />
-                <span className="flex items-center gap-1.5 text-tk-green">
-                  <span className="h-1 w-1 animate-pulse rounded-full bg-tk-green" />
-                  {t.heroLive}
-                </span>
-              </div>
-
               {/* wrapper: cabe no aside até xl; vaza levemente em xl+ */}
               <div className="relative w-full xl:w-[108%] 2xl:w-[120%]">
                 <img
@@ -341,10 +374,6 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
               <p className="mt-8 max-w-md text-base leading-relaxed text-gray-400">
                 {t.features.subtitle}
               </p>
-              <div className="mt-10 flex items-center gap-4 border-t border-white/[0.06] pt-6 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
-                <span className="text-[#FF8C42]">↳</span>
-                <span>{t.features.footer}</span>
-              </div>
             </div>
 
             <div className="col-span-12 lg:col-span-7">
@@ -352,7 +381,7 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                 {t.features.items.map(({ icon: Icon, title, description, tag }, i) => (
                   <li
                     key={title}
-                    className="group relative grid grid-cols-[auto_1fr_auto] items-start gap-6 py-8 transition-colors hover:bg-white/[0.02] sm:gap-10 sm:py-10"
+                    className="group relative grid grid-cols-[auto_1fr] items-start gap-6 py-8 transition-colors hover:bg-white/[0.02] sm:gap-10 sm:py-10"
                   >
                     <div className="space-y-3">
                       <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-[#FF8C42]/80">
@@ -375,10 +404,6 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                         {description}
                       </p>
                     </div>
-                    <ArrowUpRight
-                      className="mt-2 h-5 w-5 text-gray-700 transition-all duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-[#FF8C42]"
-                      aria-hidden
-                    />
                   </li>
                 ))}
               </ol>
@@ -419,16 +444,15 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
 
           {/* EXCHANGES TABLE */}
           <div className="mt-20 border-y border-white/[0.08]">
-            <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-6 border-b border-white/[0.06] px-2 py-3 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
+            <div className="grid grid-cols-[1fr_auto_auto] items-center gap-6 border-b border-white/[0.06] px-2 py-3 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
               <span>{t.integrations.tableHeaders.exchange}</span>
               <span className="hidden sm:inline">{t.integrations.tableHeaders.type}</span>
               <span>{t.integrations.tableHeaders.status}</span>
-              <span>{t.integrations.tableHeaders.io}</span>
             </div>
             {t.integrations.exchanges.map((ex, i) => (
               <div
                 key={ex.name}
-                className="group grid grid-cols-[1fr_auto_auto_auto] items-center gap-6 border-b border-white/[0.04] px-2 py-5 transition-colors last:border-0 hover:bg-white/[0.02]"
+                className="group grid grid-cols-[1fr_auto_auto] items-center gap-6 border-b border-white/[0.04] px-2 py-5 transition-colors last:border-0 hover:bg-white/[0.02]"
               >
                 <div className="flex items-baseline gap-4">
                   <span className="font-mono text-[10px] text-gray-600">[0{i + 1}]</span>
@@ -453,14 +477,6 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                   />
                   {ex.status === "live" ? "LIVE" : "SOON"}
                 </span>
-                <ArrowUpRight
-                  className={`h-4 w-4 transition-all ${
-                    ex.status === "live"
-                      ? "text-gray-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#FF8C42]"
-                      : "text-gray-800"
-                  }`}
-                  aria-hidden
-                />
               </div>
             ))}
           </div>
@@ -624,10 +640,79 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
         </div>
       </section>
 
-      {/* =================== CTA / TERMINAL FOOTER ===================== */}
+      {/* =================== LAUNCH PROMO ===================== */}
+      <section id="lancamento" className="relative z-[1] overflow-hidden border-y border-[#FF8C42]/20 bg-[#FF8C42]/[0.06] py-24 sm:py-28">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,140,66,0.12),transparent_55%)]" aria-hidden />
+        <div className="relative mx-auto max-w-[1100px] px-6">
+          <SectionLabel index="04" label={t.launchPromo.sectionLabel} total="05" />
+
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <span className="inline-flex border border-[#FF8C42] bg-[#FF8C42] px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.28em] text-black">
+              {t.launchPromo.badge}
+            </span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-gray-500">
+              {t.launchPromo.priceRowLabel}
+            </span>
+          </div>
+
+          <h2 className="mt-6 max-w-3xl text-balance font-sans text-4xl font-bold leading-[0.95] tracking-tight text-white sm:text-5xl lg:text-6xl">
+            {t.launchPromo.title}
+          </h2>
+          <p className="mt-5 max-w-2xl text-base leading-relaxed text-gray-300 sm:text-lg">
+            {t.launchPromo.subtitle}
+          </p>
+
+          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {pricingPlans.map((plan) => {
+              const savings = launchSavingsPct(market, plan.id);
+              const isPro = plan.id === "pro";
+              return (
+                <div
+                  key={plan.id}
+                  className={`relative border bg-black/70 p-5 backdrop-blur-sm ${
+                    isPro ? "border-[#FF8C42]" : "border-white/15"
+                  }`}
+                >
+                  <CornerMarks orange={isPro} />
+                  <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">{plan.name}</p>
+                  <div className="mt-3 flex flex-wrap items-end gap-2">
+                    <p className="font-sans text-3xl font-bold text-white">{formatPlanPrice(plan)}</p>
+                    <p className="pb-1 text-xs text-gray-500">{t.pricing.perMonth}</p>
+                  </div>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {t.pricing.originalPriceLabel}{" "}
+                    <span className="text-gray-400 line-through">{formatOriginalPlanPrice(market, plan.id)}</span>
+                  </p>
+                  {savings > 0 && (
+                    <span className="mt-3 inline-block border border-[#FF8C42]/40 bg-[#FF8C42]/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest text-[#FF8C42]">
+                      {t.launchPromo.savingsBadge(savings)}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
+            <button
+              type="button"
+              onClick={() => openTrialModal()}
+              className="group inline-flex items-center justify-center gap-2 border border-[#FF8C42] bg-[#FF8C42] px-7 py-4 text-xs font-bold uppercase tracking-[0.28em] text-black transition hover:bg-transparent hover:text-[#FF8C42]"
+            >
+              {t.launchPromo.cta}
+              <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
+            </button>
+            <p className="max-w-md font-mono text-[10px] uppercase tracking-[0.18em] text-gray-500">
+              {t.launchPromo.finePrint}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* =================== PRICING / CTA ===================== */}
       <section id="precos" className="relative z-[1] overflow-hidden bg-black py-32">
         <div className="relative mx-auto max-w-[1100px] px-6">
-          <SectionLabel index="04" label={t.pricing.sectionLabel} total="04" />
+          <SectionLabel index="05" label={t.pricing.sectionLabel} total="05" />
 
           <h2 className="mt-10 text-balance font-sans text-5xl font-bold leading-[0.92] tracking-tight text-white sm:text-6xl lg:text-[4.5rem]">
             {market === "us" ? (
@@ -643,15 +728,9 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
             )}
           </h2>
           <p className="mt-6 max-w-2xl text-base leading-relaxed text-gray-400 sm:text-lg">
-            {market === "us" ? (
-              t.pricing.subtitle
-            ) : (
-              <>
-                Teste <strong className="text-white">todos os recursos Elite por {TRIAL_DAYS} dias</strong>{" "}
-                grátis. Depois do trial, escolha o plano que combina com seu volume e número de contas.
-              </>
-            )}
+            {t.pricing.subtitle}
           </p>
+          <p className="mt-3 max-w-2xl text-sm text-gray-500">{t.pricing.afterTrialNote}</p>
 
           <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
             {pricingPlans.map((plan) => {
@@ -672,8 +751,19 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                   <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
                     {plan.name}
                   </p>
-                  <p className="mt-2 font-sans text-3xl font-bold text-white">{formatPlanPrice(plan)}</p>
-                  <p className="text-xs text-gray-500">{t.pricing.perMonth}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="inline-block border border-[#FF8C42]/50 bg-[#FF8C42]/10 px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase tracking-widest text-[#FF8C42]">
+                      {t.pricing.launchBadge}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-end gap-2">
+                    <p className="font-sans text-3xl font-bold text-white">{formatPlanPrice(plan)}</p>
+                    <p className="pb-1 text-xs text-gray-500">{t.pricing.perMonth}</p>
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    {t.pricing.originalPriceLabel}{" "}
+                    <span className="line-through">{formatOriginalPlanPrice(market, plan.id)}</span>
+                  </p>
                   <p className="mt-3 text-sm text-gray-400">{plan.tagline}</p>
                   <ul className="mt-5 space-y-2 text-sm text-gray-300">
                     {plan.highlights.map((h) => (
@@ -694,6 +784,9 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                   >
                     {t.pricing.trialCta}
                   </button>
+                  <p className="mt-2 text-center text-[10px] text-gray-600">
+                    {t.pricing.planTrialNote(plan.name, formatPlanPrice(plan))}
+                  </p>
                 </div>
               );
             })}
@@ -714,10 +807,14 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                 <input
                   type="email"
                   value={footerEmail}
-                  onChange={(e) => setFooterEmail(e.target.value)}
+                  onChange={(e) => {
+                    setFooterEmail(e.target.value);
+                    if (footerEmailError) setFooterEmailError(null);
+                  }}
                   onKeyDown={(e) => e.key === "Enter" && handleFooterCta()}
                   placeholder={t.pricing.emailPlaceholder}
                   autoComplete="email"
+                  aria-invalid={footerEmailError ? true : undefined}
                   className="min-w-0 flex-1 bg-transparent text-white placeholder:text-gray-600 outline-none"
                 />
                 <span className={footerEmail ? "tk-cursor opacity-0" : "tk-cursor"} aria-hidden />
@@ -731,8 +828,69 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                 <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
               </button>
             </div>
+            {footerEmailError && (
+              <p className="border-t border-white/10 px-4 py-2 text-xs text-red-400" role="alert">
+                {footerEmailError}
+              </p>
+            )}
             <div className="border-t border-white/10 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
               <span className="text-[#FF8C42]">›</span> {t.pricing.terminalFooter}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =================== SEO / FAQ / GUIAS ===================== */}
+      <section id="guia-crypto" className="relative z-[1] border-t border-white/[0.06] bg-black py-24">
+        <div className="relative mx-auto max-w-[1100px] px-6">
+          <SectionLabel index="06" label={t.seo.sectionLabel} total="06" />
+          <h2 className="mt-8 text-balance font-sans text-4xl font-bold leading-[0.95] tracking-tight text-white sm:text-5xl">
+            <span className="block text-white">{t.seo.title[0]}</span>
+            <span className="text-[#FF8C42]">{t.seo.title[1]}</span>
+          </h2>
+          <p className="mt-5 max-w-3xl text-base leading-relaxed text-gray-400">{t.seo.subtitle}</p>
+
+          <div className="mt-8 flex flex-wrap items-center gap-4">
+            <a
+              href="/blog"
+              className="inline-flex items-center gap-2 border border-white/15 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.2em] text-gray-300 transition hover:border-[#FF8C42]/50 hover:text-white"
+            >
+              {t.seo.blogCta}
+            </a>
+            <a
+              href="/blog"
+              className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#FF8C42] transition hover:text-white"
+            >
+              {t.seo.blogLink}
+            </a>
+          </div>
+
+          <div className="mt-14 grid grid-cols-1 gap-10 lg:grid-cols-2">
+            <div>
+              <h3 className="font-mono text-[11px] uppercase tracking-[0.28em] text-gray-500">{t.seo.faqTitle}</h3>
+              <dl className="mt-6 space-y-6">
+                {t.seo.faq.map((item, i) => (
+                  <div key={i} className="border-l border-[#FF8C42]/30 pl-4">
+                    <dt className="text-sm font-semibold text-white">{item.q}</dt>
+                    <dd className="mt-1.5 text-sm leading-relaxed text-gray-400">{item.a}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+            <div>
+              <h3 className="font-mono text-[11px] uppercase tracking-[0.28em] text-gray-500">{t.seo.guidesTitle}</h3>
+              <ul className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {t.seo.guides.map((guide) => (
+                  <li key={guide.path}>
+                    <a
+                      href={guide.path}
+                      className="block border border-white/10 px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.16em] text-gray-400 transition hover:border-[#FF8C42]/40 hover:text-white"
+                    >
+                      {guide.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>
@@ -746,7 +904,7 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
               <div className="flex items-center gap-3">
                 <img
                   src="/logo-trackion.png"
-                  alt=""
+                  alt="Trackion"
                   width={28}
                   height={28}
                   className="h-7 w-7 object-contain"
@@ -767,10 +925,10 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                 {t.footer.product}
               </p>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#recursos" className="transition hover:text-white">{t.footer.links.product[0]}</a></li>
-                <li><a href="#integracoes" className="transition hover:text-white">{t.footer.links.product[1]}</a></li>
-                <li><a href="#metodo" className="transition hover:text-white">{t.footer.links.product[2]}</a></li>
-                <li><a href="#precos" className="transition hover:text-white">{t.footer.links.product[3]}</a></li>
+                <li><button type="button" onClick={() => scrollToSection("#recursos")} className="transition hover:text-white">{t.footer.links.product[0]}</button></li>
+                <li><button type="button" onClick={() => scrollToSection("#integracoes")} className="transition hover:text-white">{t.footer.links.product[1]}</button></li>
+                <li><button type="button" onClick={() => scrollToSection("#metodo")} className="transition hover:text-white">{t.footer.links.product[2]}</button></li>
+                <li><button type="button" onClick={() => scrollToSection("#precos")} className="transition hover:text-white">{t.footer.links.product[3]}</button></li>
               </ul>
             </div>
 
@@ -787,7 +945,8 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                     {t.footer.trial}
                   </button>
                 </li>
-                <li><a href="#" className="transition hover:text-white">{t.footer.status}</a></li>
+                <li><a href={t.footerPaths.status} className="transition hover:text-white">{t.footer.status}</a></li>
+                <li><a href="/blog" className="transition hover:text-white">{t.seo.blogCta}</a></li>
               </ul>
             </div>
 
@@ -815,9 +974,9 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
           <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-white/[0.06] pt-6 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-600 sm:flex-row sm:items-center">
             <p>© {year} TRACKION · {t.footer.copyright}</p>
             <div className="flex items-center gap-5">
-              <a href="#" className="transition hover:text-white">{t.footer.legal[0]}</a>
-              <a href="#" className="transition hover:text-white">{t.footer.legal[1]}</a>
-              <a href="#" className="transition hover:text-white">{t.footer.legal[2]}</a>
+              <a href={t.footerPaths.privacy} className="transition hover:text-white">{t.footer.legal[0]}</a>
+              <a href={t.footerPaths.terms} className="transition hover:text-white">{t.footer.legal[1]}</a>
+              <a href={t.footerPaths.contact} className="transition hover:text-white">{t.footer.legal[2]}</a>
             </div>
           </div>
         </div>

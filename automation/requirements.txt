@@ -1,0 +1,17 @@
+# Banco de dados PostgreSQL
+psycopg2-binary==2.9.9
+
+# Envio de e-mails transacionais
+sendgrid==6.11.0
+
+# Integração com a API do Twitter / X (v2)
+tweepy==4.14.0
+
+# Integração com Slack
+slack_sdk==3.27.1
+
+# Agendamento de tarefas
+schedule==1.2.1
+
+# Carregamento de variáveis de ambiente a partir do arquivo .env
+python-dotenv==1.0.1

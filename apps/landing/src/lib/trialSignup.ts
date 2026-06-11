@@ -1,14 +1,13 @@
 import type { Market } from "./locale";
+import { getAffiliateSignupPayload } from "./affiliate";
 
 /** Em dev vazio = proxy Vite → :5000. Em prod sem env, fallback para o app público. */
-function resolveApiBase(): string {
+export function resolveApiBase(): string {
   const configured = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "");
   if (configured) return configured;
   if (import.meta.env.DEV) return "";
   return "https://app.trackion.app";
 }
-
-const API_BASE = resolveApiBase();
 
 export type TrialSignupResult = {
   ok: boolean;
@@ -36,11 +35,12 @@ export async function submitTrialSignup(
   market: Market,
 ): Promise<TrialSignupResult> {
   const copy = FALLBACK[market];
-  const url = `${API_BASE}/api/trial-signup`;
+  const url = `${resolveApiBase()}/api/trial-signup`;
+  const affiliate = getAffiliateSignupPayload();
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, email, market }),
+    body: JSON.stringify({ name, email, market, ...affiliate }),
   });
 
   const data = (await res.json().catch(() => ({}))) as TrialSignupResult & { error?: string };

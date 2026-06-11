@@ -16,6 +16,7 @@ import { fmtUsdt, pnlColor } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { PageHeader, TerminalButton, StatPill } from "@/components/tk";
 import { Button } from "@/components/ui/button";
+import { useAppLocale } from "@/lib/locale-context";
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 const tradeFormSchema = insertTradeSchema.extend({
@@ -198,6 +199,7 @@ function TradeForm({ onClose, initial }: { onClose: () => void; initial?: Trade 
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function Trades() {
+  const { t } = useAppLocale();
   const [open, setOpen] = useState(false);
   const [editTrade, setEditTrade] = useState<Trade | null>(null);
 
@@ -229,10 +231,10 @@ export default function Trades() {
         {/* HEADER */}
         <PageHeader
           index="02"
-          total="08"
-          eyebrow="Trades · execution log"
-          title="Registro de operações."
-          subtitle="Tudo que foi executado — manual ou via sync da exchange."
+          total="09"
+          eyebrow={t.trades.eyebrow}
+          title={t.trades.title}
+          subtitle={t.trades.subtitle}
           actions={
             <>
               <TerminalButton
@@ -242,7 +244,7 @@ export default function Trades() {
                 disabled={syncAll.isPending}
                 className={cn(syncAll.isPending && "[&_svg]:animate-spin")}
               >
-                {syncAll.isPending ? "syncing…" : "sync exchanges"}
+                {syncAll.isPending ? t.trades.syncing : t.trades.sync}
               </TerminalButton>
               <Dialog open={open || !!editTrade} onOpenChange={v => { setOpen(v); if (!v) setEditTrade(null); }}>
                 <DialogTrigger asChild>
@@ -251,13 +253,13 @@ export default function Trades() {
                     data-testid="button-add-trade"
                     className="inline-flex items-center gap-2 border border-primary bg-primary px-4 py-2.5 font-mono-tk text-[11px] font-bold uppercase tracking-[0.22em] text-primary-foreground transition hover:bg-transparent hover:text-primary"
                   >
-                    <Plus className="h-3.5 w-3.5" /> novo trade
+                    <Plus className="h-3.5 w-3.5" /> {t.trades.newTrade}
                   </button>
                 </DialogTrigger>
                 <DialogContent className="max-w-lg">
                   <DialogHeader>
                     <DialogTitle className="font-display text-xl">
-                      {editTrade ? "Editar Trade" : "Registrar Trade"}
+                      {editTrade ? t.trades.editTrade : t.trades.newTrade}
                     </DialogTitle>
                   </DialogHeader>
                   <TradeForm onClose={() => { setOpen(false); setEditTrade(null); }} initial={editTrade ?? undefined} />
@@ -275,7 +277,7 @@ export default function Trades() {
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Buscar par ou notas..."
+              placeholder={t.trades.searchPlaceholder}
               className="h-8 w-48 pl-8 font-mono-tk text-xs"
               value={tradesFilter.search}
               onChange={e => setTradesFilter({ search: e.target.value })}
@@ -284,10 +286,10 @@ export default function Trades() {
           </div>
           <Select value={tradesFilter.status} onValueChange={v => setTradesFilter({ status: v })}>
             <SelectTrigger className="h-8 w-32 font-mono-tk text-xs uppercase tracking-[0.18em]" data-testid="select-filter-status">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder={t.trades.statusFilter} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="all">{t.trades.all}</SelectItem>
               <SelectItem value="OPEN">Aberto</SelectItem>
               <SelectItem value="WIN">Win</SelectItem>
               <SelectItem value="LOSS">Loss</SelectItem>
@@ -296,10 +298,10 @@ export default function Trades() {
           </Select>
           <Select value={tradesFilter.direction} onValueChange={v => setTradesFilter({ direction: v })}>
             <SelectTrigger className="h-8 w-32 font-mono-tk text-xs uppercase tracking-[0.18em]" data-testid="select-filter-direction">
-              <SelectValue placeholder="Direção" />
+              <SelectValue placeholder={t.trades.directionFilter} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="all">{t.trades.all}</SelectItem>
               <SelectItem value="LONG">LONG</SelectItem>
               <SelectItem value="SHORT">SHORT</SelectItem>
             </SelectContent>
@@ -363,7 +365,7 @@ export default function Trades() {
                     <td colSpan={12} className="px-4 py-16 text-center">
                       <p className="font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground/50">[empty]</p>
                       <p className="mt-2 text-sm text-muted-foreground">
-                        {trades.length === 0 ? "Nenhum trade registrado ainda" : "Nenhum trade com os filtros atuais"}
+                        {trades.length === 0 ? t.trades.noTrades : t.common.noData}
                       </p>
                     </td>
                   </tr>

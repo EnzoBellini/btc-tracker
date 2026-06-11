@@ -35,6 +35,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.use((req, res, next) => {
     if (!req.path.startsWith("/api")) return next();
     if (req.path.startsWith("/api/admin")) return next();
+    if (req.path.startsWith("/api/affiliates/")) return next();
     const key = `${req.method}:${req.path}`;
     if (publicAuthPaths.has(key)) return next();
     return requireAuth(req, res, next);

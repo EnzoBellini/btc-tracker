@@ -14,6 +14,8 @@ import { getResolvedSubscription } from "./billing/subscriptionService";
 import { createPgPool, getPgConnectionString } from "./lib/pg";
 import { createRateLimiter } from "./lib/rateLimit";
 import { activateTrialAfterEmailVerification, startTrialForUser } from "./billing/routes";
+import { trackFpSignup } from "./affiliates/firstPromoter";
+import { mergeTraderProfile, parseAffiliateBody } from "./lib/affiliateAttribution";
 
 const authEnterLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 8, keyPrefix: "auth:enter" });
 const authLoginLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 15, keyPrefix: "auth:login" });
@@ -133,6 +135,36 @@ function trialSignupJson(verification: VerificationResult, locale: EmailLocale, 
   };
 }
 
+async function applyAffiliateAttribution(
+  userId: number,
+  body: unknown,
+  profileBase?: Record<string, unknown>,
+): Promise<void> {
+  const attr = parseAffiliateBody(body);
+  if (!attr.refId && !attr.fpromTid) return;
+
+  const user = await storage.getUserById(userId);
+  if (!user) return;
+
+  const traderProfile = mergeTraderProfile(user.traderProfile, {
+    ...profileBase,
+    affiliateRef: attr.refId,
+    couponCode: attr.couponCode,
+  });
+
+  await storage.updateUser(userId, {
+    affiliateRef: attr.refId ?? user.affiliateRef ?? undefined,
+    traderProfile,
+  });
+
+  void trackFpSignup({
+    email: user.email,
+    uid: String(userId),
+    ref_id: attr.refId,
+    tid: attr.fpromTid,
+  });
+}
+
 export function setupSession(app: Express) {
   const PgSession = connectPgSimple(session);
   const secret =
@@ -206,6 +238,7 @@ export function registerAuthRoutes(app: Express) {
           await storage.deleteUser(user.id);
           throw emailErr;
         }
+        await applyAffiliateAttribution(user.id, req.body, { leadName: name, locale });
         return res.status(201).json(trialSignupJson(verification, locale, "sentNew"));
       }
 
@@ -218,6 +251,7 @@ export function registerAuthRoutes(app: Express) {
           traderProfile: leadProfile,
         });
         const verification = await issueVerification(user.id, user.email, plainPassword, locale);
+        await applyAffiliateAttribution(user.id, req.body, { leadName: name, locale });
         return res.json(trialSignupJson(verification, locale, "sentResend"));
       }
 
@@ -270,6 +304,7 @@ export function registerAuthRoutes(app: Express) {
           onboardingStep: 0,
         });
         await issueVerification(user.id, user.email, plainPassword);
+        await applyAffiliateAttribution(user.id, req.body);
         return res.status(201).json({
           status: "created",
           message:

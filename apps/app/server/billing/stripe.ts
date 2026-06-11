@@ -96,14 +96,31 @@ export function registerStripeRoutes(app: Express) {
       }
 
       const appUrl = process.env.APP_URL ?? "http://localhost:5000";
-      const session = await stripe.checkout.sessions.create({
+      const refId = typeof req.body?.refId === "string" ? req.body.refId : undefined;
+      const couponCode = typeof req.body?.couponCode === "string" ? req.body.couponCode : undefined;
+      const { resolveAffiliateCoupon } = await import("../affiliates/service");
+      const affiliate = await resolveAffiliateCoupon(refId, couponCode);
+
+      const sessionParams: import("stripe").Stripe.Checkout.SessionCreateParams = {
         mode: "subscription",
         customer: customerId,
         line_items: [{ price: priceId, quantity: 1 }],
         success_url: `${appUrl}/#/billing?success=1`,
         cancel_url: `${appUrl}/#/billing?canceled=1`,
-        metadata: { userId: String(userId), planId, currency },
-      });
+        metadata: {
+          userId: String(userId),
+          planId,
+          currency,
+          ...(affiliate.refId ? { affiliateRef: affiliate.refId } : {}),
+        },
+        allow_promotion_codes: true,
+      };
+
+      if (affiliate.stripePromoId) {
+        sessionParams.discounts = [{ promotion_code: affiliate.stripePromoId }];
+      }
+
+      const session = await stripe.checkout.sessions.create(sessionParams);
 
       res.json({ url: session.url });
     } catch (e) {

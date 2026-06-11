@@ -16,6 +16,7 @@
     "db:seed-plans": "tsx script/seed-plans.ts",
     "db:migrate-billing": "tsx script/run-sql.ts script/migrate-billing.sql",
     "test:stripe": "tsx script/stripe-integration-test.ts",
+    "stripe:provision-launch-prices": "tsx script/stripe-provision-launch-prices.ts",
     "test:billing-flow": "tsx script/e2e-billing-flow.ts",
     "test:email": "tsx script/test-email.ts",
     "delete-user": "tsx script/delete-user.ts"
