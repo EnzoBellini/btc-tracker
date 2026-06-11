@@ -30,6 +30,7 @@ declare module "express-session" {
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const TERMS_VERSION = "2026-06-11";
 
 function normalizeEmail(email: string): string {
   return email.toLowerCase().trim();
@@ -108,6 +109,8 @@ const TRIAL_SIGNUP_COPY = {
       "Este e-mail já possui conta. Use Entrar no app com sua senha ou recupere o acesso por e-mail.",
     emailFailed:
       "Conta criada, mas não foi possível enviar o e-mail. Verifique spam ou tente reenviar pelo app (Entrar).",
+    termsRequired:
+      "Aceite os Termos de Uso e a Política de Privacidade para criar sua conta.",
   },
   en: {
     sentNew:
@@ -120,6 +123,8 @@ const TRIAL_SIGNUP_COPY = {
       "This email already has an account. Log in to the app with your password or recover access via email.",
     emailFailed:
       "Account created, but we couldn't send the email. Check spam or try resending from the app (Log in).",
+    termsRequired:
+      "You must accept the Terms of Use and Privacy Policy to create your account.",
   },
 } as const;
 
@@ -207,17 +212,30 @@ export function registerAuthRoutes(app: Express) {
     try {
       const name = typeof req.body.name === "string" ? req.body.name.trim() : "";
       const email = typeof req.body.email === "string" ? req.body.email : "";
+      const locale = parseEmailLocale(req.body);
+      const copy = TRIAL_SIGNUP_COPY[locale];
+      const acceptTerms =
+        req.body.acceptTerms === true || req.body.termsAccepted === true;
       if (!name || name.length < 2) {
         return res.status(400).json({ error: "Informe seu nome" });
       }
       if (!email || !EMAIL_RE.test(normalizeEmail(email))) {
         return res.status(400).json({ error: "E-mail inválido" });
       }
+      if (!acceptTerms) {
+        return res.status(400).json({ error: copy.termsRequired });
+      }
 
       const normalized = normalizeEmail(email);
-      const locale = parseEmailLocale(req.body);
       let user = await storage.getUserByEmail(normalized);
-      const leadProfile = JSON.stringify({ leadName: name, locale });
+      const leadProfile = JSON.stringify({
+        leadName: name,
+        locale,
+        termsAcceptedAt: new Date().toISOString(),
+        termsVersion: TERMS_VERSION,
+        privacyAcceptedAt: new Date().toISOString(),
+        privacyVersion: TERMS_VERSION,
+      });
 
       if (!user) {
         const plainPassword = generateSecurePassword();
@@ -238,7 +256,14 @@ export function registerAuthRoutes(app: Express) {
           await storage.deleteUser(user.id);
           throw emailErr;
         }
-        await applyAffiliateAttribution(user.id, req.body, { leadName: name, locale });
+        await applyAffiliateAttribution(user.id, req.body, {
+          leadName: name,
+          locale,
+          termsAcceptedAt: new Date().toISOString(),
+          termsVersion: TERMS_VERSION,
+          privacyAcceptedAt: new Date().toISOString(),
+          privacyVersion: TERMS_VERSION,
+        });
         return res.status(201).json(trialSignupJson(verification, locale, "sentNew"));
       }
 
@@ -251,7 +276,14 @@ export function registerAuthRoutes(app: Express) {
           traderProfile: leadProfile,
         });
         const verification = await issueVerification(user.id, user.email, plainPassword, locale);
-        await applyAffiliateAttribution(user.id, req.body, { leadName: name, locale });
+        await applyAffiliateAttribution(user.id, req.body, {
+          leadName: name,
+          locale,
+          termsAcceptedAt: new Date().toISOString(),
+          termsVersion: TERMS_VERSION,
+          privacyAcceptedAt: new Date().toISOString(),
+          privacyVersion: TERMS_VERSION,
+        });
         return res.json(trialSignupJson(verification, locale, "sentResend"));
       }
 

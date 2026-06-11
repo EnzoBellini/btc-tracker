@@ -1,13 +1,15 @@
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { X } from "lucide-react";
 import type { LandingContent } from "../lib/landing-content";
+import type { StaticPageKind } from "../lib/static-page-content";
 
 export type TrialSignupModalProps = {
   open: boolean;
   initialEmail?: string;
   copy: LandingContent["trialModal"];
   onClose: () => void;
-  onSubmit: (data: { name: string; email: string }) => Promise<void>;
+  onSubmit: (data: { name: string; email: string; acceptTerms: boolean }) => Promise<void>;
+  onOpenLegal?: (kind: StaticPageKind) => void;
   submitting?: boolean;
   error?: string | null;
   success?: boolean;
@@ -22,6 +24,7 @@ export function TrialSignupModal({
   copy,
   onClose,
   onSubmit,
+  onOpenLegal,
   submitting = false,
   error = null,
   success = false,
@@ -30,10 +33,15 @@ export function TrialSignupModal({
   emailSent = true,
 }: TrialSignupModalProps) {
   const titleId = useId();
+  const termsId = useId();
   const nameRef = useRef<HTMLInputElement>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsError, setTermsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
+    setTermsAccepted(false);
+    setTermsError(null);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const t = window.setTimeout(() => nameRef.current?.focus(), 50);
@@ -114,10 +122,15 @@ export function TrialSignupModal({
               className="mt-6 space-y-4"
               onSubmit={async (e) => {
                 e.preventDefault();
+                if (!termsAccepted) {
+                  setTermsError(copy.termsConsentError);
+                  return;
+                }
+                setTermsError(null);
                 const fd = new FormData(e.currentTarget);
                 const name = String(fd.get("name") ?? "").trim();
                 const email = String(fd.get("email") ?? "").trim();
-                await onSubmit({ name, email });
+                await onSubmit({ name, email, acceptTerms: true });
               }}
             >
               <div className="space-y-1.5">
@@ -151,6 +164,45 @@ export function TrialSignupModal({
                   placeholder={copy.emailPlaceholder}
                   className="w-full border border-white/15 bg-black px-4 py-3 text-sm text-white placeholder:text-gray-600 outline-none transition focus:border-[#FF8C42]/60 focus:ring-1 focus:ring-[#FF8C42]/40"
                 />
+              </div>
+
+              <div className="rounded border border-white/10 bg-black/50 px-3 py-3">
+                <div className="flex gap-3">
+                  <input
+                    id={termsId}
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => {
+                      setTermsAccepted(e.target.checked);
+                      if (e.target.checked) setTermsError(null);
+                    }}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[#FF8C42]"
+                  />
+                  <label htmlFor={termsId} className="text-xs leading-relaxed text-gray-400">
+                    {copy.termsConsentPrefix}{" "}
+                    <button
+                      type="button"
+                      onClick={() => onOpenLegal?.("terms")}
+                      className="font-medium text-[#FF8C42] underline decoration-[#FF8C42]/40 underline-offset-2 transition hover:text-[#FFB86A]"
+                    >
+                      {copy.termsLink}
+                    </button>
+                    {" "}{copy.termsConsentMiddle}{" "}
+                    <button
+                      type="button"
+                      onClick={() => onOpenLegal?.("privacy")}
+                      className="font-medium text-[#FF8C42] underline decoration-[#FF8C42]/40 underline-offset-2 transition hover:text-[#FFB86A]"
+                    >
+                      {copy.privacyLink}
+                    </button>
+                    .
+                  </label>
+                </div>
+                {termsError && (
+                  <p className="mt-2 text-xs text-red-400" role="alert">
+                    {termsError}
+                  </p>
+                )}
               </div>
 
               {error && (

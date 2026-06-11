@@ -33,6 +33,7 @@ export async function submitTrialSignup(
   name: string,
   email: string,
   market: Market,
+  acceptTerms: boolean,
 ): Promise<TrialSignupResult> {
   const copy = FALLBACK[market];
   const url = `${resolveApiBase()}/api/trial-signup`;
@@ -40,7 +41,7 @@ export async function submitTrialSignup(
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, email, market, ...affiliate }),
+    body: JSON.stringify({ name, email, market, acceptTerms, ...affiliate }),
   });
 
   const data = (await res.json().catch(() => ({}))) as TrialSignupResult & { error?: string };

@@ -115,6 +115,11 @@ export type LandingContent = {
     emailPlaceholder: string;
     submitting: string;
     submit: string;
+    termsConsentPrefix: string;
+    termsLink: string;
+    termsConsentMiddle: string;
+    privacyLink: string;
+    termsConsentError: string;
   };
   navBrandSubtitle: string;
   heroMarketPulse: string;
@@ -124,7 +129,7 @@ export type LandingContent = {
     coupon: string;
     discount: (pct: number) => string;
   };
-  static: { back: string };
+  static: { back: string; close: string };
   footerPaths: {
     privacy: string;
     terms: string;
@@ -365,6 +370,11 @@ const BR: LandingContent = {
     emailPlaceholder: "voce@email.com",
     submitting: "Enviando…",
     submit: "Enviar link de acesso",
+    termsConsentPrefix: "Li e aceito os",
+    termsLink: "Termos de Uso",
+    termsConsentMiddle: "e a",
+    privacyLink: "Política de Privacidade",
+    termsConsentError: "Aceite os Termos de Uso e a Política de Privacidade para continuar.",
   },
   affiliate: {
     loading: "Carregando oferta do parceiro…",
@@ -372,7 +382,7 @@ const BR: LandingContent = {
     coupon: "Cupom",
     discount: (pct) => `${pct}% off na assinatura`,
   },
-  static: { back: "Voltar ao site" },
+  static: { back: "Voltar ao site", close: "Fechar" },
   footerPaths: {
     privacy: "/privacidade",
     terms: "/termos",
@@ -646,6 +656,11 @@ const US: LandingContent = {
     emailPlaceholder: "you@email.com",
     submitting: "Sending…",
     submit: "Send access link",
+    termsConsentPrefix: "I have read and accept the",
+    termsLink: "Terms of Use",
+    termsConsentMiddle: "and the",
+    privacyLink: "Privacy Policy",
+    termsConsentError: "You must accept the Terms of Use and Privacy Policy to continue.",
   },
   affiliate: {
     loading: "Loading partner offer…",
@@ -653,7 +668,7 @@ const US: LandingContent = {
     coupon: "Coupon",
     discount: (pct) => `${pct}% off subscription`,
   },
-  static: { back: "Back to site" },
+  static: { back: "Back to site", close: "Close" },
   footerPaths: {
     privacy: "/privacy",
     terms: "/terms",
