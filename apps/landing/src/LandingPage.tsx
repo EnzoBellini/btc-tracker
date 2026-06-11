@@ -3,6 +3,14 @@ import { useEffect, useState } from "react";
 import { AnimatedWealthChart } from "./components/AnimatedWealthChart";
 import { HeroWaveCanvas } from "./components/HeroWaveCanvas";
 import { MarketSelector } from "./components/MarketSelector";
+import {
+  LaunchOfferBadge,
+  LaunchOfferHighlight,
+  LaunchPriceBlock,
+} from "./components/LaunchPriceBlock";
+import { LegalInfoModal } from "./components/LegalInfoModal";
+import { TrialCtaButton } from "./components/TrialCtaButton";
+import type { StaticPageKind } from "./lib/static-page-content";
 import { TrialSignupModal } from "./components/TrialSignupModal";
 import { useMarket } from "./hooks/useMarket";
 import { getLandingContent } from "./lib/landing-content";
@@ -106,6 +114,7 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
   const [trialDevPassword, setTrialDevPassword] = useState<string | null>(null);
   const [trialEmailSent, setTrialEmailSent] = useState(true);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [legalModal, setLegalModal] = useState<StaticPageKind | null>(null);
   const [footerEmailError, setFooterEmailError] = useState<string | null>(null);
   const goStart = onStartClick ?? (() => {});
 
@@ -139,10 +148,18 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
     openTrialModal(trimmed);
   };
 
-  const handleTrialSubmit = async ({ name, email }: { name: string; email: string }) => {
+  const handleTrialSubmit = async ({
+    name,
+    email,
+    acceptTerms,
+  }: {
+    name: string;
+    email: string;
+    acceptTerms: boolean;
+  }) => {
     setTrialSubmitting(true);
     setTrialError(null);
-    const result = await submitTrialSignup(name, email, market);
+    const result = await submitTrialSignup(name, email, market, acceptTerms);
     setTrialSubmitting(false);
     if (!result.ok) {
       setTrialError(result.message);
@@ -161,7 +178,6 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const todayISO = new Date().toISOString().slice(0, 10);
   const year = new Date().getFullYear();
 
   return (
@@ -221,14 +237,9 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
             >
               {t.navLogin}
             </button>
-            <button
-              type="button"
-              onClick={() => openTrialModal()}
-              className="group relative inline-flex items-center gap-2 border border-[#FF8C42] bg-[#FF8C42] px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-black transition hover:bg-transparent hover:text-[#FF8C42]"
-            >
+            <TrialCtaButton size="sm" onClick={() => openTrialModal()}>
               {t.navCta}
-              <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
-            </button>
+            </TrialCtaButton>
           </div>
         </div>
         {mobileNavOpen && (
@@ -248,6 +259,9 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
               <button type="button" onClick={goStart} className="py-2 text-left text-sm text-gray-400">
                 {t.navLogin}
               </button>
+              <TrialCtaButton fullWidth onClick={() => openTrialModal()}>
+                {t.navCta}
+              </TrialCtaButton>
             </div>
           </div>
         )}
@@ -301,14 +315,14 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
 
               {/* CTAs */}
               <div className="tk-rise tk-rise-5 mt-10 flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
+                <TrialCtaButton
+                  size="lg"
+                  ring
+                  shine
                   onClick={() => openTrialModal()}
-                  className="group relative inline-flex items-center gap-2.5 border border-[#FF8C42] bg-[#FF8C42] px-6 py-3.5 text-sm font-bold uppercase tracking-[0.22em] text-black transition hover:bg-transparent hover:text-[#FF8C42]"
                 >
-                  <span>{t.heroCtaPrimary}</span>
-                  <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
-                </button>
+                  {t.heroCtaPrimary}
+                </TrialCtaButton>
                 <button
                   type="button"
                   onClick={() => scrollToSection("#recursos")}
@@ -628,14 +642,9 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
                 )}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => openTrialModal()}
-              className="group inline-flex items-center gap-3 border border-[#FF8C42] bg-[#FF8C42] px-7 py-4 text-xs font-bold uppercase tracking-[0.28em] text-black transition hover:bg-transparent hover:text-[#FF8C42]"
-            >
+            <TrialCtaButton size="lg" onClick={() => openTrialModal()}>
               {t.manifesto.cta}
-              <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
-            </button>
+            </TrialCtaButton>
           </div>
         </div>
       </section>
@@ -647,10 +656,10 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
           <SectionLabel index="04" label={t.launchPromo.sectionLabel} total="05" />
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <span className="inline-flex border border-[#FF8C42] bg-[#FF8C42] px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.28em] text-black">
+            <LaunchOfferBadge className="px-4 py-1.5 text-[10px] tracking-[0.28em]">
               {t.launchPromo.badge}
-            </span>
-            <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-gray-500">
+            </LaunchOfferBadge>
+            <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#FFB86A]/70">
               {t.launchPromo.priceRowLabel}
             </span>
           </div>
@@ -658,9 +667,7 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
           <h2 className="mt-6 max-w-3xl text-balance font-sans text-4xl font-bold leading-[0.95] tracking-tight text-white sm:text-5xl lg:text-6xl">
             {t.launchPromo.title}
           </h2>
-          <p className="mt-5 max-w-2xl text-base leading-relaxed text-gray-300 sm:text-lg">
-            {t.launchPromo.subtitle}
-          </p>
+          <LaunchOfferHighlight>{t.launchPromo.subtitle}</LaunchOfferHighlight>
 
           <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-3">
             {pricingPlans.map((plan) => {
@@ -669,42 +676,35 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
               return (
                 <div
                   key={plan.id}
-                  className={`relative border bg-black/70 p-5 backdrop-blur-sm ${
-                    isPro ? "border-[#FF8C42]" : "border-white/15"
+                  className={`relative border bg-black/80 p-5 backdrop-blur-sm ${
+                    isPro
+                      ? "border-[#FF8C42] shadow-[0_0_28px_rgba(255,140,66,0.25)]"
+                      : "border-[#FF8C42]/40 shadow-[0_0_18px_rgba(255,140,66,0.1)]"
                   }`}
                 >
                   <CornerMarks orange={isPro} />
-                  <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">{plan.name}</p>
-                  <div className="mt-3 flex flex-wrap items-end gap-2">
-                    <p className="font-sans text-3xl font-bold text-white">{formatPlanPrice(plan)}</p>
-                    <p className="pb-1 text-xs text-gray-500">{t.pricing.perMonth}</p>
-                  </div>
-                  <p className="mt-1 text-sm text-gray-500">
-                    {t.pricing.originalPriceLabel}{" "}
-                    <span className="text-gray-400 line-through">{formatOriginalPlanPrice(market, plan.id)}</span>
-                  </p>
-                  {savings > 0 && (
-                    <span className="mt-3 inline-block border border-[#FF8C42]/40 bg-[#FF8C42]/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest text-[#FF8C42]">
-                      {t.launchPromo.savingsBadge(savings)}
-                    </span>
-                  )}
+                  <LaunchPriceBlock
+                    size="lg"
+                    planName={plan.name}
+                    launchPrice={formatPlanPrice(plan)}
+                    originalPrice={formatOriginalPlanPrice(market, plan.id)}
+                    perMonth={t.pricing.perMonth}
+                    originalPriceLabel={t.pricing.originalPriceLabel}
+                    savingsPct={savings}
+                    savingsBadge={t.launchPromo.savingsBadge}
+                  />
                 </div>
               );
             })}
           </div>
 
           <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
-            <button
-              type="button"
-              onClick={() => openTrialModal()}
-              className="group inline-flex items-center justify-center gap-2 border border-[#FF8C42] bg-[#FF8C42] px-7 py-4 text-xs font-bold uppercase tracking-[0.28em] text-black transition hover:bg-transparent hover:text-[#FF8C42]"
-            >
+            <TrialCtaButton size="lg" onClick={() => openTrialModal()}>
               {t.launchPromo.cta}
-              <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
-            </button>
-            <p className="max-w-md font-mono text-[10px] uppercase tracking-[0.18em] text-gray-500">
+            </TrialCtaButton>
+            <LaunchOfferHighlight className="max-w-md !py-2 !text-[10px] !font-mono !uppercase !tracking-[0.18em] !text-[#FFB86A]/90">
               {t.launchPromo.finePrint}
-            </p>
+            </LaunchOfferHighlight>
           </div>
         </div>
       </section>
@@ -713,8 +713,13 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
       <section id="precos" className="relative z-[1] overflow-hidden bg-black py-32">
         <div className="relative mx-auto max-w-[1100px] px-6">
           <SectionLabel index="05" label={t.pricing.sectionLabel} total="05" />
+          <div className="mt-6">
+            <LaunchOfferBadge className="px-4 py-1.5 text-[10px] tracking-[0.28em]">
+              {t.launchPromo.badge}
+            </LaunchOfferBadge>
+          </div>
 
-          <h2 className="mt-10 text-balance font-sans text-5xl font-bold leading-[0.92] tracking-tight text-white sm:text-6xl lg:text-[4.5rem]">
+          <h2 className="mt-8 text-balance font-sans text-5xl font-bold leading-[0.92] tracking-tight text-white sm:text-6xl lg:text-[4.5rem]">
             {market === "us" ? (
               <>
                 Plans for every stage of your{" "}
@@ -730,7 +735,9 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
           <p className="mt-6 max-w-2xl text-base leading-relaxed text-gray-400 sm:text-lg">
             {t.pricing.subtitle}
           </p>
-          <p className="mt-3 max-w-2xl text-sm text-gray-500">{t.pricing.afterTrialNote}</p>
+          <LaunchOfferHighlight className="!mt-3 !text-sm">
+            {t.pricing.afterTrialNote}
+          </LaunchOfferHighlight>
 
           <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
             {pricingPlans.map((plan) => {
@@ -738,8 +745,10 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
               return (
                 <div
                   key={plan.id}
-                  className={`relative border bg-black/60 p-6 backdrop-blur-sm ${
-                    isPro ? "border-[#FF8C42]" : "border-white/15"
+                  className={`relative border bg-black/70 p-6 backdrop-blur-sm ${
+                    isPro
+                      ? "border-[#FF8C42] shadow-[0_0_24px_rgba(255,140,66,0.2)]"
+                      : "border-[#FF8C42]/30 shadow-[0_0_14px_rgba(255,140,66,0.08)]"
                   }`}
                 >
                   <CornerMarks orange={isPro} />
@@ -748,22 +757,16 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
                       {t.pricing.anchorBadge}
                     </span>
                   )}
-                  <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
-                    {plan.name}
-                  </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="inline-block border border-[#FF8C42]/50 bg-[#FF8C42]/10 px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase tracking-widest text-[#FF8C42]">
-                      {t.pricing.launchBadge}
-                    </span>
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-end gap-2">
-                    <p className="font-sans text-3xl font-bold text-white">{formatPlanPrice(plan)}</p>
-                    <p className="pb-1 text-xs text-gray-500">{t.pricing.perMonth}</p>
-                  </div>
-                  <p className="text-sm text-gray-500">
-                    {t.pricing.originalPriceLabel}{" "}
-                    <span className="line-through">{formatOriginalPlanPrice(market, plan.id)}</span>
-                  </p>
+                  <LaunchPriceBlock
+                    planName={plan.name}
+                    launchPrice={formatPlanPrice(plan)}
+                    originalPrice={formatOriginalPlanPrice(market, plan.id)}
+                    perMonth={t.pricing.perMonth}
+                    originalPriceLabel={t.pricing.originalPriceLabel}
+                    launchBadge={t.pricing.launchBadge}
+                    savingsPct={launchSavingsPct(market, plan.id)}
+                    savingsBadge={t.launchPromo.savingsBadge}
+                  />
                   <p className="mt-3 text-sm text-gray-400">{plan.tagline}</p>
                   <ul className="mt-5 space-y-2 text-sm text-gray-300">
                     {plan.highlights.map((h) => (
@@ -773,17 +776,17 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
                       </li>
                     ))}
                   </ul>
-                  <button
-                    type="button"
+                  <TrialCtaButton
+                    className="mt-6"
+                    fullWidth
+                    size="sm"
+                    variant={isPro ? "solidPro" : "outline"}
+                    glow={isPro}
+                    showArrow={false}
                     onClick={() => openTrialModal()}
-                    className={`mt-6 w-full border px-4 py-2.5 text-xs font-bold uppercase tracking-[0.2em] transition ${
-                      isPro
-                        ? "border-[#FF8C42] bg-[#FF8C42] text-black hover:bg-transparent hover:text-[#FF8C42]"
-                        : "border-white/20 text-white hover:border-[#FF8C42]"
-                    }`}
                   >
                     {t.pricing.trialCta}
-                  </button>
+                  </TrialCtaButton>
                   <p className="mt-2 text-center text-[10px] text-gray-600">
                     {t.pricing.planTrialNote(plan.name, formatPlanPrice(plan))}
                   </p>
@@ -819,14 +822,9 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
                 />
                 <span className={footerEmail ? "tk-cursor opacity-0" : "tk-cursor"} aria-hidden />
               </div>
-              <button
-                type="button"
-                onClick={handleFooterCta}
-                className="group inline-flex items-center justify-center gap-2 border border-[#FF8C42] bg-[#FF8C42] px-7 py-3 text-xs font-bold uppercase tracking-[0.28em] text-black transition hover:bg-transparent hover:text-[#FF8C42]"
-              >
+              <TrialCtaButton onClick={handleFooterCta}>
                 {t.pricing.startTrial}
-                <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
-              </button>
+              </TrialCtaButton>
             </div>
             {footerEmailError && (
               <p className="border-t border-white/10 px-4 py-2 text-xs text-red-400" role="alert">
@@ -899,8 +897,8 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
       {/* =================== FOOTER ===================== */}
       <footer className="relative z-[1] bg-black">
         <div className="relative mx-auto max-w-[1400px] px-6 py-14">
-          <div className="grid grid-cols-12 gap-6">
-            <div className="col-span-12 lg:col-span-5">
+          <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between">
+            <div className="max-w-sm">
               <div className="flex items-center gap-3">
                 <img
                   src="/logo-trackion.png"
@@ -911,7 +909,7 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
                 />
                 <span className="text-base font-bold tracking-[0.32em] text-white">TRACKION</span>
               </div>
-              <p className="mt-4 max-w-sm text-sm leading-relaxed text-gray-500">
+              <p className="mt-4 text-sm leading-relaxed text-gray-500">
                 {t.footer.tagline}
               </p>
               <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-600">
@@ -920,53 +918,35 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
               </p>
             </div>
 
-            <div className="col-span-6 lg:col-span-2">
-              <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
-                {t.footer.product}
-              </p>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><button type="button" onClick={() => scrollToSection("#recursos")} className="transition hover:text-white">{t.footer.links.product[0]}</button></li>
-                <li><button type="button" onClick={() => scrollToSection("#integracoes")} className="transition hover:text-white">{t.footer.links.product[1]}</button></li>
-                <li><button type="button" onClick={() => scrollToSection("#metodo")} className="transition hover:text-white">{t.footer.links.product[2]}</button></li>
-                <li><button type="button" onClick={() => scrollToSection("#precos")} className="transition hover:text-white">{t.footer.links.product[3]}</button></li>
-              </ul>
-            </div>
+            <div className="flex gap-12 sm:gap-16 lg:gap-20 lg:justify-end">
+              <div>
+                <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
+                  {t.footer.product}
+                </p>
+                <ul className="space-y-2 text-sm text-gray-400">
+                  <li><button type="button" onClick={() => scrollToSection("#recursos")} className="transition hover:text-white">{t.footer.links.product[0]}</button></li>
+                  <li><button type="button" onClick={() => scrollToSection("#integracoes")} className="transition hover:text-white">{t.footer.links.product[1]}</button></li>
+                  <li><button type="button" onClick={() => scrollToSection("#metodo")} className="transition hover:text-white">{t.footer.links.product[2]}</button></li>
+                  <li><button type="button" onClick={() => scrollToSection("#precos")} className="transition hover:text-white">{t.footer.links.product[3]}</button></li>
+                </ul>
+              </div>
 
-            <div className="col-span-6 lg:col-span-2">
-              <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
-                {t.footer.account}
-              </p>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li>
-                  <button onClick={goStart} className="transition hover:text-white">{t.footer.login}</button>
-                </li>
-                <li>
-                  <button onClick={() => openTrialModal()} className="transition hover:text-white">
-                    {t.footer.trial}
-                  </button>
-                </li>
-                <li><a href={t.footerPaths.status} className="transition hover:text-white">{t.footer.status}</a></li>
-                <li><a href="/blog" className="transition hover:text-white">{t.seo.blogCta}</a></li>
-              </ul>
-            </div>
-
-            <div className="col-span-12 lg:col-span-3">
-              <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
-                {t.footer.lastSync}
-              </p>
-              <div className="space-y-2 border border-white/10 p-3 font-mono text-[11px] text-gray-400">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500">{t.footer.syncLabels.timestamp}</span>
-                  <span className="text-white num">{todayISO}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500">{t.footer.syncLabels.status}</span>
-                  <span className="text-tk-green">{t.footer.online}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500">{t.footer.syncLabels.version}</span>
-                  <span className="text-white num">v2.0</span>
-                </div>
+              <div>
+                <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
+                  {t.footer.account}
+                </p>
+                <ul className="space-y-2 text-sm text-gray-400">
+                  <li>
+                    <button onClick={goStart} className="transition hover:text-white">{t.footer.login}</button>
+                  </li>
+                  <li>
+                    <button onClick={() => openTrialModal()} className="transition hover:text-white">
+                      {t.footer.trial}
+                    </button>
+                  </li>
+                  <li><a href={t.footerPaths.status} className="transition hover:text-white">{t.footer.status}</a></li>
+                  <li><a href="/blog" className="transition hover:text-white">{t.seo.blogCta}</a></li>
+                </ul>
               </div>
             </div>
           </div>
@@ -974,13 +954,39 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
           <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-white/[0.06] pt-6 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-600 sm:flex-row sm:items-center">
             <p>© {year} TRACKION · {t.footer.copyright}</p>
             <div className="flex items-center gap-5">
-              <a href={t.footerPaths.privacy} className="transition hover:text-white">{t.footer.legal[0]}</a>
-              <a href={t.footerPaths.terms} className="transition hover:text-white">{t.footer.legal[1]}</a>
-              <a href={t.footerPaths.contact} className="transition hover:text-white">{t.footer.legal[2]}</a>
+              <button
+                type="button"
+                onClick={() => setLegalModal("privacy")}
+                className="transition hover:text-white"
+              >
+                {t.footer.legal[0]}
+              </button>
+              <button
+                type="button"
+                onClick={() => setLegalModal("terms")}
+                className="transition hover:text-white"
+              >
+                {t.footer.legal[1]}
+              </button>
+              <button
+                type="button"
+                onClick={() => setLegalModal("contact")}
+                className="transition hover:text-white"
+              >
+                {t.footer.legal[2]}
+              </button>
             </div>
           </div>
         </div>
       </footer>
+
+      <LegalInfoModal
+        open={legalModal !== null}
+        kind={legalModal}
+        market={market}
+        closeLabel={t.static.close}
+        onClose={() => setLegalModal(null)}
+      />
 
       <TrialSignupModal
         open={trialModalOpen}
@@ -994,6 +1000,7 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
           }
         }}
         onSubmit={handleTrialSubmit}
+        onOpenLegal={(kind) => setLegalModal(kind)}
         submitting={trialSubmitting}
         error={trialError}
         success={trialSuccess}
