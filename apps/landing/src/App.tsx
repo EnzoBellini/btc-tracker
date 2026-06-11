@@ -1,10 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import AffiliateGate from "./AffiliateGate";
 import { useSeo } from "./hooks/useSeo";
-import BlogIndex from "./pages/BlogIndex";
-import BlogPostPage from "./pages/BlogPostPage";
-import SeoLandingPage from "./pages/SeoLandingPage";
-import StaticPage, { resolveStaticPage } from "./pages/StaticPage";
 import { useMarket } from "./hooks/useMarket";
 import { getBlogPost, isBlogIndex } from "./lib/blog-posts";
 import {
@@ -16,6 +12,12 @@ import {
 } from "./lib/seo";
 import { getLandingContent } from "./lib/landing-content";
 import { resolveSeoPage } from "./lib/seo-pages";
+import { resolveStaticPage } from "./pages/StaticPage";
+
+const BlogIndex = lazy(() => import("./pages/BlogIndex"));
+const BlogPostPage = lazy(() => import("./pages/BlogPostPage"));
+const SeoLandingPage = lazy(() => import("./pages/SeoLandingPage"));
+const StaticPage = lazy(() => import("./pages/StaticPage"));
 
 /** URL do app (login/dashboard). Em produção: https://app.trackion.app */
 const APP_URL = (import.meta.env.VITE_APP_URL as string | undefined)?.replace(/\/$/, "") ?? "";
@@ -91,33 +93,49 @@ export default function App() {
   };
 
   if (route.blogIndex) {
-    return <BlogIndex market={market} onBack={goHome} onStartClick={goToApp} />;
+    return (
+      <Suspense fallback={null}>
+        <BlogIndex market={market} onBack={goHome} onStartClick={goToApp} />
+      </Suspense>
+    );
   }
 
   if (route.blogSlug) {
     const post = getBlogPost(market, route.blogSlug);
     if (!post) {
-      return <BlogIndex market={market} onBack={goHome} onStartClick={goToApp} />;
+      return (
+        <Suspense fallback={null}>
+          <BlogIndex market={market} onBack={goHome} onStartClick={goToApp} />
+        </Suspense>
+      );
     }
     return (
-      <BlogPostPage post={post} market={market} onBack={goBlog} onStartClick={goToApp} />
+      <Suspense fallback={null}>
+        <BlogPostPage post={post} market={market} onBack={goBlog} onStartClick={goToApp} />
+      </Suspense>
     );
   }
 
   if (route.seoPage) {
     return (
-      <SeoLandingPage
-        page={route.seoPage}
-        canonicalPath={route.pathname}
-        market={route.seoPage.market}
-        onBack={goHome}
-        onStartClick={goToApp}
-      />
+      <Suspense fallback={null}>
+        <SeoLandingPage
+          page={route.seoPage}
+          canonicalPath={route.pathname}
+          market={route.seoPage.market}
+          onBack={goHome}
+          onStartClick={goToApp}
+        />
+      </Suspense>
     );
   }
 
   if (route.staticPage) {
-    return <StaticPage kind={route.staticPage} market={market} onBack={goHome} />;
+    return (
+      <Suspense fallback={null}>
+        <StaticPage kind={route.staticPage} market={market} onBack={goHome} />
+      </Suspense>
+    );
   }
 
   return (

@@ -3,6 +3,8 @@ import { useEffect, useRef } from "react";
 
 const BRAND_ORANGE = { r: 255, g: 140, b: 66 } as const;
 const WAVE_DARK_ORANGE = { r: 188, g: 92, b: 42 } as const;
+const TARGET_FPS = 30;
+const FRAME_BUDGET_MS = 1000 / TARGET_FPS;
 
 export type HeroWaveCanvasProps = {
   className?: string;
@@ -35,6 +37,20 @@ function dotColor(variant: NonNullable<HeroWaveCanvasProps["variant"]>, intensit
   )}, ${alpha})`;
 }
 
+function gridDensity(cw: number, ch: number, coarsePointer: boolean) {
+  if (coarsePointer) {
+    return {
+      columns: Math.max(72, Math.floor(cw / 10)),
+      rows: Math.max(36, Math.floor(ch / 8)),
+    };
+  }
+
+  return {
+    columns: Math.max(128, Math.floor(cw / 8)),
+    rows: Math.max(54, Math.floor(ch / 6)),
+  };
+}
+
 export function HeroWaveCanvas({
   className,
   variant = "orangeBlack",
@@ -55,23 +71,48 @@ export function HeroWaveCanvas({
     let lastTime = performance.now();
     let elapsedSeconds = 0;
     let reducedMotion = false;
+    let visible = true;
+    let nextFrameAt = 0;
 
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const motionMedia = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const coarseMedia = window.matchMedia("(pointer: coarse)");
+
     const updateReducedMotion = () => {
-      reducedMotion = media.matches;
+      reducedMotion = motionMedia.matches;
     };
     updateReducedMotion();
-    media.addEventListener("change", updateReducedMotion);
+    motionMedia.addEventListener("change", updateReducedMotion);
+
+    const visibilityObserver = new IntersectionObserver(
+      ([entry]) => {
+        visible = entry?.isIntersecting ?? false;
+      },
+      { rootMargin: "120px 0px" },
+    );
+    visibilityObserver.observe(container);
+
+    const syncVisibility = () => {
+      if (document.hidden) {
+        visible = false;
+        return;
+      }
+      const rect = container.getBoundingClientRect();
+      visible = rect.bottom > -120 && rect.top < window.innerHeight + 120;
+    };
+    document.addEventListener("visibilitychange", syncVisibility);
 
     const paint = (time: number) => {
+      animationFrame = window.requestAnimationFrame(paint);
+
+      if (!visible) return;
+      if (time < nextFrameAt) return;
+      nextFrameAt = time + FRAME_BUDGET_MS;
+
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const cw = container.clientWidth;
       const ch = container.clientHeight;
 
-      if (cw < 1 || ch < 1) {
-        animationFrame = window.requestAnimationFrame(paint);
-        return;
-      }
+      if (cw < 1 || ch < 1) return;
 
       const deltaSeconds = Math.min((time - lastTime) / 1000, 0.05);
       lastTime = time;
@@ -84,16 +125,16 @@ export function HeroWaveCanvas({
       canvas.style.width = `${cw}px`;
       canvas.style.height = `${ch}px`;
 
-      const ctx = canvas.getContext("2d");
+      const ctx = canvas.getContext("2d", { alpha: true });
       if (!ctx) return;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, cw, ch);
       ctx.globalCompositeOperation = "lighter";
 
-      const columns = Math.max(128, Math.floor(cw / 8));
-      const rows = Math.max(54, Math.floor(ch / 6));
+      const { columns, rows } = gridDensity(cw, ch, coarseMedia.matches);
       const scrollLift = Math.max(0, Math.min(1, scrollProgressRef.current)) * ch * 0.08;
+      let lastFill = "";
 
       for (let row = 0; row < rows; row += 1) {
         const depth = row / (rows - 1);
@@ -118,20 +159,25 @@ export function HeroWaveCanvas({
           const intensity = Math.min(1, Math.max(0.38, 0.55 + elevation * 2.3 + depth * 0.22));
           const alpha = 0.34 * horizonFade * sideFade * (0.8 + intensity * 0.35);
           const radius = 0.78 + depth * 2.45 + Math.max(elevation, 0) * 3.2;
+          const fill = dotColor(variant, intensity, alpha);
+
+          if (fill !== lastFill) {
+            ctx.fillStyle = fill;
+            lastFill = fill;
+          }
 
           ctx.beginPath();
-          ctx.fillStyle = dotColor(variant, intensity, alpha);
           ctx.arc(x, y, radius, 0, Math.PI * 2);
           ctx.fill();
         }
       }
 
       ctx.globalCompositeOperation = "source-over";
-      animationFrame = window.requestAnimationFrame(paint);
     };
 
     animationFrame = window.requestAnimationFrame((time) => {
       lastTime = time;
+      nextFrameAt = time;
       paint(time);
     });
 
@@ -143,7 +189,9 @@ export function HeroWaveCanvas({
     return () => {
       window.cancelAnimationFrame(animationFrame);
       ro.disconnect();
-      media.removeEventListener("change", updateReducedMotion);
+      visibilityObserver.disconnect();
+      document.removeEventListener("visibilitychange", syncVisibility);
+      motionMedia.removeEventListener("change", updateReducedMotion);
     };
   }, [variant]);
 

@@ -1,6 +1,5 @@
 import { ArrowDownRight, ArrowUpRight, Menu, Plus, X } from "lucide-react";
-import { useEffect, useState } from "react";
-import { AnimatedWealthChart } from "./components/AnimatedWealthChart";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { HeroWaveCanvas } from "./components/HeroWaveCanvas";
 import { MarketSelector } from "./components/MarketSelector";
 import {
@@ -11,12 +10,18 @@ import {
 import { LegalInfoModal } from "./components/LegalInfoModal";
 import { TrialCtaButton } from "./components/TrialCtaButton";
 import type { StaticPageKind } from "./lib/static-page-content";
-import { TrialSignupModal } from "./components/TrialSignupModal";
 import { useMarket } from "./hooks/useMarket";
 import { getLandingContent } from "./lib/landing-content";
 import { submitTrialSignup } from "./lib/trialSignup";
 import { formatPlanPrice, formatOriginalPlanPrice, getPlansForMarket, launchSavingsPct } from "./lib/plans";
 import { useMarketTicker } from "./hooks/useMarketTicker";
+
+const AnimatedWealthChart = lazy(() =>
+  import("./components/AnimatedWealthChart").then((m) => ({ default: m.AnimatedWealthChart })),
+);
+const TrialSignupModal = lazy(() =>
+  import("./components/TrialSignupModal").then((m) => ({ default: m.TrialSignupModal })),
+);
 
 export type LandingPageProps = {
   onStartClick?: () => void;
@@ -104,7 +109,8 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
   const { market, setMarket } = useMarket();
   const t = getLandingContent(market);
   const pricingPlans = getPlansForMarket(market);
-  const [scrollY, setScrollY] = useState(0);
+  const pcMockupRef = useRef<HTMLImageElement>(null);
+  const mobileMockupRef = useRef<HTMLImageElement>(null);
   const [footerEmail, setFooterEmail] = useState("");
   const [trialModalOpen, setTrialModalOpen] = useState(false);
   const [trialSubmitting, setTrialSubmitting] = useState(false);
@@ -173,9 +179,25 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
   };
 
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
+    let raf = 0;
+    const handleScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(() => {
+        raf = 0;
+        const y = Math.min(window.scrollY, 280);
+        if (pcMockupRef.current) {
+          pcMockupRef.current.style.transform = `translateY(${y * 0.04}px)`;
+        }
+        if (mobileMockupRef.current) {
+          mobileMockupRef.current.style.transform = `translateY(${y * 0.065}px)`;
+        }
+      });
+    };
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
   }, []);
 
   const year = new Date().getFullYear();
@@ -193,7 +215,7 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-3.5">
           <a href="/" className="group flex items-center gap-2.5">
             <img
-              src="/logo-trackion.png"
+              src="/logo-trackion.webp"
               alt="Trackion"
               width={26}
               height={26}
@@ -351,21 +373,32 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
             <aside className="tk-rise tk-rise-4 relative col-span-12 min-w-0 self-center lg:col-span-6">
               {/* wrapper: cabe no aside até xl; vaza levemente em xl+ */}
               <div className="relative w-full xl:w-[108%] 2xl:w-[120%]">
-                <img
-                  src="/mockup_pc.png"
-                  alt="Trackion Dashboard Desktop"
-                  className="relative z-10 mx-auto block h-auto w-full drop-shadow-[0_30px_80px_rgba(0,0,0,0.7)]"
-                  style={{ transform: `translateY(${Math.min(scrollY, 280) * 0.04}px)` }}
-                  decoding="async"
-                />
-                <img
-                  src="/mockup_mobile.png"
-                  alt="Trackion Dashboard Mobile"
-                  className="absolute right-[4%] bottom-0 z-20 h-auto w-[24%] min-w-[90px] max-w-[200px] drop-shadow-[0_30px_60px_rgba(0,0,0,0.85)] sm:w-[22%] sm:max-w-[230px] lg:w-[24%] lg:max-w-[250px] xl:max-w-[290px] 2xl:max-w-[320px]"
-                  style={{ transform: `translateY(${Math.min(scrollY, 280) * 0.065}px)` }}
-                  decoding="async"
-                  loading="lazy"
-                />
+                <picture>
+                  <source srcSet="/mockup_pc.webp" type="image/webp" />
+                  <img
+                    ref={pcMockupRef}
+                    src="/mockup_pc.png"
+                    alt="Trackion Dashboard Desktop"
+                    width={1536}
+                    height={1024}
+                    className="relative z-10 mx-auto block h-auto w-full drop-shadow-[0_30px_80px_rgba(0,0,0,0.7)]"
+                    decoding="async"
+                    fetchPriority="high"
+                  />
+                </picture>
+                <picture>
+                  <source srcSet="/mockup_mobile.webp" type="image/webp" />
+                  <img
+                    ref={mobileMockupRef}
+                    src="/mockup_mobile.png"
+                    alt="Trackion Dashboard Mobile"
+                    width={941}
+                    height={1672}
+                    className="absolute right-[4%] bottom-0 z-20 h-auto w-[24%] min-w-[90px] max-w-[200px] drop-shadow-[0_30px_60px_rgba(0,0,0,0.85)] sm:w-[22%] sm:max-w-[230px] lg:w-[24%] lg:max-w-[250px] xl:max-w-[290px] 2xl:max-w-[320px]"
+                    decoding="async"
+                    loading="lazy"
+                  />
+                </picture>
               </div>
             </aside>
           </div>
@@ -508,7 +541,9 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
                   <span className="text-gray-600">trackion.app</span>
                 </div>
                 <div className="p-2 sm:p-4">
-                  <AnimatedWealthChart />
+                  <Suspense fallback={<div className="aspect-[1.85/1] w-full" aria-hidden />}>
+                    <AnimatedWealthChart />
+                  </Suspense>
                 </div>
               </div>
             </div>
@@ -901,7 +936,7 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
             <div className="max-w-sm">
               <div className="flex items-center gap-3">
                 <img
-                  src="/logo-trackion.png"
+                  src="/logo-trackion.webp"
                   alt="Trackion"
                   width={28}
                   height={28}
@@ -988,26 +1023,30 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
         onClose={() => setLegalModal(null)}
       />
 
-      <TrialSignupModal
-        open={trialModalOpen}
-        initialEmail={footerEmail}
-        copy={t.trialModal}
-        onClose={() => {
-          setTrialModalOpen(false);
-          if (trialSuccess) {
-            setTrialSuccess(false);
-            setTrialError(null);
-          }
-        }}
-        onSubmit={handleTrialSubmit}
-        onOpenLegal={(kind) => setLegalModal(kind)}
-        submitting={trialSubmitting}
-        error={trialError}
-        success={trialSuccess}
-        emailSent={trialEmailSent}
-        devVerifyUrl={trialDevVerifyUrl}
-        devPassword={trialDevPassword}
-      />
+      {trialModalOpen && (
+        <Suspense fallback={null}>
+          <TrialSignupModal
+            open={trialModalOpen}
+            initialEmail={footerEmail}
+            copy={t.trialModal}
+            onClose={() => {
+              setTrialModalOpen(false);
+              if (trialSuccess) {
+                setTrialSuccess(false);
+                setTrialError(null);
+              }
+            }}
+            onSubmit={handleTrialSubmit}
+            onOpenLegal={(kind) => setLegalModal(kind)}
+            submitting={trialSubmitting}
+            error={trialError}
+            success={trialSuccess}
+            emailSent={trialEmailSent}
+            devVerifyUrl={trialDevVerifyUrl}
+            devPassword={trialDevPassword}
+          />
+        </Suspense>
+      )}
 
       {/* Cross-marks decorativos (estilo blueprint) — apenas em telas grandes */}
       <CrossMark className="left-6 top-32 hidden lg:block" />
