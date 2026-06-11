@@ -1,4 +1,5 @@
-import { ArrowUpRight, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
+import { TrialCtaButton } from "../components/TrialCtaButton";
 import { useMemo } from "react";
 import BlogShell from "../components/BlogShell";
 import { useSeo } from "../hooks/useSeo";
@@ -64,14 +65,9 @@ export default function BlogIndex({ market, onBack, onStartClick }: BlogIndexPro
 
       <div className="mt-14 border border-[#FF8C42]/20 bg-[#FF8C42]/[0.06] p-6">
         <p className="text-sm text-gray-300">{copy.ctaText}</p>
-        <button
-          type="button"
-          onClick={onStartClick}
-          className="group mt-4 inline-flex items-center gap-2 border border-[#FF8C42] bg-[#FF8C42] px-5 py-2.5 text-xs font-bold uppercase tracking-[0.22em] text-black transition hover:bg-transparent hover:text-[#FF8C42]"
-        >
+        <TrialCtaButton className="mt-4" onClick={onStartClick}>
           {copy.ctaButton}
-          <ArrowUpRight className="h-4 w-4" />
-        </button>
+        </TrialCtaButton>
       </div>
     </BlogShell>
   );

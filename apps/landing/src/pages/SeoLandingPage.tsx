@@ -1,4 +1,5 @@
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { TrialCtaButton } from "../components/TrialCtaButton";
 import { useMemo } from "react";
 import { useSeo } from "../hooks/useSeo";
 import { getLandingContent } from "../lib/landing-content";
@@ -51,14 +52,9 @@ export default function SeoLandingPage({
         <h1 className="mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl">{page.h1}</h1>
         <p className="mt-4 text-base leading-relaxed text-gray-400">{page.subtitle}</p>
 
-        <button
-          type="button"
-          onClick={onStartClick}
-          className="group mt-8 inline-flex items-center gap-2 border border-[#FF8C42] bg-[#FF8C42] px-6 py-3 text-xs font-bold uppercase tracking-[0.24em] text-black transition hover:bg-transparent hover:text-[#FF8C42]"
-        >
+        <TrialCtaButton className="mt-8" ring shine onClick={onStartClick}>
           {page.cta}
-          <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-        </button>
+        </TrialCtaButton>
 
         <article className="mt-12 space-y-8">
           {page.sections.map((section, i) => (
