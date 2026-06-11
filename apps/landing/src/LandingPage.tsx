@@ -1,6 +1,7 @@
-import { ArrowDownRight, ArrowUpRight, Menu, Plus, X } from "lucide-react";
+import { Menu, Plus, X } from "lucide-react";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { HeroWaveCanvas } from "./components/HeroWaveCanvas";
+import { TickerBar } from "./components/TickerBar";
 import { MarketSelector } from "./components/MarketSelector";
 import {
   LaunchOfferBadge,
@@ -14,7 +15,6 @@ import { useMarket } from "./hooks/useMarket";
 import { getLandingContent } from "./lib/landing-content";
 import { submitTrialSignup } from "./lib/trialSignup";
 import { formatPlanPrice, formatOriginalPlanPrice, getPlansForMarket, launchSavingsPct } from "./lib/plans";
-import { useMarketTicker } from "./hooks/useMarketTicker";
 
 const AnimatedWealthChart = lazy(() =>
   import("./components/AnimatedWealthChart").then((m) => ({ default: m.AnimatedWealthChart })),
@@ -35,40 +35,6 @@ export type LandingPageProps = {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // ============================== UI HELPERS ==============================
-
-function TickerBar() {
-  const { items } = useMarketTicker();
-
-  return (
-    <div className="relative z-40 overflow-hidden border-y border-white/[0.08] bg-black/90 backdrop-blur-xl">
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-32 bg-gradient-to-r from-black to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-32 bg-gradient-to-l from-black to-transparent" />
-      <div className="flex w-max tk-marquee">
-        {[...items, ...items].map((item, i) => (
-          <div
-            key={`${item.symbol}-${i}`}
-            className="flex shrink-0 items-center gap-3 border-r border-white/[0.06] px-6 py-2.5 font-mono text-[11px]"
-          >
-            <span className="tracking-[0.18em] text-gray-500">{item.symbol}</span>
-            <span className="num font-semibold text-white">{item.price}</span>
-            <span
-              className={`num inline-flex items-center gap-1 font-semibold ${
-                item.up ? "text-tk-green" : "text-tk-red"
-              }`}
-            >
-              {item.up ? (
-                <ArrowUpRight className="h-3 w-3" aria-hidden />
-              ) : (
-                <ArrowDownRight className="h-3 w-3" aria-hidden />
-              )}
-              {item.delta}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function CrossMark({ className = "" }: { className?: string }) {
   return (
@@ -98,7 +64,7 @@ function SectionLabel({ index, label, total = "04" }: { index: string; label: st
       <span className="text-[#FF8C42]">[{index}]</span>
       <span className="h-px w-8 bg-white/20" aria-hidden />
       <span className="text-white">{label}</span>
-      <span className="text-gray-600">/ {total}</span>
+      <span className="text-gray-400">/ {total}</span>
     </div>
   );
 }
@@ -213,7 +179,7 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
       {/* =================== NAV ===================== */}
       <nav className="fixed top-0 z-50 w-full border-b border-white/[0.06] bg-black/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-3.5">
-          <a href="/" className="group flex items-center gap-2.5">
+          <a href="/" className="group -ml-2 flex min-h-11 min-w-11 items-center gap-2.5 rounded-sm p-2">
             <img
               src="/logo-trackion.webp"
               alt="Trackion"
@@ -242,12 +208,12 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-3 sm:gap-4">
             <button
               type="button"
               aria-label={mobileNavOpen ? t.navMenuClose : t.navMenuOpen}
               onClick={() => setMobileNavOpen((v) => !v)}
-              className="inline-flex h-9 w-9 items-center justify-center border border-white/15 text-gray-400 transition hover:text-white md:hidden"
+              className="inline-flex h-11 w-11 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center border border-white/15 text-gray-400 transition hover:text-white md:hidden"
             >
               {mobileNavOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
@@ -300,11 +266,12 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
         </div>
       )}
 
-      {/* TICKER abaixo do nav */}
-      <div className={`fixed z-40 w-full ${affiliateBanner ? "top-[89px]" : "top-[57px]"}`}>
+      {/* TICKER abaixo do nav — z-[51] fica acima do glow do CTA (nav z-50) */}
+      <div className={`fixed z-[51] w-full ${affiliateBanner ? "top-[89px]" : "top-[57px]"}`}>
         <TickerBar />
       </div>
 
+      <main id="main-content">
       {/* =================== HERO ===================== */}
       <section className={`relative z-[1] pb-24 sm:pb-32 ${affiliateBanner ? "pt-[11rem] sm:pt-[12.5rem]" : "pt-[8.5rem] sm:pt-[10rem]"}`}>
         {/* Onda animada no rodapé do hero */}
@@ -381,6 +348,7 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
                     alt="Trackion Dashboard Desktop"
                     width={1536}
                     height={1024}
+                    sizes="(min-width: 1280px) 720px, (min-width: 1024px) 580px, 100vw"
                     className="relative z-10 mx-auto block h-auto w-full drop-shadow-[0_30px_80px_rgba(0,0,0,0.7)]"
                     decoding="async"
                     fetchPriority="high"
@@ -491,7 +459,7 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
 
           {/* EXCHANGES TABLE */}
           <div className="mt-20 border-y border-white/[0.08]">
-            <div className="grid grid-cols-[1fr_auto_auto] items-center gap-6 border-b border-white/[0.06] px-2 py-3 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500">
+            <div className="grid grid-cols-[1fr_auto_auto] items-center gap-6 border-b border-white/[0.06] px-2 py-3 font-mono text-[10px] uppercase tracking-[0.28em] text-gray-400">
               <span>{t.integrations.tableHeaders.exchange}</span>
               <span className="hidden sm:inline">{t.integrations.tableHeaders.type}</span>
               <span>{t.integrations.tableHeaders.status}</span>
@@ -928,6 +896,8 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
           </div>
         </div>
       </section>
+
+      </main>
 
       {/* =================== FOOTER ===================== */}
       <footer className="relative z-[1] bg-black">

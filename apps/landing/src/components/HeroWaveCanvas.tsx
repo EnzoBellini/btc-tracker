@@ -3,8 +3,6 @@ import { useEffect, useRef } from "react";
 
 const BRAND_ORANGE = { r: 255, g: 140, b: 66 } as const;
 const WAVE_DARK_ORANGE = { r: 188, g: 92, b: 42 } as const;
-const TARGET_FPS = 30;
-const FRAME_BUDGET_MS = 1000 / TARGET_FPS;
 
 export type HeroWaveCanvasProps = {
   className?: string;
@@ -37,14 +35,14 @@ function dotColor(variant: NonNullable<HeroWaveCanvasProps["variant"]>, intensit
   )}, ${alpha})`;
 }
 
-function gridDensity(cw: number, ch: number, coarsePointer: boolean) {
-  if (coarsePointer) {
+/** Grade idêntica ao site em produção — densidade cheia, sem pular pontos. */
+function gridSize(cw: number, ch: number, lite: boolean) {
+  if (lite) {
     return {
       columns: Math.max(72, Math.floor(cw / 10)),
       rows: Math.max(36, Math.floor(ch / 8)),
     };
   }
-
   return {
     columns: Math.max(128, Math.floor(cw / 8)),
     rows: Math.max(54, Math.floor(ch / 6)),
@@ -71,11 +69,10 @@ export function HeroWaveCanvas({
     let lastTime = performance.now();
     let elapsedSeconds = 0;
     let reducedMotion = false;
-    let visible = true;
-    let nextFrameAt = 0;
+    let visible = false;
 
     const motionMedia = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const coarseMedia = window.matchMedia("(pointer: coarse)");
+    const liteMedia = window.matchMedia("(pointer: coarse) and (max-width: 767px)");
 
     const updateReducedMotion = () => {
       reducedMotion = motionMedia.matches;
@@ -83,30 +80,17 @@ export function HeroWaveCanvas({
     updateReducedMotion();
     motionMedia.addEventListener("change", updateReducedMotion);
 
-    const visibilityObserver = new IntersectionObserver(
-      ([entry]) => {
-        visible = entry?.isIntersecting ?? false;
-      },
-      { rootMargin: "120px 0px" },
-    );
-    visibilityObserver.observe(container);
-
-    const syncVisibility = () => {
-      if (document.hidden) {
-        visible = false;
-        return;
+    const stopLoop = () => {
+      if (animationFrame) {
+        window.cancelAnimationFrame(animationFrame);
+        animationFrame = 0;
       }
-      const rect = container.getBoundingClientRect();
-      visible = rect.bottom > -120 && rect.top < window.innerHeight + 120;
     };
-    document.addEventListener("visibilitychange", syncVisibility);
 
     const paint = (time: number) => {
-      animationFrame = window.requestAnimationFrame(paint);
+      animationFrame = 0;
 
       if (!visible) return;
-      if (time < nextFrameAt) return;
-      nextFrameAt = time + FRAME_BUDGET_MS;
 
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const cw = container.clientWidth;
@@ -132,9 +116,8 @@ export function HeroWaveCanvas({
       ctx.clearRect(0, 0, cw, ch);
       ctx.globalCompositeOperation = "lighter";
 
-      const { columns, rows } = gridDensity(cw, ch, coarseMedia.matches);
+      const { columns, rows } = gridSize(cw, ch, liteMedia.matches);
       const scrollLift = Math.max(0, Math.min(1, scrollProgressRef.current)) * ch * 0.08;
-      let lastFill = "";
 
       for (let row = 0; row < rows; row += 1) {
         const depth = row / (rows - 1);
@@ -159,27 +142,49 @@ export function HeroWaveCanvas({
           const intensity = Math.min(1, Math.max(0.38, 0.55 + elevation * 2.3 + depth * 0.22));
           const alpha = 0.34 * horizonFade * sideFade * (0.8 + intensity * 0.35);
           const radius = 0.78 + depth * 2.45 + Math.max(elevation, 0) * 3.2;
-          const fill = dotColor(variant, intensity, alpha);
-
-          if (fill !== lastFill) {
-            ctx.fillStyle = fill;
-            lastFill = fill;
-          }
 
           ctx.beginPath();
+          ctx.fillStyle = dotColor(variant, intensity, alpha);
           ctx.arc(x, y, radius, 0, Math.PI * 2);
           ctx.fill();
         }
       }
 
       ctx.globalCompositeOperation = "source-over";
+      animationFrame = window.requestAnimationFrame(paint);
     };
 
-    animationFrame = window.requestAnimationFrame((time) => {
-      lastTime = time;
-      nextFrameAt = time;
-      paint(time);
-    });
+    const startLoop = () => {
+      if (animationFrame || !visible) return;
+      lastTime = performance.now();
+      animationFrame = window.requestAnimationFrame(paint);
+    };
+
+    const visibilityObserver = new IntersectionObserver(
+      ([entry]) => {
+        visible = entry?.isIntersecting ?? false;
+        if (visible) startLoop();
+        else stopLoop();
+      },
+      { rootMargin: "80px 0px" },
+    );
+    visibilityObserver.observe(container);
+
+    const syncVisibility = () => {
+      if (document.hidden) {
+        visible = false;
+        stopLoop();
+        return;
+      }
+      const rect = container.getBoundingClientRect();
+      const inView = rect.bottom > -80 && rect.top < window.innerHeight + 80;
+      if (inView !== visible) {
+        visible = inView;
+        if (visible) startLoop();
+        else stopLoop();
+      }
+    };
+    document.addEventListener("visibilitychange", syncVisibility);
 
     const ro = new ResizeObserver(() => {
       lastTime = performance.now();
@@ -187,7 +192,7 @@ export function HeroWaveCanvas({
     ro.observe(container);
 
     return () => {
-      window.cancelAnimationFrame(animationFrame);
+      stopLoop();
       ro.disconnect();
       visibilityObserver.disconnect();
       document.removeEventListener("visibilitychange", syncVisibility);

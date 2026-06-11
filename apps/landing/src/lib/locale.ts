@@ -96,7 +96,7 @@ export function setMarketPreference(market: Market): void {
   } catch {
     /* ignore */
   }
-  document.documentElement.lang = market === "us" ? "en" : "pt-BR";
+  document.documentElement.lang = market === "us" ? "en-US" : "pt-BR";
 }
 
 /** Detecta mercado: EUA → inglês/USD; demais → pt-BR/BRL. */

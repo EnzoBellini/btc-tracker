@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @source "../**/*.{ts,tsx}";
 
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Instrument+Serif:ital@0;1&display=swap");
+@import url("https://fonts.cdnfonts.com/css/microgramma-d-extended");
+@import url("https://fonts.cdnfonts.com/css/eurostile-extended");
+
 @theme {
   --font-sans: "Microgramma D Extended", "Microgramma", "Eurostile Extended", "Eurostile", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -63,6 +67,10 @@
 }
 
 /* ---------- Marquee (ticker bar) ---------- */
+.tk-ticker-bar {
+  isolation: isolate;
+}
+
 @keyframes tk-marquee {
   from {
     transform: translateX(0);

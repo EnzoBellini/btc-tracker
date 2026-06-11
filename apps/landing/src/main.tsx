@@ -1,6 +1,10 @@
+import "./lib/trusted-types";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./styles/index.css";
+import { prefetchMarketTicker } from "./lib/marketTicker";
+
+prefetchMarketTicker();
 
 const fpAccountId = import.meta.env.VITE_FIRSTPROMOTER_ACCOUNT_ID as string | undefined;
 if (fpAccountId?.trim()) {

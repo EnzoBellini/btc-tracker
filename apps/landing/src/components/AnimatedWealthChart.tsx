@@ -9,6 +9,8 @@ const SAMPLES = Array.from({ length: 140 }, (_, index) => {
   return Math.max(0.06, Math.min(0.92, trend + softMovement - calmPullback));
 });
 
+const CHART_FRAME_MS = 1000 / 20;
+
 function useLinearProgress(active: boolean, durationMs = 7800) {
   const [progress, setProgress] = useState(0);
   const frameRef = useRef<number>();
@@ -20,6 +22,7 @@ function useLinearProgress(active: boolean, durationMs = 7800) {
     }
 
     const start = performance.now();
+    let nextFrameAt = start;
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     const tick = (time: number) => {
@@ -29,7 +32,10 @@ function useLinearProgress(active: boolean, durationMs = 7800) {
       }
 
       const nextProgress = Math.min((time - start) / durationMs, 1);
-      setProgress(nextProgress);
+      if (time >= nextFrameAt || nextProgress >= 1) {
+        nextFrameAt = time + CHART_FRAME_MS;
+        setProgress(nextProgress);
+      }
 
       if (nextProgress < 1) {
         frameRef.current = window.requestAnimationFrame(tick);

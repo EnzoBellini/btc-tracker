@@ -1,11 +1,21 @@
 import { useEffect, useState } from "react";
-import { fetchMarketTicker, type MarketTickerItem } from "@/lib/marketTicker";
+import {
+  fetchMarketTicker,
+  readCachedMarketTicker,
+  TICKER_FALLBACK_ITEMS,
+  writeCachedMarketTicker,
+  type MarketTickerItem,
+} from "@/lib/marketTicker";
 
 const REFRESH_MS = 30_000;
 
+function initialTickerItems(): MarketTickerItem[] {
+  return readCachedMarketTicker() ?? TICKER_FALLBACK_ITEMS;
+}
+
 export function useMarketTicker() {
-  const [items, setItems] = useState<MarketTickerItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<MarketTickerItem[]>(initialTickerItems);
+  const [loading, setLoading] = useState(() => readCachedMarketTicker() === null);
 
   useEffect(() => {
     let cancelled = false;
@@ -13,9 +23,11 @@ export function useMarketTicker() {
     async function load() {
       try {
         const next = await fetchMarketTicker();
-        if (!cancelled) setItems(next);
+        if (cancelled || next.length === 0) return;
+        writeCachedMarketTicker(next);
+        setItems(next);
       } catch {
-        /* mantém último estado ou array vazio */
+        /* mantém cache / fallback */
       } finally {
         if (!cancelled) setLoading(false);
       }
