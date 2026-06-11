@@ -20,7 +20,7 @@ export type SeoPageContent = {
   related: { label: string; path: string }[];
 };
 
-const PAGES: SeoPageContent[] = [
+export const PAGES: SeoPageContent[] = [
   // ── BR ──────────────────────────────────────────────────────────
   {
     id: "br-trading-journal",
@@ -75,7 +75,7 @@ const PAGES: SeoPageContent[] = [
   {
     id: "br-diario-trades",
     market: "br",
-    paths: ["/diario-de-trades", "/diario-trades-criptomoeda"],
+    paths: ["/diario-de-trades", "/diario-trades-criptomoeda", "/controle-operacoes-crypto", "/historico-trades-crypto"],
     meta: {
       title: "Diário de Trades para Criptomoedas — Registro Automático | Trackion",
       description:
@@ -284,7 +284,7 @@ const PAGES: SeoPageContent[] = [
   {
     id: "br-binance",
     market: "br",
-    paths: ["/journal-binance", "/trading-journal-binance"],
+    paths: ["/journal-binance", "/trading-journal-binance", "/diario-trades-binance", "/controle-trades-binance"],
     meta: {
       title: "Trading Journal Binance — Sync API & Analytics | Trackion",
       description:
@@ -308,7 +308,7 @@ const PAGES: SeoPageContent[] = [
   {
     id: "br-bitget",
     market: "br",
-    paths: ["/journal-bitget"],
+    paths: ["/journal-bitget", "/diario-trades-bitget", "/controle-trades-bitget"],
     meta: {
       title: "Trading Journal Bitget — Sync API Automático | Trackion",
       description: "Journal Bitget com importação automática de trades via API. Futuros, spot, métricas e gestão de risco integrados.",
@@ -326,7 +326,7 @@ const PAGES: SeoPageContent[] = [
   {
     id: "br-mexc",
     market: "br",
-    paths: ["/journal-mexc"],
+    paths: ["/journal-mexc", "/diario-trades-mexc", "/controle-trades-mexc"],
     meta: {
       title: "Trading Journal MEXC — Registro Automático de Trades | Trackion",
       description: "Diário de trades MEXC com sync API. Futuros e spot, analytics profissional. 14 dias Elite grátis.",
@@ -431,16 +431,18 @@ const PAGES: SeoPageContent[] = [
   {
     id: "br-planilha",
     market: "br",
-    paths: ["/planilha-trades-crypto", "/substituir-planilha-trading"],
+    paths: ["/planilha-trades-crypto", "/substituir-planilha-trading", "/planilha-de-trades", "/excel-trading-crypto"],
     meta: {
       title: "Substitua Planilha de Trades Crypto — Journal Automático | Trackion",
       description:
-        "Cansado de planilha de trades? Sync automático com exchange, métricas prontas e zero fórmula quebrada. Migre para o Trackion.",
+        "Cansado de planilha de trades? Sync automático com exchange, métricas prontas e zero fórmula quebrada. Migre para o Trackion — trial 14 dias grátis.",
       keywords: [
         "planilha de trades",
         "planilha trading crypto",
         "substituir planilha trades",
         "excel trading bitcoin",
+        "planilha excel trading",
+        "substituir excel trading",
       ],
     },
     h1: "Planilha de trades crypto chegou ao limite?",
@@ -455,6 +457,443 @@ const PAGES: SeoPageContent[] = [
     cta: "Migrar da planilha",
     related: [{ label: "Trading journal", path: "/trading-journal-crypto" }],
   },
+  {
+    id: "br-planilha-trading",
+    market: "br",
+    paths: ["/planilha-de-trading", "/planilha-day-trade", "/planilha-trading-excel"],
+    meta: {
+      title: "Planilha de Trading Crypto — Alternativa Automática ao Excel | Trackion",
+      description:
+        "Substitua sua planilha de trading por um journal com sync Binance, MEXC e Bitget. Win rate, PnL e drawdown prontos — sem fórmula quebrada. Trial 14 dias grátis.",
+      keywords: [
+        "planilha de trading",
+        "planilha day trade",
+        "planilha trading excel",
+        "planilha day trade crypto",
+        "controle day trade",
+        "planilha operacional trading",
+      ],
+    },
+    h1: "Planilha de trading: quando Excel não aguenta mais",
+    subtitle:
+      "Day trade crypto gera dezenas de execuções por dia. Planilha manual atrasa revisão, distorce PnL e não sincroniza com a exchange. O Trackion importa trades via API e calcula tudo automaticamente.",
+    sections: [
+      {
+        heading: "Por que traders abandonam planilha de trading",
+        body: "Fees, funding, múltiplas exchanges e centenas de linhas por mês quebram qualquer Excel. Um fill esquecido distorce win rate; um fee ignorado infla lucro. Journal com sync elimina erro humano.",
+      },
+      {
+        heading: "Do day trade à revisão semanal em minutos",
+        body: "Conecte API read-only da Binance, MEXC ou Bitget. Trades entram sozinhos, dashboard mostra expectancy e drawdown. Você analisa edge — não mantém fórmula.",
+      },
+      {
+        heading: "Trial grátis para migrar sem risco",
+        body: "14 dias Elite sem cartão. Importe histórico, compare com sua planilha por duas semanas e decida com números reais — não com promessa de template.",
+      },
+    ],
+    faq: [
+      {
+        q: "Planilha de trading ou journal: qual escolher?",
+        a: "Planilha serve para poucos trades manuais. Se você day trade crypto ou opera futuros com volume, journal com sync de exchange economiza horas e entrega PnL confiável.",
+      },
+      {
+        q: "Posso exportar dados do Trackion?",
+        a: "Sim. Seu histórico fica disponível para revisão e você mantém controle total — o journal substitui a planilha, não prende seus dados.",
+      },
+    ],
+    cta: "Substituir planilha de trading",
+    related: [
+      { label: "Planilha de trades crypto", path: "/planilha-trades-crypto" },
+      { label: "Day trade crypto", path: "/day-trade-crypto" },
+    ],
+  },
+  {
+    id: "br-day-trade",
+    market: "br",
+    paths: ["/day-trade-crypto", "/day-trade-criptomoedas", "/journal-day-trade"],
+    meta: {
+      title: "Day Trade Crypto — Journal com Sync Automático | Trackion",
+      description:
+        "Controle day trade de criptomoedas sem planilha. Sync Binance, MEXC e Bitget, win rate, drawdown e limites de risco. Trial Elite 14 dias grátis.",
+      keywords: [
+        "day trade crypto",
+        "day trade criptomoedas",
+        "day trade bitcoin",
+        "journal day trade",
+        "controle day trade",
+        "day trade futuros",
+      ],
+    },
+    h1: "Day trade crypto exige registro — ou você repete erro",
+    subtitle:
+      "Day trade de criptomoedas é volume alto, mercado 24/7 e alavancagem em futuros. Sem journal estruturado, cada sessão vira amnésia seletiva. Trackion registra cada fill automaticamente.",
+    sections: [
+      {
+        heading: "Volume que planilha não acompanha",
+        body: "Scalping e day trade geram dezenas de execuções por sessão. Copiar ordem por ordem atrasa revisão e distorce métricas. API read-only importa tudo em tempo real.",
+      },
+      {
+        heading: "Limites de risco para sessão de day trade",
+        body: "Configure perda máxima diária e pare antes do tilt. Day trade sem teto de loss é roleta — journal audita se você obedeceu às regras.",
+      },
+    ],
+    faq: [
+      {
+        q: "Trackion serve para day trade e swing?",
+        a: "Sim. Qualquer operação em exchange — scalping, day trade, swing ou futuros — entra no journal com tags, notas e métricas por estratégia.",
+      },
+    ],
+    cta: "Começar day trade com método",
+    related: [
+      { label: "Planilha de trading", path: "/planilha-de-trading" },
+      { label: "Futuros crypto", path: "/futuros-crypto" },
+    ],
+  },
+  {
+    id: "br-controle-trades",
+    market: "br",
+    paths: ["/controle-trades-crypto", "/registrar-trades-bitcoin", "/log-trades-criptomoeda"],
+    meta: {
+      title: "Controle de Trades Crypto — Registro Automático | Trackion",
+      description:
+        "Controle trades de Bitcoin e altcoins com sync de exchange. Registro automático, PnL real, win rate e drawdown. Sem planilha manual — trial 14 dias grátis.",
+      keywords: [
+        "controle de trades",
+        "controle trades crypto",
+        "registrar trades bitcoin",
+        "log trades criptomoeda",
+        "controle operações crypto",
+        "registro trades automático",
+      ],
+    },
+    h1: "Controle de trades crypto sem planilha manual",
+    subtitle:
+      "Registrar trades bitcoin e altcoins na mão é onde nasce erro de PnL. Trackion puxa execuções da exchange e monta histórico confiável para revisão e gestão de risco.",
+    sections: [
+      {
+        heading: "Registro automático via API",
+        body: "Binance, MEXC e Bitget conectam com permissão read-only. Cada fill aparece no journal com timestamp, fee e PnL — zero digitação.",
+      },
+      {
+        heading: "Controle multi-exchange em um painel",
+        body: "Opera em mais de uma corretora? PnL consolidado, drawdown global e expectancy por exchange — sem somar abas de browser.",
+      },
+    ],
+    faq: [
+      {
+        q: "Como registrar trades de crypto automaticamente?",
+        a: "Conecte API read-only da sua exchange ao Trackion. O sistema importa execuções passadas e novas, calculando métricas sem cadastro manual.",
+      },
+    ],
+    cta: "Controlar meus trades",
+    related: [
+      { label: "Diário de trades", path: "/diario-de-trades" },
+      { label: "Sync exchange", path: "/sincronizar-exchange-crypto" },
+    ],
+  },
+  {
+    id: "br-journal-brasil",
+    market: "br",
+    paths: ["/trading-journal-brasil", "/journal-trading-brasil", "/ferramenta-trading-brasil"],
+    meta: {
+      title: "Trading Journal Brasil — Diário de Trades Crypto | Trackion",
+      description:
+        "Trading journal feito para traders no Brasil. Sync Binance, MEXC e Bitget, futuros USDT, gestão de risco e psicologia de trade. Trial 14 dias grátis.",
+      keywords: [
+        "trading journal brasil",
+        "journal trading brasil",
+        "diário trades brasil",
+        "ferramenta trading brasil",
+        "app trading crypto brasil",
+        "journal criptomoedas brasil",
+      ],
+    },
+    h1: "Trading journal para traders no Brasil",
+    subtitle:
+      "Traders BR operam futuros USDT, altcoins e stack BTC em exchanges globais. O Trackion foi feito para esse perfil — sync automático, métricas profissionais e trial sem cartão.",
+    sections: [
+      {
+        heading: "Binance, MEXC e Bitget — as exchanges que BR usa",
+        body: "Integração read-only com as corretoras mais populares entre traders brasileiros. Histórico unificado, PnL com fees reais e relatórios por par.",
+      },
+      {
+        heading: "Método antes do feeling",
+        body: "Journal não é luxo — é sobrevivência em mercado 24/7. Win rate, expectancy e revisão semanal separam quem evolui de quem repete ciclo de euforia e loss.",
+      },
+    ],
+    faq: [
+      {
+        q: "Qual o melhor trading journal no Brasil?",
+        a: "Um que sincronize exchanges sem planilha, calcule win rate e drawdown automaticamente e tenha foco em futuros crypto. O Trackion cobre esse perfil com trial grátis.",
+      },
+    ],
+    cta: "Testar journal no Brasil",
+    related: [
+      { label: "Trading journal crypto", path: "/trading-journal-crypto" },
+      { label: "Planilha de trading", path: "/planilha-de-trading" },
+    ],
+  },
+  {
+    id: "br-pnl",
+    market: "br",
+    paths: ["/controle-pnl-crypto", "/calcular-lucro-trades-crypto", "/pnl-trading-bitcoin"],
+    meta: {
+      title: "Controle de PnL Crypto — Lucro Real por Trade | Trackion",
+      description:
+        "Calcule PnL de trades crypto com fees e funding incluídos. Sync automático Binance, MEXC e Bitget. Equity curve e drawdown prontos. Trial grátis.",
+      keywords: [
+        "controle pnl crypto",
+        "calcular lucro trades",
+        "pnl trading bitcoin",
+        "lucro trades criptomoeda",
+        "pnl futuros crypto",
+        "resultado trades exchange",
+      ],
+    },
+    h1: "Controle de PnL crypto: lucro real, não calculadora",
+    subtitle:
+      "PnL de futuros crypto inclui fees, funding e slippage. Planilha e calculadora ignoram metade disso. Trackion importa execuções reais da exchange e mostra resultado verdadeiro.",
+    sections: [
+      {
+        heading: "PnL consolidado multi-exchange",
+        body: "Some contas Binance, MEXC e Bitget em um dashboard. Saiba se o mês foi positivo de verdade — não por aba verde no browser.",
+      },
+      {
+        heading: "Equity curve e drawdown visíveis",
+        body: "Lucro acumulado ao longo do tempo, max drawdown e sequências de loss. PnL isolado por trade mente; curva de equity conta a história completa.",
+      },
+    ],
+    faq: [],
+    cta: "Ver meu PnL real",
+    related: [
+      { label: "Análise de performance", path: "/analise-performance-trading" },
+      { label: "Controle de trades", path: "/controle-trades-crypto" },
+    ],
+  },
+  {
+    id: "br-win-rate",
+    market: "br",
+    paths: ["/win-rate-trading-crypto", "/calculadora-win-rate-trading"],
+    meta: {
+      title: "Win Rate Trading Crypto — Calcule Automaticamente | Trackion",
+      description:
+        "Calcule win rate de trades crypto a partir do histórico da exchange. Filtros por par, horário e estratégia. Expectancy e drawdown inclusos. Trial grátis.",
+      keywords: [
+        "win rate trading",
+        "win rate crypto",
+        "calcular win rate",
+        "taxa de acerto trading",
+        "win rate futuros",
+        "win rate bitcoin",
+      ],
+    },
+    h1: "Win rate em trading crypto: calcule de verdade",
+    subtitle:
+      "Win rate alto sozinho engana — mas sem ele você não enxerga padrão nenhum. Trackion calcula taxa de acerto, expectancy e profit factor do histórico syncado.",
+    sections: [
+      {
+        heading: "Win rate por contexto",
+        body: "Filtre por par, horário, dia da semana ou tag de setup. Talvez você acerte 70% em BTCUSDT de manhã e perca em altcoins à noite — sem filtro, mistura tudo.",
+      },
+      {
+        heading: "Win rate + expectancy = decisão",
+        body: "Taxa de acerto com R:R ruim ainda quebra conta. Dashboard mostra win rate junto com expectancy e drawdown — as três métricas que importam.",
+      },
+    ],
+    faq: [
+      {
+        q: "Qual win rate é bom em crypto?",
+        a: "Depende do R:R médio. 40% de acerto com expectancy positiva pode ser excelente; 70% com losses grandes ainda quebra. Meça expectancy, não só taxa de acerto.",
+      },
+    ],
+    cta: "Calcular meu win rate",
+    related: [{ label: "Análise de performance", path: "/analise-performance-trading" }],
+  },
+  {
+    id: "br-ferramenta",
+    market: "br",
+    paths: ["/ferramenta-trading-crypto", "/app-controle-trades", "/software-trading-crypto"],
+    meta: {
+      title: "Ferramenta de Trading Crypto — Journal Profissional | Trackion",
+      description:
+        "Software para controle de trades crypto: sync exchange, analytics, gestão de risco e psicologia de trade. Substituí planilha Excel. Trial 14 dias grátis.",
+      keywords: [
+        "ferramenta trading crypto",
+        "app controle trades",
+        "software trading criptomoedas",
+        "ferramenta day trade",
+        "app trading journal",
+        "plataforma trading crypto",
+      ],
+    },
+    h1: "Ferramenta de trading crypto feita para operar de verdade",
+    subtitle:
+      "App genérico não sincroniza exchange; planilha não escala. Trackion é software de journal com sync Binance/MEXC/Bitget, métricas profissionais e metas de risco integradas.",
+    sections: [
+      {
+        heading: "Tudo que planilha promete — sem manutenção",
+        body: "Win rate, drawdown, equity curve, tags emocionais, screenshots de setup e revisão semanal. Um produto coeso, não três planilhas que nunca batem PnL.",
+      },
+      {
+        heading: "Trial Elite sem cartão",
+        body: "14 dias grátis para testar se a ferramenta muda sua rotina de revisão. Conecte exchange, importe histórico e compare com seu fluxo atual.",
+      },
+    ],
+    faq: [],
+    cta: "Testar ferramenta grátis",
+    related: [
+      { label: "Trading journal Brasil", path: "/trading-journal-brasil" },
+      { label: "Substituir planilha", path: "/planilha-trades-crypto" },
+    ],
+  },
+  {
+    id: "br-scalping",
+    market: "br",
+    paths: ["/journal-scalping-crypto", "/scalping-bitcoin", "/scalping-criptomoedas"],
+    meta: {
+      title: "Journal para Scalping Crypto — Registro em Tempo Real | Trackion",
+      description:
+        "Scalping bitcoin e altcoins exige registro rápido. Sync automático de execuções, win rate por sessão e controle de risco. Trial Trackion 14 dias grátis.",
+      keywords: [
+        "scalping crypto",
+        "scalping bitcoin",
+        "journal scalping",
+        "scalping criptomoedas",
+        "registro scalping",
+        "scalping futuros",
+      ],
+    },
+    h1: "Scalping crypto: journal que acompanha o ritmo",
+    subtitle:
+      "Scalping gera volume extremo de execuções. Registrar na mão é impossível; revisar sem dados é inútil. Trackion importa fills em tempo real para análise pós-sessão.",
+    sections: [
+      {
+        heading: "Centenas de trades, zero digitação",
+        body: "API read-only captura cada fill com fee e timestamp. Revise sessão de scalping com win rate, expectancy e horários — não com memória falha.",
+      },
+    ],
+    faq: [],
+    cta: "Journal para scalping",
+    related: [
+      { label: "Day trade crypto", path: "/day-trade-crypto" },
+      { label: "Futuros crypto", path: "/futuros-crypto" },
+    ],
+  },
+  {
+    id: "br-revenge",
+    market: "br",
+    paths: ["/revenge-trade-crypto", "/overtrading-crypto", "/tilt-trading-criptomoedas"],
+    meta: {
+      title: "Revenge Trade e Overtrading em Crypto — Pare com Dados | Trackion",
+      description:
+        "Pare revenge trade e overtrading em criptomoedas. Limites diários, tags emocionais e journal que expõe padrão destrutivo. Trial Trackion 14 dias grátis.",
+      keywords: [
+        "revenge trade",
+        "overtrading crypto",
+        "tilt trading",
+        "revenge trade criptomoeda",
+        "operar no impulso crypto",
+        "disciplina day trade",
+      ],
+    },
+    h1: "Revenge trade: o journal mostra o que emoção esconde",
+    subtitle:
+      "Dobrar mão após stop, overtrading após win, operar no tilt — padrões repetidos que planilha não tagueia. Trackion marca contexto emocional e mede custo real.",
+    sections: [
+      {
+        heading: "Limite diário como freio",
+        body: "Configure perda máxima por sessão e pare quando atingir. Mercado abre amanhã; conta zerada não. Journal audita quantas vezes você violou a regra.",
+      },
+      {
+        heading: "Tags emocionais revelam padrão",
+        body: "Marque trades como revenge, FOMO ou tilt. Compare expectancy delas vs. setups planejados — a diferença educa mais que qualquer thread.",
+      },
+    ],
+    faq: [],
+    cta: "Controlar revenge trade",
+    related: [
+      { label: "Psicologia do trading", path: "/psicologia-do-trading" },
+      { label: "FOMO trading", path: "/fomo-trading" },
+    ],
+  },
+  {
+    id: "br-expectancy",
+    market: "br",
+    paths: ["/expectancy-trading-crypto", "/profit-factor-trading", "/metricas-trading-profissional"],
+    meta: {
+      title: "Expectancy e Profit Factor em Trading Crypto | Trackion",
+      description:
+        "Calcule expectancy e profit factor de trades crypto automaticamente. Sync exchange, filtros por estratégia e drawdown. Trial Elite 14 dias grátis.",
+      keywords: [
+        "expectancy trading",
+        "profit factor trading",
+        "expectancy crypto",
+        "métricas trading profissional",
+        "expectativa matemática trading",
+        "profit factor criptomoeda",
+      ],
+    },
+    h1: "Expectancy: a métrica que separa método de sorte",
+    subtitle:
+      "Win rate impressiona; expectancy decide se você sobrevive. Trackion calcula lucro médio esperado por trade, profit factor e drawdown do histórico real da exchange.",
+    sections: [
+      {
+        heading: "Expectancy positiva com risco controlado",
+        body: "Processo sustentável = expectancy positiva + drawdown tolerável. Dashboard atualiza a cada sync — você vê se estratégia evolui ou estagnou.",
+      },
+    ],
+    faq: [
+      {
+        q: "O que é expectancy em trading?",
+        a: "Lucro médio esperado por operação ao longo do tempo. Positiva com gestão de risco indica edge real; negativa com win rate alto indica ilusão.",
+      },
+    ],
+    cta: "Ver minha expectancy",
+    related: [{ label: "Win rate trading", path: "/win-rate-trading-crypto" }],
+  },
+  {
+    id: "br-darf",
+    market: "br",
+    paths: ["/controle-trades-darf", "/day-trade-imposto-renda", "/organizar-trades-ir"],
+    meta: {
+      title: "Controle de Trades para DARF e IR — Day Trade Crypto | Trackion",
+      description:
+        "Organize trades crypto para declaração de IR e DARF de day trade. Histórico confiável via sync de exchange, PnL por mês e exportação. Trial grátis.",
+      keywords: [
+        "controle trades darf",
+        "day trade imposto renda",
+        "declarar trades crypto",
+        "ir day trade crypto",
+        "organizar trades imposto",
+        "controle operações ir",
+      ],
+    },
+    h1: "Controle de trades para DARF e IR: histórico que confia",
+    subtitle:
+      "Day trade crypto exige organização para imposto de renda. Planilha desatualizada gera erro na DARF. Trackion mantém histórico syncado com PnL real por período.",
+    sections: [
+      {
+        heading: "Histórico confiável por mês",
+        body: "Execuções importadas da exchange com fees refletidos. Filtre por mês, exchange e par para consolidar resultado — base sólida para contador ou declaração.",
+      },
+      {
+        heading: "Menos planilha, menos erro na DARF",
+        body: "PnL que bate com extrato da corretora reduz surpresa na hora do IR. Journal atualizado diariamente, não 'quando sobra tempo'.",
+      },
+    ],
+    faq: [
+      {
+        q: "Trackion substitui contador?",
+        a: "Não. Trackion organiza histórico e PnL de trades; consulte contador para DARF e declaração de IR conforme legislação vigente.",
+      },
+    ],
+    cta: "Organizar trades para IR",
+    related: [
+      { label: "Controle de trades", path: "/controle-trades-crypto" },
+      { label: "Day trade crypto", path: "/day-trade-crypto" },
+    ],
+  },
+
   {
     id: "br-cripto-geral",
     market: "br",
@@ -867,8 +1306,8 @@ export function getSeoPagesForMarket(market: Market): SeoPageContent[] {
   return PAGES.filter((page) => page.market === market);
 }
 
-export function buildSeoPageMeta(page: SeoPageContent, canonicalPath: string): SeoMeta {
-  const path = canonicalPath.startsWith("/") ? canonicalPath : `/${canonicalPath}`;
+export function buildSeoPageMeta(page: SeoPageContent, _canonicalPath: string): SeoMeta {
+  const path = page.paths[0].startsWith("/") ? page.paths[0] : `/${page.paths[0]}`;
   return {
     ...page.meta,
     path,

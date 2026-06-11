@@ -267,6 +267,119 @@ const POSTS: BlogPost[] = [
     ],
     relatedSlugs: ["gestao-risco-futuros-crypto", "trading-journal-vs-feeling", "sincronizar-exchange-journal"],
   },
+  {
+    slug: "planilha-de-trading-crypto",
+    market: "br",
+    publishedAt: "2026-06-12",
+    readMinutes: 7,
+    title: "Planilha de trading crypto: guia para substituir Excel por journal automático",
+    excerpt:
+      "Planilha de trading funciona até certo volume. Veja quando migrar para journal com sync de exchange, como comparar PnL e gerar leads de consistência no day trade.",
+    tags: ["Planilha", "Day trade", "Trading", "Journal"],
+    keywords: [
+      "planilha de trading",
+      "planilha day trade",
+      "planilha trading excel",
+      "substituir planilha trading",
+      "journal trading crypto",
+    ],
+    sections: [
+      {
+        paragraphs: [
+          "Buscar \"planilha de trading\" no Google ainda retorna templates de corretoras e vídeos de Excel. Funciona para quem opera pouco. Day trade crypto em 2026 quebra esse modelo: funding, fees, multi-exchange e centenas de fills por mês.",
+          "A pergunta não é se planilha é ruim — é quando ela virou gargalo. Se você gasta mais tempo mantendo fórmula do que revisando edge, cruzou a linha.",
+        ],
+      },
+      {
+        heading: "Sinais de que planilha de trading não escala",
+        paragraphs: [
+          "PnL da planilha não bate com extrato da exchange. Você adia atualização \"para o fim do dia\" e nunca atualiza. Tem abas diferentes por corretora e nunca consolidou resultado global.",
+          "Journal com API read-only resolve sync; você mantém planilha paralela duas semanas e compara. Quando números convergem e planilha fica obsoleta, migração se paga.",
+        ],
+      },
+      {
+        heading: "Do template ao trial em 15 minutos",
+        paragraphs: [
+          "Trackion oferece trial Elite 14 dias sem cartão. Conecte Binance, MEXC ou Bitget, importe histórico e rode checklist de revisão semanal no journal — não na aba Mensal do Excel.",
+        ],
+      },
+    ],
+    relatedSlugs: ["planilha-trades-futuros-crypto", "day-trade-crypto-sem-planilha", "trading-journal-brasil-2026"],
+  },
+  {
+    slug: "day-trade-crypto-sem-planilha",
+    market: "br",
+    publishedAt: "2026-06-12",
+    readMinutes: 6,
+    title: "Day trade crypto sem planilha: controle de trades com sync automático",
+    excerpt:
+      "Day trade de criptomoedas exige registro em tempo real. Aprenda a controlar trades, win rate e drawdown sem Excel — com journal conectado à exchange.",
+    tags: ["Day trade", "Controle", "Crypto", "Sync"],
+    keywords: [
+      "day trade crypto",
+      "controle day trade",
+      "day trade sem planilha",
+      "controle trades crypto",
+      "journal day trade",
+    ],
+    sections: [
+      {
+        paragraphs: [
+          "Day trade crypto combina volume alto, mercado 24/7 e alavancagem em futuros. Registrar manualmente atrasa revisão e abre espaço para erro de PnL — especialmente com partial fills e fees maker/taker.",
+        ],
+      },
+      {
+        heading: "Sync read-only: trades entram sozinhos",
+        paragraphs: [
+          "API somente leitura importa execuções com timestamp e fee corretos. Você adiciona contexto — tag de setup, emoção, screenshot — sem redigitar cada ordem.",
+        ],
+      },
+      {
+        heading: "Limites de risco por sessão",
+        paragraphs: [
+          "Day trade sem teto diário de loss vira tilt rápido. Configure perda máxima e deixe journal auditar compliance. Profissionais param quando o plano manda.",
+        ],
+      },
+    ],
+    relatedSlugs: ["planilha-de-trading-crypto", "gestao-risco-futuros-crypto", "win-rate-expectancy-crypto"],
+  },
+  {
+    slug: "trading-journal-brasil-2026",
+    market: "br",
+    publishedAt: "2026-06-12",
+    readMinutes: 6,
+    title: "Melhor trading journal para traders no Brasil em 2026",
+    excerpt:
+      "Critérios para escolher journal no Brasil: sync Binance/MEXC/Bitget, futuros USDT, métricas profissionais e trial sem cartão. Comparativo prático.",
+    tags: ["Brasil", "Journal", "Trading", "Ferramenta"],
+    keywords: [
+      "trading journal brasil",
+      "melhor journal trading",
+      "ferramenta trading brasil",
+      "app trading crypto brasil",
+      "diário trades brasil",
+    ],
+    sections: [
+      {
+        paragraphs: [
+          "Trader brasileiro opera exchanges globais — Binance, MEXC, Bitget — em futuros USDT e altcoins. Journal genérico ou planilha local não reflete esse fluxo.",
+        ],
+      },
+      {
+        heading: "O que exigir de um journal em 2026",
+        paragraphs: [
+          "Sync automático read-only, PnL com fees reais, win rate/expectancy/drawdown, tags emocionais, multi-exchange e trial sem cartão. Sem isso, volta para planilha em duas semanas.",
+        ],
+      },
+      {
+        heading: "Trackion: feito para crypto, não adaptado de ações",
+        paragraphs: [
+          "Futuros, spot, stack BTC e psicologia de trade no mesmo produto. Trial Elite 14 dias para validar se dados mudam sua rotina de revisão.",
+        ],
+      },
+    ],
+    relatedSlugs: ["trading-journal-vs-feeling", "sincronizar-exchange-journal", "planilha-de-trading-crypto"],
+  },
 
   // ── EN-US ───────────────────────────────────────────────────────
   {
@@ -598,6 +711,10 @@ export function buildBlogIndexMeta(market: Market): SeoMeta {
       ]),
     ],
   };
+}
+
+export function getAllPosts(): BlogPost[] {
+  return POSTS;
 }
 
 export function getAllBlogPaths(): string[] {

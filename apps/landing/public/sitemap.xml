@@ -1,21 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml">
-  <url>
-    <loc>https://trackion.app/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://trackion.app/"/>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://trackion.app/?market=us"/>
-  </url>
-
-  <!-- PT-BR SEO guides -->
-  <url><loc>https://trackion.app/trading-journal-crypto</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://trackion.app/diario-de-trades</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://trackion.app/psicologia-do-trading</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://trackion.app/gestao-de-risco-crypto</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://trackion.app/futuros-crypto</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://trackion.app/sincronizar-exchange-crypto</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://trackion.app/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://trackion.app/trading-journal-crypto</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/diario-de-trades</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/psicologia-do-trading</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/gestao-de-risco-crypto</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/futuros-crypto</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/sincronizar-exchange-crypto</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
   <url><loc>https://trackion.app/journal-binance</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
   <url><loc>https://trackion.app/journal-bitget</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
   <url><loc>https://trackion.app/journal-mexc</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
@@ -23,14 +14,23 @@
   <url><loc>https://trackion.app/analise-performance-trading</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
   <url><loc>https://trackion.app/fomo-trading</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
   <url><loc>https://trackion.app/planilha-trades-crypto</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/planilha-de-trading</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/day-trade-crypto</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/controle-trades-crypto</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/trading-journal-brasil</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/controle-pnl-crypto</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/win-rate-trading-crypto</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/ferramenta-trading-crypto</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/journal-scalping-crypto</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/revenge-trade-crypto</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/expectancy-trading-crypto</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/controle-trades-darf</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
   <url><loc>https://trackion.app/criptomoeda-trading</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
-
-  <!-- EN-US SEO guides -->
-  <url><loc>https://trackion.app/crypto-trading-journal</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://trackion.app/trading-psychology-crypto</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://trackion.app/crypto-futures-journal</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://trackion.app/exchange-api-sync</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://trackion.app/crypto-risk-management</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://trackion.app/crypto-trading-journal</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/trading-psychology-crypto</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/crypto-futures-journal</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/exchange-api-sync</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://trackion.app/crypto-risk-management</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
   <url><loc>https://trackion.app/binance-trading-journal</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
   <url><loc>https://trackion.app/bitget-trade-log</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
   <url><loc>https://trackion.app/mexc-trade-log</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
@@ -39,8 +39,6 @@
   <url><loc>https://trackion.app/fomo-crypto-trading</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
   <url><loc>https://trackion.app/crypto-trading-spreadsheet</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
   <url><loc>https://trackion.app/retail-crypto-trading</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
-
-  <!-- Blog -->
   <url><loc>https://trackion.app/blog</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
   <url><loc>https://trackion.app/blog/bitcoin-google-trends-2026</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://trackion.app/blog/psicologia-trading-crypto-fomo</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
@@ -49,19 +47,11 @@
   <url><loc>https://trackion.app/blog/gestao-risco-futuros-crypto</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://trackion.app/blog/trading-journal-vs-feeling</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://trackion.app/blog/analise-performance-win-rate</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://trackion.app/blog/crypto-trading-psychology-fomo</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://trackion.app/blog/crypto-futures-spreadsheet-limit</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://trackion.app/blog/sync-exchange-trading-journal</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://trackion.app/blog/crypto-futures-risk-management</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://trackion.app/blog/trading-journal-vs-gut-feel</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://trackion.app/blog/win-rate-expectancy-crypto</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-
-  <!-- Legal & support -->
-  <url><loc>https://trackion.app/privacidade</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://trackion.app/termos</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://trackion.app/contato</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://trackion.app/status</loc><changefreq>weekly</changefreq><priority>0.4</priority></url>
-  <url><loc>https://trackion.app/privacy</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://trackion.app/terms</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://trackion.app/contact</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://trackion.app/blog/planilha-de-trading-crypto</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://trackion.app/blog/day-trade-crypto-sem-planilha</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://trackion.app/blog/trading-journal-brasil-2026</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://trackion.app/privacidade</loc><changefreq>weekly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://trackion.app/termos</loc><changefreq>weekly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://trackion.app/contato</loc><changefreq>weekly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://trackion.app/status</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>
 </urlset>

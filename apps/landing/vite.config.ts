@@ -3,9 +3,10 @@ import path from "path";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { marketTickerDevPlugin } from "./vite-market-ticker";
+import { seoPrerenderPlugin } from "./vite-seo-prerender";
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), marketTickerDevPlugin()],
+  plugins: [react(), tailwindcss(), marketTickerDevPlugin(), seoPrerenderPlugin()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
