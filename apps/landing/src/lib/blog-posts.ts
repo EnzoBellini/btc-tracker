@@ -2,6 +2,7 @@ import type { Market } from "./locale";
 import { EXPANDED_BLOG } from "./blog-expanded-content";
 import {
   buildArticleJsonLd,
+  buildBlogIndexJsonLd,
   buildBreadcrumbJsonLd,
   buildOrganizationJsonLd,
   type SeoMeta,
@@ -12,6 +13,9 @@ export type BlogSection = {
   paragraphs: string[];
 };
 
+export type BlogCategory = "planilha-de-trading" | "trading-journal";
+export type BlogIntent = "educational" | "comparative";
+
 export type BlogPost = {
   slug: string;
   market: Market;
@@ -21,6 +25,10 @@ export type BlogPost = {
   excerpt: string;
   tags: string[];
   keywords: string[];
+  category: BlogCategory;
+  intent: BlogIntent;
+  isPillar?: boolean;
+  pillarSlug?: string;
   sections: BlogSection[];
   relatedSlugs: string[];
 };
@@ -32,11 +40,14 @@ const POSTS: BlogPost[] = [
     market: "br",
     publishedAt: "2026-06-01",
     readMinutes: 7,
-    title: "Bitcoin no Google Trends em 2026: o que picos de busca realmente significam",
+    title: "Bitcoin no Google Trends 2026: O Que Picos de Busca Significam para Traders",
     excerpt:
-      "Buscas por Bitcoin bateram máximas de 12 meses durante a volatilidade de 2026. Entenda o que isso revela sobre psicologia retail — e por que volume de busca não é estratégia.",
-    tags: ["Bitcoin", "Google Trends", "Criptomoeda", "Psicologia"],
-    keywords: ["bitcoin google trends", "comprar bitcoin", "criptomoeda 2026", "bitcoin zero", "interesse retail crypto"],
+      "Buscas por Bitcoin bateram máximas de 12 meses em 2026. Entenda o que picos no Google Trends revelam sobre psicologia retail — e por que volume de busca não é estratégia de trading.",
+    tags: ["Bitcoin", "Google Trends", "Trading journal", "Psicologia"],
+    keywords: ["bitcoin google trends 2026", "comprar bitcoin", "criptomoeda 2026", "bitcoin zero", "interesse retail crypto"],
+    category: "trading-journal",
+    intent: "educational",
+    pillarSlug: "trading-journal-vs-feeling",
     sections: [
       {
         paragraphs: [
@@ -73,11 +84,14 @@ const POSTS: BlogPost[] = [
     market: "br",
     publishedAt: "2026-06-03",
     readMinutes: 8,
-    title: "Psicologia do trading em crypto: FOMO, medo e revenge trade em dados",
+    title: "Psicologia do Trading em Crypto: FOMO, Medo e Revenge Trade (Guia 2026)",
     excerpt:
-      "64% dos traders retail entram após picos de preço. Veja como journal, tags emocionais e limites de risco transformam psicologia de trade em processo mensurável.",
-    tags: ["Psicologia", "FOMO", "Trading", "Disciplina"],
+      "64% dos traders retail entram após picos de preço. Veja 3 formas de transformar FOMO e revenge trade em dados mensuráveis com journal, tags emocionais e limites de risco.",
+    tags: ["Psicologia", "FOMO", "Trading journal", "Disciplina"],
     keywords: ["psicologia do trading", "FOMO crypto", "revenge trade", "disciplina trading", "emoção no trading"],
+    category: "trading-journal",
+    intent: "educational",
+    pillarSlug: "trading-journal-vs-feeling",
     sections: [
       {
         paragraphs: [
@@ -113,11 +127,14 @@ const POSTS: BlogPost[] = [
     market: "br",
     publishedAt: "2026-06-05",
     readMinutes: 6,
-    title: "Por que planilha de trades não funciona mais em futuros crypto",
+    title: "Por Que Planilha de Trades Não Funciona em Futuros Crypto (2026)",
     excerpt:
-      "Fees, funding, multi-exchange e centenas de execuções por mês quebram qualquer Excel. Entenda quando migrar para um journal com sync automático.",
-    tags: ["Planilha", "Futuros", "Exchange", "Journal"],
+      "Fees, funding e centenas de execuções por mês quebram qualquer Excel. Veja 3 sinais de que é hora de migrar para journal com sync automático — sem perder controle do PnL.",
+    tags: ["Planilha de trading", "Futuros", "Exchange", "Journal"],
     keywords: ["planilha de trades", "excel trading crypto", "futuros crypto", "diário de trades", "substituir planilha"],
+    category: "planilha-de-trading",
+    intent: "comparative",
+    pillarSlug: "planilha-de-trading-crypto",
     sections: [
       {
         paragraphs: [
@@ -138,18 +155,21 @@ const POSTS: BlogPost[] = [
         ],
       },
     ],
-    relatedSlugs: ["sincronizar-exchange-journal", "trading-journal-vs-feeling", "analise-performance-win-rate"],
+    relatedSlugs: ["planilha-de-trading-crypto", "sincronizar-exchange-journal", "trading-journal-vs-feeling", "analise-performance-win-rate"],
   },
   {
     slug: "sincronizar-exchange-journal",
     market: "br",
     publishedAt: "2026-06-07",
     readMinutes: 5,
-    title: "Como sincronizar Binance, MEXC e Bitget no seu trading journal",
+    title: "Journal Automático Conectado à Binance: Guia Sync MEXC e Bitget 2026",
     excerpt:
-      "Passo a passo conceitual para conectar exchanges via API read-only, centralizar futuros e spot e manter histórico confiável para análise.",
-    tags: ["Exchange", "API", "Binance", "Sync"],
-    keywords: ["sincronizar exchange", "API binance read only", "importar trades", "journal bitget", "journal mexc"],
+      "Passo a passo para conectar Binance, MEXC e Bitget via API read-only, centralizar futuros e manter histórico confiável — sem planilha manual.",
+    tags: ["Trading journal", "API", "Binance", "Sync"],
+    keywords: ["journal automático binance", "sincronizar exchange", "API binance read only", "importar trades", "journal bitget"],
+    category: "trading-journal",
+    intent: "comparative",
+    pillarSlug: "trading-journal-vs-feeling",
     sections: [
       {
         paragraphs: [
@@ -177,11 +197,14 @@ const POSTS: BlogPost[] = [
     market: "br",
     publishedAt: "2026-06-09",
     readMinutes: 7,
-    title: "Gestão de risco em futuros crypto: drawdown, stop e limites diários",
+    title: "Gestão de Risco em Futuros Crypto: Drawdown, Stop e Limites Diários (2026)",
     excerpt:
-      "Alavancagem transforma pequeno erro em grande dano. Aprenda a estruturar risco por trade, por dia e por conta — e medir se você realmente obedece às regras.",
-    tags: ["Risco", "Futuros", "Drawdown", "Stop loss"],
+      "Alavancagem transforma pequeno erro em grande dano. Aprenda a estruturar risco por trade, por dia e por conta — e como controlar PnL com dados reais do journal.",
+    tags: ["Risco", "Futuros", "Drawdown", "Trading journal"],
     keywords: ["gestão de risco crypto", "drawdown trading", "stop loss futuros", "position sizing", "limite diário perda"],
+    category: "trading-journal",
+    intent: "educational",
+    pillarSlug: "trading-journal-vs-feeling",
     sections: [
       {
         paragraphs: [
@@ -209,11 +232,14 @@ const POSTS: BlogPost[] = [
     market: "br",
     publishedAt: "2026-06-11",
     readMinutes: 6,
-    title: "Trading journal vs operar no feeling: o que os dados de 2026 mostram",
+    title: "Trading Journal vs Feeling: Dados Reais de Traders Crypto em 2026",
     excerpt:
-      "Retail voltou a olhar crypto, mas institucional domina volume. Quem sobrevive sem journal repete ciclo de euforia, capitulação e reentrada tardia.",
+      "Retail voltou a olhar crypto, mas quem opera no feeling repete euforia e capitulação. Veja o que dados de 2026 mostram — e por que journal vence memória seletiva.",
     tags: ["Trading journal", "Método", "Retail", "Dados"],
-    keywords: ["trading journal", "operar no feeling", "trading com método", "retail crypto", "diário de trades"],
+    keywords: ["trading journal", "journal vs feeling", "operar no feeling", "trading com método", "diário de trades crypto"],
+    category: "trading-journal",
+    intent: "educational",
+    isPillar: true,
     sections: [
       {
         paragraphs: [
@@ -241,11 +267,14 @@ const POSTS: BlogPost[] = [
     market: "br",
     publishedAt: "2026-06-10",
     readMinutes: 6,
-    title: "Win rate, expectancy e drawdown: as métricas que todo trader crypto ignora",
+    title: "Como Controlar PnL: Win Rate, Expectancy e Drawdown (Guia 2026)",
     excerpt:
-      "Win rate sozinho engana. Entenda expectancy, profit factor e drawdown — e como calculá-los automaticamente a partir do histórico da exchange.",
-    tags: ["Analytics", "Win rate", "Expectancy", "Métricas"],
-    keywords: ["win rate crypto", "expectancy trading", "profit factor", "análise de performance", "métricas trading"],
+      "Win rate sozinho engana. Entenda expectancy, profit factor e drawdown — e como calculá-los automaticamente a partir do histórico da exchange, sem Excel.",
+    tags: ["Analytics", "Win rate", "Trading journal", "Métricas"],
+    keywords: ["como controlar pnl", "win rate crypto", "expectancy trading", "profit factor", "métricas trading"],
+    category: "trading-journal",
+    intent: "educational",
+    pillarSlug: "trading-journal-vs-feeling",
     sections: [
       {
         paragraphs: [
@@ -272,72 +301,96 @@ const POSTS: BlogPost[] = [
     market: "br",
     publishedAt: "2026-06-12",
     readMinutes: 7,
-    title: "Planilha de trading crypto: guia para substituir Excel por journal automático",
+    title: "Planilha de Trading em Criptomoedas: Guia Completo 2026",
     excerpt:
-      "Planilha de trading funciona até certo volume. Veja quando migrar para journal com sync de exchange, como comparar PnL e gerar leads de consistência no day trade.",
-    tags: ["Planilha", "Day trade", "Trading", "Journal"],
+      "Planilha de trading grátis funciona até certo volume. Guia completo para substituir Excel por journal automático — sync Binance, controle de PnL e teste grátis 14 dias.",
+    tags: ["Planilha de trading", "Day trade", "Crypto", "Journal"],
     keywords: [
       "planilha de trading",
+      "planilha de trading crypto",
       "planilha day trade",
       "planilha trading excel",
       "substituir planilha trading",
-      "journal trading crypto",
     ],
+    category: "planilha-de-trading",
+    intent: "comparative",
+    isPillar: true,
     sections: [
       {
         paragraphs: [
-          "Buscar \"planilha de trading\" no Google ainda retorna templates de corretoras e vídeos de Excel. Funciona para quem opera pouco. Day trade crypto em 2026 quebra esse modelo: funding, fees, multi-exchange e centenas de fills por mês.",
+          "Buscar \"planilha de trading\" no Google ainda retorna templates de corretoras e vídeos de Excel. Funciona para quem opera pouco. [Day trade crypto](/blog/day-trade-crypto-sem-planilha) em 2026 quebra esse modelo: funding, fees, multi-exchange e centenas de fills por mês.",
           "A pergunta não é se planilha é ruim — é quando ela virou gargalo. Se você gasta mais tempo mantendo fórmula do que revisando edge, cruzou a linha.",
         ],
       },
       {
-        heading: "Sinais de que planilha de trading não escala",
+        heading: "3 sinais de que planilha de trading não escala",
         paragraphs: [
           "PnL da planilha não bate com extrato da exchange. Você adia atualização \"para o fim do dia\" e nunca atualiza. Tem abas diferentes por corretora e nunca consolidou resultado global.",
-          "Journal com API read-only resolve sync; você mantém planilha paralela duas semanas e compara. Quando números convergem e planilha fica obsoleta, migração se paga.",
+          "Journal com API read-only resolve sync; você mantém planilha paralela duas semanas e compara. Quando números convergem e planilha fica obsoleta, migração se paga. Veja também [por que planilha falha em futuros](/blog/planilha-trades-futuros-crypto).",
         ],
       },
       {
-        heading: "Do template ao trial em 15 minutos",
+        heading: "Como controlar PnL sem Excel",
+        paragraphs: [
+          "Controle de PnL real exige fees, funding e partial fills — dados que planilha manual distorce. Sync read-only importa execuções com timestamp correto; você adiciona contexto (tag, emoção, setup) sem redigitar ordens.",
+          "Compare win rate e expectancy da planilha vs. journal automático por duas semanas. Divergência > 5% indica erro sistemático na planilha — comum em futuros crypto.",
+        ],
+      },
+      {
+        heading: "Do template grátis ao trial em 15 minutos",
         paragraphs: [
           "Trackion oferece trial Elite 14 dias sem cartão. Conecte Binance, MEXC ou Bitget, importe histórico e rode checklist de revisão semanal no journal — não na aba Mensal do Excel.",
+          "Para escolher ferramenta no Brasil, leia o [comparativo de trading journal 2026](/blog/trading-journal-brasil-2026) e valide com dados reais antes de assinar.",
         ],
       },
     ],
-    relatedSlugs: ["planilha-trades-futuros-crypto", "day-trade-crypto-sem-planilha", "trading-journal-brasil-2026"],
+    relatedSlugs: ["planilha-de-trading-crypto", "planilha-trades-futuros-crypto", "trading-journal-brasil-2026"],
   },
   {
     slug: "day-trade-crypto-sem-planilha",
     market: "br",
     publishedAt: "2026-06-12",
     readMinutes: 6,
-    title: "Day trade crypto sem planilha: controle de trades com sync automático",
+    title: "Day Trade Crypto Sem Planilha: Controle Automático de Trades 2026",
     excerpt:
-      "Day trade de criptomoedas exige registro em tempo real. Aprenda a controlar trades, win rate e drawdown sem Excel — com journal conectado à exchange.",
-    tags: ["Day trade", "Controle", "Crypto", "Sync"],
+      "Day trade de criptomoedas exige registro em tempo real. Controle trades, win rate e drawdown sem Excel — journal conectado à Binance com sync automático.",
+    tags: ["Day trade", "Planilha de trading", "Crypto", "Sync"],
     keywords: [
       "day trade crypto",
-      "controle day trade",
       "day trade sem planilha",
+      "controle day trade",
       "controle trades crypto",
       "journal day trade",
     ],
+    category: "planilha-de-trading",
+    intent: "comparative",
+    pillarSlug: "planilha-de-trading-crypto",
     sections: [
       {
         paragraphs: [
           "Day trade crypto combina volume alto, mercado 24/7 e alavancagem em futuros. Registrar manualmente atrasa revisão e abre espaço para erro de PnL — especialmente com partial fills e fees maker/taker.",
+          "Se você ainda usa Excel, o [guia completo de planilha de trading](/blog/planilha-de-trading-crypto) mostra quando migrar para journal automático.",
         ],
       },
       {
-        heading: "Sync read-only: trades entram sozinhos",
+        heading: "Journal automático conectado à Binance: trades entram sozinhos",
         paragraphs: [
-          "API somente leitura importa execuções com timestamp e fee corretos. Você adiciona contexto — tag de setup, emoção, screenshot — sem redigitar cada ordem.",
+          "API somente leitura importa execuções com timestamp e fee corretos. Você adiciona contexto — tag de setup, emoção, screenshot — sem redigitar cada ordem. MEXC e Bitget no mesmo painel.",
+          "Sync em ~2 segundos após operar: PnL real em <30s, não estimativa mental no fim do dia.",
+        ],
+      },
+      {
+        heading: "Como controlar PnL no day trade sem planilha",
+        paragraphs: [
+          "Métricas essenciais: win rate, expectancy, drawdown e profit factor — calculados do histórico da exchange, não de fórmula que quebra. Veja o guia de [win rate e expectancy](/blog/analise-performance-win-rate).",
+          "Filtros por horário e par revelam se você doa dinheiro em altcoins à noite enquanto BTC de manhã sustenta o mês.",
         ],
       },
       {
         heading: "Limites de risco por sessão",
         paragraphs: [
-          "Day trade sem teto diário de loss vira tilt rápido. Configure perda máxima e deixe journal auditar compliance. Profissionais param quando o plano manda.",
+          "Day trade sem teto diário de loss vira tilt rápido. Configure perda máxima e deixe journal auditar compliance. Leia sobre [gestão de risco em futuros](/blog/gestao-risco-futuros-crypto) antes de aumentar tamanho.",
+          "Profissionais param quando o plano manda — amadores param quando a conta não deixa mais.",
         ],
       },
     ],
@@ -348,33 +401,46 @@ const POSTS: BlogPost[] = [
     market: "br",
     publishedAt: "2026-06-12",
     readMinutes: 6,
-    title: "Melhor trading journal para traders no Brasil em 2026",
+    title: "Melhor Trading Journal para Brasil em 2026: Teste Grátis 14 Dias",
     excerpt:
-      "Critérios para escolher journal no Brasil: sync Binance/MEXC/Bitget, futuros USDT, métricas profissionais e trial sem cartão. Comparativo prático.",
-    tags: ["Brasil", "Journal", "Trading", "Ferramenta"],
+      "Comparativo prático: melhor journal para traders no Brasil — sync Binance/MEXC/Bitget, futuros USDT, métricas profissionais e trial grátis sem cartão.",
+    tags: ["Brasil", "Trading journal", "Ferramenta", "Crypto"],
     keywords: [
+      "melhor trading journal",
       "trading journal brasil",
       "melhor journal trading",
-      "ferramenta trading brasil",
       "app trading crypto brasil",
-      "diário trades brasil",
+      "teste grátis journal",
     ],
+    category: "trading-journal",
+    intent: "comparative",
+    isPillar: true,
     sections: [
       {
         paragraphs: [
           "Trader brasileiro opera exchanges globais — Binance, MEXC, Bitget — em futuros USDT e altcoins. Journal genérico ou planilha local não reflete esse fluxo.",
+          "Este comparativo foca em critérios objetivos: sync, métricas, multi-exchange e teste grátis — não hype de influencer.",
         ],
       },
       {
-        heading: "O que exigir de um journal em 2026",
+        heading: "Melhor journal: o que exigir em 2026",
         paragraphs: [
-          "Sync automático read-only, PnL com fees reais, win rate/expectancy/drawdown, tags emocionais, multi-exchange e trial sem cartão. Sem isso, volta para planilha em duas semanas.",
+          "Sync automático read-only, PnL com fees reais, win rate/expectancy/drawdown, tags emocionais, multi-exchange e trial sem cartão. Sem isso, volta para [planilha de trading](/blog/planilha-de-trading-crypto) em duas semanas.",
+          "Journal bom também audita [gestão de risco](/blog/gestao-risco-futuros-crypto): limite diário, drawdown visível e compliance registrada.",
         ],
       },
       {
-        heading: "Trackion: feito para crypto, não adaptado de ações",
+        heading: "Planilha grátis vs. journal automático",
         paragraphs: [
-          "Futuros, spot, stack BTC e psicologia de trade no mesmo produto. Trial Elite 14 dias para validar se dados mudam sua rotina de revisão.",
+          "Planilha grátis funciona até ~30 trades/mês em um par. Acima disso, erro manual distorce win rate. Compare [journal vs feeling](/blog/trading-journal-vs-feeling): dados de 2026 mostram que memória seletiva custa caro.",
+          "Teste paralelo de 14 dias: mantenha planilha e journal syncado; quando números convergem e planilha fica obsoleta, migração se paga.",
+        ],
+      },
+      {
+        heading: "Trackion: feito para crypto, teste grátis 14 dias",
+        paragraphs: [
+          "Futuros, spot, stack BTC e psicologia de trade no mesmo produto. Sync [Binance, MEXC e Bitget](/blog/sincronizar-exchange-journal) via API read-only.",
+          "Trial Elite 14 dias sem cartão para validar se dados mudam sua rotina — melhor journal é o que você usa após o primeiro drawdown.",
         ],
       },
     ],
@@ -392,6 +458,9 @@ const POSTS: BlogPost[] = [
       "Bitcoin searches hit 12-month highs during 2026 volatility. Learn what that reveals about retail psychology — and why search volume isn't a strategy.",
     tags: ["Bitcoin", "Google Trends", "Cryptocurrency", "Psychology"],
     keywords: ["bitcoin google trends", "buy bitcoin", "cryptocurrency 2026", "bitcoin zero", "retail crypto interest"],
+    category: "trading-journal",
+    intent: "educational",
+    pillarSlug: "trading-journal-vs-gut-feel",
     sections: [
       {
         paragraphs: [
@@ -433,6 +502,9 @@ const POSTS: BlogPost[] = [
       "64% of retail traders enter after price spikes. See how journaling, emotional tags and risk limits turn trading psychology into measurable process.",
     tags: ["Psychology", "FOMO", "Trading", "Discipline"],
     keywords: ["trading psychology", "FOMO crypto", "revenge trading", "trading discipline", "emotional trading"],
+    category: "trading-journal",
+    intent: "educational",
+    pillarSlug: "trading-journal-vs-gut-feel",
     sections: [
       {
         paragraphs: [
@@ -473,6 +545,9 @@ const POSTS: BlogPost[] = [
       "Fees, funding, multi-exchange accounts and hundreds of fills per month break any Excel workflow. Know when to migrate to a journal with automatic sync.",
     tags: ["Spreadsheet", "Futures", "Exchange", "Journal"],
     keywords: ["crypto trading spreadsheet", "excel trading bitcoin", "crypto futures", "trade log", "replace spreadsheet"],
+    category: "planilha-de-trading",
+    intent: "comparative",
+    isPillar: true,
     sections: [
       {
         paragraphs: [
@@ -505,6 +580,9 @@ const POSTS: BlogPost[] = [
       "A practical overview of connecting exchanges via read-only API, centralizing futures and spot, and keeping reliable history for analysis.",
     tags: ["Exchange", "API", "Binance", "Sync"],
     keywords: ["exchange API sync", "binance read only api", "import trades", "bitget journal", "mexc trade log"],
+    category: "trading-journal",
+    intent: "comparative",
+    pillarSlug: "trading-journal-vs-gut-feel",
     sections: [
       {
         paragraphs: [
@@ -537,6 +615,9 @@ const POSTS: BlogPost[] = [
       "Leverage turns small mistakes into large damage. Structure risk per trade, per day and per account — and measure whether you actually follow the rules.",
     tags: ["Risk", "Futures", "Drawdown", "Stop loss"],
     keywords: ["crypto risk management", "drawdown trading", "futures stop loss", "position sizing", "daily loss limit"],
+    category: "trading-journal",
+    intent: "educational",
+    pillarSlug: "trading-journal-vs-gut-feel",
     sections: [
       {
         paragraphs: [
@@ -569,6 +650,9 @@ const POSTS: BlogPost[] = [
       "Retail is watching crypto again, but institutions dominate volume. Traders without a journal repeat the cycle of euphoria, capitulation and late re-entry.",
     tags: ["Trading journal", "Method", "Retail", "Data"],
     keywords: ["trading journal", "gut feel trading", "disciplined trading", "retail crypto", "crypto trade log"],
+    category: "trading-journal",
+    intent: "educational",
+    isPillar: true,
     sections: [
       {
         paragraphs: [
@@ -601,6 +685,9 @@ const POSTS: BlogPost[] = [
       "Win rate alone misleads. Understand expectancy, profit factor and drawdown — and compute them automatically from exchange history.",
     tags: ["Analytics", "Win rate", "Expectancy", "Metrics"],
     keywords: ["win rate crypto", "trading expectancy", "profit factor", "trade performance analytics", "crypto metrics"],
+    category: "trading-journal",
+    intent: "educational",
+    pillarSlug: "trading-journal-vs-gut-feel",
     sections: [
       {
         paragraphs: [
@@ -647,6 +734,22 @@ export function getBlogPosts(market: Market): BlogPost[] {
   );
 }
 
+export function getBlogPostsByCategory(market: Market, category: BlogCategory | null): BlogPost[] {
+  const posts = getBlogPosts(market);
+  if (!category) return posts;
+  return posts.filter((p) => p.category === category);
+}
+
+export function parseBlogCategoryParam(value: string | null): BlogCategory | null {
+  if (value === "planilha-de-trading" || value === "trading-journal") return value;
+  return null;
+}
+
+export function getPillarPost(market: Market, post: BlogPost): BlogPost | null {
+  if (post.isPillar || !post.pillarSlug) return null;
+  return getBlogPost(market, post.pillarSlug);
+}
+
 export function resolveBlogPost(pathname: string): { market: Market; slug: string } | null {
   const match = pathname.replace(/\/$/, "").match(/^\/blog\/([^/]+)$/);
   if (!match) return null;
@@ -668,11 +771,16 @@ export function formatBlogDate(iso: string, market: Market): string {
 
 export function buildBlogPostMeta(post: BlogPost): SeoMeta {
   const path = `/blog/${post.slug}`;
+  const publishedIso = `${post.publishedAt}T08:00:00-03:00`;
+
   return {
     title: `${post.title} | Trackion Blog`,
     description: post.excerpt,
     path,
     keywords: post.keywords,
+    ogType: "article",
+    articlePublishedTime: publishedIso,
+    articleModifiedTime: publishedIso,
     jsonLd: [
       buildOrganizationJsonLd(),
       buildBreadcrumbJsonLd([
@@ -685,6 +793,8 @@ export function buildBlogPostMeta(post: BlogPost): SeoMeta {
         description: post.excerpt,
         path,
         publishedAt: post.publishedAt,
+        keywords: post.keywords,
+        inLanguage: post.market === "us" ? "en-US" : "pt-BR",
       }),
     ],
   };
@@ -694,17 +804,18 @@ export function buildBlogIndexMeta(market: Market): SeoMeta {
   const isUs = market === "us";
   return {
     title: isUs
-      ? "Trackion Blog — Crypto Trading, Psychology & Exchange Sync"
-      : "Blog Trackion — Trading Crypto, Psicologia & Exchange",
+      ? "Trackion Blog — Crypto Trading Journal & Spreadsheet Guides 2026"
+      : "Blog Trackion — Trading Journal Crypto & Planilha de Trading 2026",
     description: isUs
-      ? "Articles on crypto trading journals, Google Trends signals, trading psychology, risk management and exchange API sync. Method over hype."
-      : "Artigos sobre trading journal crypto, Google Trends, psicologia de trade, gestão de risco e sync de exchange. Método, não hype.",
+      ? "Guides on crypto trading journals, trading spreadsheets, psychology, risk management and Binance sync. Method over hype — free 14-day trial."
+      : "Guias sobre trading journal crypto, planilha de trading, psicologia, gestão de risco e sync Binance. Método, não hype — teste grátis 14 dias.",
     path: "/blog",
     keywords: isUs
       ? ["crypto trading blog", "trading psychology articles", "bitcoin trends", "trading journal tips"]
       : ["blog trading crypto", "psicologia trading", "bitcoin trends", "diário de trades"],
     jsonLd: [
       buildOrganizationJsonLd(),
+      buildBlogIndexJsonLd(market),
       buildBreadcrumbJsonLd([
         { name: "Trackion", path: "/" },
         { name: "Blog", path: "/blog" },

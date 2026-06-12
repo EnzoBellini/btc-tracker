@@ -1,9 +1,9 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { Plugin } from "vite";
-import { getAllPosts, getAllBlogPaths } from "./src/lib/blog-posts";
+import { buildBlogIndexMeta, buildBlogPostMeta, getAllPosts, getAllBlogPaths } from "./src/lib/blog-posts";
 import { buildSeoPageMeta, getAllSeoPaths, PAGES } from "./src/lib/seo-pages";
-import { getHomeSeo } from "./src/lib/seo";
+import { getHomeSeo, serializeJsonLd } from "./src/lib/seo";
 
 const SITE_URL = "https://trackion.app";
 
@@ -12,6 +12,7 @@ type PrerenderMeta = {
   title: string;
   description: string;
   keywords?: string[];
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 };
 
 function escapeHtml(value: string): string {
@@ -63,6 +64,18 @@ function patchHtml(template: string, meta: PrerenderMeta): string {
     `<meta name="twitter:description" content="${escapeHtml(meta.description)}" />`,
   );
 
+  if (meta.jsonLd) {
+    const jsonLdScript = `<script id="trackion-seo-jsonld" type="application/ld+json">${serializeJsonLd(meta.jsonLd)}</script>`;
+    if (html.includes('id="trackion-seo-jsonld"')) {
+      html = html.replace(
+        /<script id="trackion-seo-jsonld" type="application\/ld\+json">[\s\S]*?<\/script>/,
+        jsonLdScript,
+      );
+    } else {
+      html = html.replace("</head>", `${jsonLdScript}\n</head>`);
+    }
+  }
+
   return html;
 }
 
@@ -99,21 +112,24 @@ function collectPrerenderMeta(): PrerenderMeta[] {
   }
 
   for (const post of getAllPosts()) {
-    const path = `/blog/${post.slug}`;
+    if (post.market !== "br") continue;
+    const built = buildBlogPostMeta(post);
     items.push({
-      path,
-      title: `${post.title} | Trackion Blog`,
-      description: post.excerpt,
-      keywords: post.keywords,
+      path: built.path ?? `/blog/${post.slug}`,
+      title: built.title,
+      description: built.description,
+      keywords: built.keywords,
+      jsonLd: built.jsonLd,
     });
   }
 
+  const blogIndex = buildBlogIndexMeta("br");
   items.push({
     path: "/blog",
-    title: "Blog Trackion — Trading Crypto, Psicologia & Exchange",
-    description:
-      "Artigos sobre trading journal crypto, Google Trends, psicologia de trade, gestão de risco e sync de exchange. Método, não hype.",
-    keywords: ["blog trading crypto", "psicologia trading", "diário de trades"],
+    title: blogIndex.title,
+    description: blogIndex.description,
+    keywords: blogIndex.keywords,
+    jsonLd: blogIndex.jsonLd,
   });
 
   return items;

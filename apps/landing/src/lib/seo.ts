@@ -9,6 +9,9 @@ export type SeoMeta = {
   path?: string;
   keywords?: string[];
   ogImage?: string;
+  ogType?: "website" | "article";
+  articlePublishedTime?: string;
+  articleModifiedTime?: string;
   noindex?: boolean;
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 };
@@ -134,6 +137,7 @@ function upsertJsonLd(data: Record<string, unknown> | Record<string, unknown>[])
 
 export function applySeoMeta(meta: SeoMeta) {
   const url = `${SITE_URL}${meta.path ?? "/"}`;
+  const ogType = meta.ogType ?? "website";
   document.title = meta.title;
 
   upsertMeta("description", meta.description);
@@ -143,13 +147,22 @@ export function applySeoMeta(meta: SeoMeta) {
   upsertMeta("robots", meta.noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large");
   upsertLink("canonical", url);
 
-  upsertMeta("og:type", "website", "property");
+  upsertMeta("og:type", ogType, "property");
   upsertMeta("og:title", meta.title, "property");
   upsertMeta("og:description", meta.description, "property");
   upsertMeta("og:url", url, "property");
   upsertMeta("og:site_name", SITE_NAME, "property");
   if (meta.ogImage) {
     upsertMeta("og:image", meta.ogImage, "property");
+  }
+  if (ogType === "article" && meta.articlePublishedTime) {
+    upsertMeta("article:published_time", meta.articlePublishedTime, "property");
+    upsertMeta(
+      "article:modified_time",
+      meta.articleModifiedTime ?? meta.articlePublishedTime,
+      "property",
+    );
+    upsertMeta("article:author", SITE_NAME, "property");
   }
 
   upsertMeta("twitter:card", "summary_large_image");
@@ -261,21 +274,60 @@ export function buildArticleJsonLd(input: {
   path: string;
   publishedAt: string;
   modifiedAt?: string;
+  image?: string;
+  keywords?: string[];
+  inLanguage?: string;
 }) {
+  const url = `${SITE_URL}${input.path}`;
+  const isoPublished = `${input.publishedAt}T08:00:00-03:00`;
+  const isoModified = `${input.modifiedAt ?? input.publishedAt}T08:00:00-03:00`;
+
   return {
     "@context": "https://schema.org",
-    "@type": "Article",
+    "@type": "BlogPosting",
     headline: input.title,
     description: input.description,
-    url: `${SITE_URL}${input.path}`,
-    datePublished: input.publishedAt,
-    dateModified: input.modifiedAt ?? input.publishedAt,
-    author: { "@type": "Organization", name: SITE_NAME },
+    url,
+    datePublished: isoPublished,
+    dateModified: isoModified,
+    inLanguage: input.inLanguage ?? "pt-BR",
+    author: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
     publisher: {
       "@type": "Organization",
       name: SITE_NAME,
+      url: SITE_URL,
       logo: { "@type": "ImageObject", url: `${SITE_URL}/logo-trackion.png` },
     },
-    mainEntityOfPage: `${SITE_URL}${input.path}`,
+    image: input.image ?? `${SITE_URL}/logo-trackion.png`,
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    ...(input.keywords?.length ? { keywords: input.keywords.join(", ") } : {}),
   };
+}
+
+/** @deprecated alias — prefer buildArticleJsonLd (emits BlogPosting) */
+export const buildBlogPostingJsonLd = buildArticleJsonLd;
+
+export function buildBlogIndexJsonLd(market: "br" | "us") {
+  const isUs = market === "us";
+  return {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    name: isUs ? "Trackion Blog" : "Blog Trackion",
+    description: isUs
+      ? "Crypto trading journal guides, psychology, risk and exchange sync."
+      : "Guias de trading journal crypto, planilha de trading, psicologia e gestão de risco.",
+    url: `${SITE_URL}/blog`,
+    publisher: {
+      "@type": "Organization",
+      name: SITE_NAME,
+      url: SITE_URL,
+      logo: { "@type": "ImageObject", url: `${SITE_URL}/logo-trackion.png` },
+    },
+    inLanguage: isUs ? "en-US" : "pt-BR",
+  };
+}
+
+/** Serializa JSON-LD para injeção em HTML estático (prerender). */
+export function serializeJsonLd(data: Record<string, unknown> | Record<string, unknown>[]): string {
+  return JSON.stringify(data).replace(/</g, "\\u003c");
 }

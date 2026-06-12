@@ -234,6 +234,13 @@ export const EXPANDED_BLOG: Record<string, ExpandedBlogMeta> = {
         ],
       },
       {
+        heading: "Como controlar PnL com gestão de risco",
+        paragraphs: [
+          "Drawdown e equity curve devem estar visíveis diariamente — não enterrados em aba mensal da [planilha de trading](/blog/planilha-de-trading-crypto). PnL real inclui fees e funding; journal syncado calcula automaticamente.",
+          "Compare expectancy em dias de alta volatilidade vs. calmos. Se cai 40% nos dias de hype, reduza tamanho — dado acionável do [trading journal](/blog/trading-journal-vs-feeling), não opinião.",
+        ],
+      },
+      {
         heading: "Drawdown: a métrica que importa mais que win rate",
         paragraphs: [
           "Win rate alto com drawdown profundo ainda quebra conta — matematicamente e psicologicamente. Max drawdown e equity curve devem estar sempre visíveis, não enterrados em aba mensal da planilha.",
@@ -365,6 +372,124 @@ export const EXPANDED_BLOG: Record<string, ExpandedBlogMeta> = {
         paragraphs: [
           "Sync ~2s, PnL <30s, métricas automáticas. Conecte Binance, MEXC ou Bitget, importe histórico e rode seus filtros favoritos na primeira semana.",
           "Trial Elite 14 dias grátis, sem cartão. Se você descobre que um filtro muda sua alocação de tempo (ex.: parar altcoin à noite), o analytics já vale mais que outro indicador no chart.",
+        ],
+      },
+    ],
+  },
+
+  "br:planilha-de-trading-crypto": {
+    readMinutes: 12,
+    sections: [
+      {
+        paragraphs: [
+          "Buscar \"planilha de trading\" no Google ainda retorna templates de corretoras e vídeos de Excel. Funciona para quem opera pouco. [Day trade crypto](/blog/day-trade-crypto-sem-planilha) em 2026 quebra esse modelo: funding, fees, multi-exchange e centenas de fills por mês.",
+          "Este guia completo 2026 cobre quando migrar, como controlar PnL sem Excel e como validar journal automático conectado à Binance antes de abandonar a planilha.",
+        ],
+      },
+      {
+        heading: "3 sinais de que planilha de trading não escala",
+        paragraphs: [
+          "PnL da planilha não bate com extrato da exchange. Você adia atualização \"para o fim do dia\" e nunca atualiza. Tem abas diferentes por corretora e nunca consolidou resultado global.",
+          "Journal com API read-only resolve sync; mantenha planilha paralela duas semanas e compare. Leia também [por que planilha falha em futuros](/blog/planilha-trades-futuros-crypto).",
+        ],
+      },
+      {
+        heading: "Como controlar PnL sem Excel",
+        paragraphs: [
+          "Controle de PnL real exige fees, funding e partial fills. Sync read-only importa execuções; você adiciona tag de setup e emoção sem redigitar ordens.",
+          "Win rate e expectancy calculados do histórico da exchange eliminam fórmula que quebra. Veja [métricas essenciais](/blog/analise-performance-win-rate) para revisão semanal.",
+        ],
+      },
+      {
+        heading: "Journal automático conectado à Binance, MEXC e Bitget",
+        paragraphs: [
+          "API somente leitura importa fills em ~2 segundos. Multi-exchange consolidado: um painel para PnL global, sem copiar saldo de três abas.",
+          "Guia de [sync de exchange](/blog/sincronizar-exchange-journal) passo a passo — read-only, sem permissão de saque.",
+        ],
+      },
+      {
+        heading: "Do template grátis ao trial em 15 minutos",
+        paragraphs: [
+          "Trackion: trial Elite 14 dias sem cartão. Conecte exchange, importe histórico, rode checklist no journal — não na aba Mensal do Excel.",
+          "Compare com [melhor journal no Brasil 2026](/blog/trading-journal-brasil-2026) e valide com dados reais antes de assinar.",
+        ],
+      },
+    ],
+  },
+  "br:day-trade-crypto-sem-planilha": {
+    readMinutes: 10,
+    sections: [
+      {
+        paragraphs: [
+          "Day trade crypto combina volume alto, mercado 24/7 e alavancagem em futuros. Registrar manualmente atrasa revisão e abre erro de PnL — partial fills e fees maker/taker.",
+          "Se ainda usa Excel, o [guia de planilha de trading 2026](/blog/planilha-de-trading-crypto) mostra quando migrar para journal automático.",
+        ],
+      },
+      {
+        heading: "Journal automático conectado à Binance: trades entram sozinhos",
+        paragraphs: [
+          "API read-only importa execuções com timestamp e fee corretos. Contexto — setup, emoção, screenshot — no mesmo registro da exchange.",
+          "Sync ~2s após operar: PnL real em <30s. MEXC e Bitget no mesmo dashboard que Binance.",
+        ],
+      },
+      {
+        heading: "Como controlar PnL no day trade sem planilha",
+        paragraphs: [
+          "Win rate, expectancy, drawdown e profit factor do histórico real — não de VLOOKUP. Guia de [win rate e expectancy](/blog/analise-performance-win-rate).",
+          "Filtros por horário e par: talvez você lucra só em BTCUSDT de manhã e perde em altcoins à noite.",
+        ],
+      },
+      {
+        heading: "Limites de risco e psicologia no day trade",
+        paragraphs: [
+          "Day trade sem teto diário vira tilt rápido. [Gestão de risco em futuros](/blog/gestao-risco-futuros-crypto): limite diário, drawdown visível, compliance auditada.",
+          "[Psicologia de trade](/blog/psicologia-trading-crypto-fomo): FOMO e revenge trade concentram drawdown — tags emocionais quantificam o custo.",
+        ],
+      },
+      {
+        heading: "Teste grátis 14 dias sem cartão",
+        paragraphs: [
+          "Trackion elimina 8h/mês de planilha. Trial Elite para validar se sync muda sua revisão diária.",
+          "Compare [journal vs feeling](/blog/trading-journal-vs-feeling): dados de 2026 mostram que memória seletiva custa caro.",
+        ],
+      },
+    ],
+  },
+  "br:trading-journal-brasil-2026": {
+    readMinutes: 10,
+    sections: [
+      {
+        paragraphs: [
+          "Trader brasileiro opera Binance, MEXC, Bitget em futuros USDT. Journal genérico ou planilha local não reflete esse fluxo.",
+          "Comparativo 2026: melhor journal = sync read-only + métricas profissionais + teste grátis — critérios objetivos, não hype.",
+        ],
+      },
+      {
+        heading: "Melhor trading journal: o que exigir em 2026",
+        paragraphs: [
+          "Sync automático, PnL com fees reais, win rate/expectancy/drawdown, tags emocionais, multi-exchange, trial sem cartão.",
+          "Sem isso, volta para [planilha de trading](/blog/planilha-de-trading-crypto) em duas semanas. Journal audita [gestão de risco](/blog/gestao-risco-futuros-crypto).",
+        ],
+      },
+      {
+        heading: "Planilha grátis vs. journal automático",
+        paragraphs: [
+          "Planilha grátis funciona até ~30 trades/mês. Acima disso, erro manual distorce win rate.",
+          "[Journal vs feeling](/blog/trading-journal-vs-feeling): dados reais de 2026 — quem opera sem registro repete ciclo de euforia e capitulação.",
+        ],
+      },
+      {
+        heading: "Sync Binance, MEXC e Bitget no mesmo produto",
+        paragraphs: [
+          "Read-only API: histórico confiável sem risco de saque. Guia de [sincronizar exchange](/blog/sincronizar-exchange-journal).",
+          "Futuros e spot separados no dashboard — stack BTC não contamina métricas de day trade.",
+        ],
+      },
+      {
+        heading: "Trackion: teste grátis 14 dias, sem cartão",
+        paragraphs: [
+          "Feito para crypto futures, não adaptado de ações. PnL consolidado, metas de risco, psicologia de trade.",
+          "Trial Elite para validar se dados mudam rotina após primeiro drawdown — melhor journal é o que você usa quando dói.",
         ],
       },
     ],

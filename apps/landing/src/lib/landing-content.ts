@@ -187,9 +187,30 @@ export type LandingContent = {
     readTime: (min: number) => string;
     backToBlog: string;
     relatedTitle: string;
+    pillarTitle: string;
+    categoryAll: string;
+    categoryPlanilha: string;
+    categoryJournal: string;
     ctaText: string;
     ctaButton: string;
+    headerTrialButton: string;
+    productBanner: { eyebrow: string; text: string; button: string };
     inlineCta: string;
+    softCta: {
+      eyebrow: string;
+      title: string;
+      body: string;
+      secondaryLabel: string;
+      secondaryHref: string;
+    };
+    hardCta: {
+      eyebrow: string;
+      title: string;
+      body: string;
+      secondaryLabel: string;
+      secondaryHref: string;
+    };
+    authorBio: { label: string; text: string; appLink: string; planilhaLink: string };
   };
 };
 
@@ -544,18 +565,48 @@ const BR: LandingContent = {
     blogCta: "Blog · trading crypto",
   },
   blog: {
-    eyebrow: "Blog · Trackion",
+    eyebrow: "Blog oficial · Trackion",
     indexTitle: "Trading crypto com método",
     indexSubtitle:
-      "Artigos sobre Google Trends, psicologia de trade, gestão de risco, sync de exchange e por que journal vence planilha — escrito para quem opera Bitcoin e futuros de verdade.",
+      "Guias sobre planilha de trading, trading journal crypto, psicologia, risco e sync de exchange — escrito para quem opera Bitcoin e futuros de verdade.",
     readMore: "Ler artigo",
     readTime: (min) => `${min} min de leitura`,
     backToBlog: "Voltar ao blog",
     relatedTitle: "Artigos relacionados",
+    pillarTitle: "Guia completo",
+    categoryAll: "Todos",
+    categoryPlanilha: "Planilha de trading",
+    categoryJournal: "Trading journal",
     ctaText: "Registre trades com sync automático de exchange, metas de risco e analytics profissional.",
-    ctaButton: "Trial Elite 14 dias grátis",
+    ctaButton: "Testar Trackion 14 dias",
+    headerTrialButton: "Testar Trackion 14 dias",
+    productBanner: {
+      eyebrow: "Blog do Trackion",
+      text: "Trading journal brasileiro para futuros crypto — sync Binance, MEXC e Bitget, PnL real e trial 14 dias sem cartão.",
+      button: "Testar Trackion 14 dias",
+    },
     inlineCta:
       "Pare de confiar na memória. O Trackion sincroniza Binance, MEXC e Bitget, calcula win rate e expectancy e ajuda você a operar com método — não no feeling.",
+    softCta: {
+      eyebrow: "Checklist · revisão semanal",
+      title: "3 métricas para revisar antes da próxima sessão",
+      body: "Win rate, expectancy e drawdown — filtrados por setup e emoção. Teste o Trackion 14 dias grátis e rode sua checklist no journal, não no Excel.",
+      secondaryLabel: "Ver guia de planilha",
+      secondaryHref: "/planilha-de-trading",
+    },
+    hardCta: {
+      eyebrow: "Sem planilha · sem Excel",
+      title: "Journal automático conectado à Binance, MEXC e Bitget",
+      body: "Teste grátis 14 dias Elite — sync read-only, PnL com fees reais e métricas que traders no Brasil usam em 2026. Sem cartão.",
+      secondaryLabel: "Landing planilha de trading",
+      secondaryHref: "/planilha-de-trading",
+    },
+    authorBio: {
+      label: "Sobre o Trackion",
+      text: "Trackion é um trading journal brasileiro focado em futuros crypto. Sync automático via API read-only, controle de PnL, gestão de risco e psicologia de trade — substituindo planilha e Excel por dados reais da exchange.",
+      appLink: "Testar 14 dias grátis →",
+      planilhaLink: "Planilha de trading",
+    },
   },
 };
 
@@ -897,18 +948,48 @@ const US: LandingContent = {
     blogCta: "Blog · crypto trading",
   },
   blog: {
-    eyebrow: "Blog · Trackion",
+    eyebrow: "Official blog · Trackion",
     indexTitle: "Crypto trading with method",
     indexSubtitle:
-      "Articles on Google Trends, trading psychology, risk management, exchange sync and why journals beat spreadsheets — for traders who actually operate Bitcoin and futures.",
+      "Guides on trading spreadsheets, crypto trading journals, psychology, risk and exchange sync — for traders who actually operate Bitcoin and futures.",
     readMore: "Read article",
     readTime: (min) => `${min} min read`,
     backToBlog: "Back to blog",
     relatedTitle: "Related articles",
+    pillarTitle: "Complete guide",
+    categoryAll: "All",
+    categoryPlanilha: "Trading spreadsheet",
+    categoryJournal: "Trading journal",
     ctaText: "Log trades with automatic exchange sync, risk goals and pro analytics.",
-    ctaButton: "Free 14-day Elite trial",
+    ctaButton: "Try Trackion 14 days free",
+    headerTrialButton: "Try Trackion 14 days free",
+    productBanner: {
+      eyebrow: "Trackion blog",
+      text: "Crypto futures trading journal — sync Binance, MEXC and Bitget, real PnL and 14-day trial with no card.",
+      button: "Try Trackion 14 days free",
+    },
     inlineCta:
       "Stop trusting memory. Trackion syncs Binance, MEXC and Bitget, computes win rate and expectancy, and helps you trade with method — not gut feel.",
+    softCta: {
+      eyebrow: "Checklist · weekly review",
+      title: "3 metrics to review before your next session",
+      body: "Win rate, expectancy and drawdown — filtered by setup and emotion. Try Trackion free for 14 days and run your checklist in the journal, not Excel.",
+      secondaryLabel: "Spreadsheet guide",
+      secondaryHref: "/planilha-de-trading",
+    },
+    hardCta: {
+      eyebrow: "No spreadsheet · no Excel",
+      title: "Automatic journal synced to Binance, MEXC and Bitget",
+      body: "Free 14-day Elite trial — read-only sync, real-fee PnL and metrics crypto traders use in 2026. No card required.",
+      secondaryLabel: "Trading spreadsheet landing",
+      secondaryHref: "/planilha-de-trading",
+    },
+    authorBio: {
+      label: "About Trackion",
+      text: "Trackion is a crypto futures trading journal with automatic read-only exchange sync, PnL control, risk management and trading psychology — replacing spreadsheets with real exchange data.",
+      appLink: "Try 14 days free →",
+      planilhaLink: "Trading spreadsheet",
+    },
   },
 };
 
