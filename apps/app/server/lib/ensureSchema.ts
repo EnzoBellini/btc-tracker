@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createPgPool, getPgConnectionString } from "./pg";
+import { storage } from "../storage";
 
 const MIGRATION_FILES = [
   "migrate-auth-email.sql",
@@ -59,10 +60,25 @@ export async function checkDatabaseHealth(): Promise<{
         WHERE table_schema = 'public' AND table_name = 'email_verification_tokens'
       ) AS has_tokens
     `);
+    const columns = await client.query<{ column_name: string }>(`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'users'
+      ORDER BY ordinal_position
+    `);
+    let sampleUser: string | undefined;
+    try {
+      await storage.getUserByEmail("health-check-nonexistent@trackion.app");
+      sampleUser = "drizzle_ok";
+    } catch (err) {
+      sampleUser = err instanceof Error ? err.message : String(err);
+    }
     return {
       ok: true,
       users: users.rows[0]?.n ?? 0,
       emailVerificationTokens: tokens.rows[0]?.has_tokens ?? false,
+      userColumns: columns.rows.map((r) => r.column_name),
+      drizzleUsers: sampleUser,
     };
   } catch (err) {
     return {
