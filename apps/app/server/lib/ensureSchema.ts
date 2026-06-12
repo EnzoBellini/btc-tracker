@@ -10,9 +10,36 @@ const MIGRATION_FILES = [
   "migrate-affiliates.sql",
 ] as const;
 
+const CRITICAL_USER_COLUMNS = [
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT TRUE`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN NOT NULL DEFAULT TRUE`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_step INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS trader_profile TEXT`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMP`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_used_at TIMESTAMP`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS affiliate_ref TEXT`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`,
+];
+
 let ensured = false;
 
-/** Migrações SQL idempotentes — evita 500 no login quando o schema ficou atrás do código. */
+async function runStatements(client: import("pg").PoolClient, sql: string, label: string) {
+  const statements = sql
+    .split(";")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0 && !s.startsWith("--"));
+
+  for (const statement of statements) {
+    try {
+      await client.query(`${statement};`);
+    } catch (err) {
+      console.error(`[db] statement failed (${label}):`, statement.slice(0, 80), err);
+    }
+  }
+}
+
+/** Migrações SQL idempotentes — cada statement isolado para não reverter ALTERs. */
 export async function ensureProductionSchema(log?: (msg: string, source?: string) => void): Promise<void> {
   if (ensured || process.env.NODE_ENV !== "production") return;
   if (!getPgConnectionString()) return;
@@ -22,23 +49,21 @@ export async function ensureProductionSchema(log?: (msg: string, source?: string
   const client = await pool.connect();
 
   try {
-    for (const file of MIGRATION_FILES) {
+    for (const statement of CRITICAL_USER_COLUMNS) {
       try {
-        const sqlPath = path.join(scriptDir, file);
-        const sql = readFileSync(sqlPath, "utf8");
-        await client.query(sql);
-        log?.(`migration ok: ${file}`, "db");
+        await client.query(`${statement};`);
       } catch (err) {
-        console.error(`[db] migration failed: ${file}`, err);
+        console.error("[db] critical column failed:", statement, err);
       }
     }
-
-    // Garantias críticas (drizzle quebra se faltar)
-    await client.query(`
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS affiliate_ref TEXT;
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
-    `);
     log?.("critical user columns ok", "db");
+
+    for (const file of MIGRATION_FILES) {
+      const sqlPath = path.join(scriptDir, file);
+      const sql = readFileSync(sqlPath, "utf8");
+      await runStatements(client, sql, file);
+      log?.(`migration ok: ${file}`, "db");
+    }
 
     ensured = true;
   } finally {
@@ -51,6 +76,8 @@ export async function checkDatabaseHealth(): Promise<{
   ok: boolean;
   users?: number;
   emailVerificationTokens?: boolean;
+  userColumns?: string[];
+  drizzleUsers?: string;
   error?: string;
 }> {
   if (!getPgConnectionString()) {
@@ -61,10 +88,13 @@ export async function checkDatabaseHealth(): Promise<{
   const client = await pool.connect();
   try {
     await client.query("SELECT 1");
-    await client.query(`
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS affiliate_ref TEXT;
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
-    `);
+    for (const statement of CRITICAL_USER_COLUMNS) {
+      try {
+        await client.query(`${statement};`);
+      } catch {
+        /* best effort */
+      }
+    }
     const users = await client.query<{ n: number }>("SELECT COUNT(*)::int AS n FROM users");
     const tokens = await client.query<{ has_tokens: boolean }>(`
       SELECT EXISTS (
@@ -86,7 +116,7 @@ export async function checkDatabaseHealth(): Promise<{
       sampleUser = err instanceof Error ? err.message : String(err);
     }
     return {
-      ok: true,
+      ok: sampleUser === "drizzle_ok",
       users: users.rows[0]?.n ?? 0,
       emailVerificationTokens: tokens.rows[0]?.has_tokens ?? false,
       userColumns: columns.rows.map((r) => r.column_name),
