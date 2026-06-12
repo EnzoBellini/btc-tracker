@@ -32,6 +32,14 @@ export async function ensureProductionSchema(log?: (msg: string, source?: string
         console.error(`[db] migration failed: ${file}`, err);
       }
     }
+
+    // Garantias críticas (drizzle quebra se faltar)
+    await client.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS affiliate_ref TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
+    log?.("critical user columns ok", "db");
+
     ensured = true;
   } finally {
     client.release();
