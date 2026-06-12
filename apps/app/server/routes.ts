@@ -29,6 +29,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     "POST:/api/trial-signup",
     "GET:/api/market/ticker",
     "GET:/api/billing/plans",
+    "POST:/api/billing/checkout",
+    "POST:/api/billing/portal",
+    "POST:/api/billing/sync-subscription",
+    "GET:/api/billing/checkout-session",
     "POST:/api/billing/webhook",
   ]);
 

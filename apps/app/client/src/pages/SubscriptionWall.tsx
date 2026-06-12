@@ -1,10 +1,19 @@
+import { useEffect, useRef } from "react";
 import CheckoutPlansPage from "@/components/CheckoutPlansPage";
-import { useSubscription } from "@/hooks/useSubscription";
+import { useSubscription, useBillingSync } from "@/hooks/useSubscription";
 import { useAppLocale } from "@/lib/locale-context";
 
 export default function SubscriptionWall() {
   const { t } = useAppLocale();
   const { data: sub, isLoading } = useSubscription();
+  const sync = useBillingSync();
+  const autoSynced = useRef(false);
+
+  useEffect(() => {
+    if (isLoading || sub?.hasAccess || autoSynced.current) return;
+    autoSynced.current = true;
+    sync.mutate(undefined);
+  }, [isLoading, sub?.hasAccess]);
 
   if (isLoading) {
     return (
@@ -35,6 +44,26 @@ export default function SubscriptionWall() {
         </p>
 
         <CheckoutPlansPage />
+
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            disabled={sync.isPending}
+            onClick={() =>
+              sync.mutate(undefined, {
+                onSuccess: () => {
+                  window.location.href = "/#/";
+                },
+              })
+            }
+            className="font-mono-tk text-[10px] uppercase tracking-widest text-muted-foreground underline hover:text-primary disabled:opacity-50"
+          >
+            {sync.isPending ? t.subscriptionWall.syncing : t.subscriptionWall.alreadyPaid}
+          </button>
+          {sync.isError && (
+            <p className="mt-2 text-xs text-loss">{sync.error.message}</p>
+          )}
+        </div>
 
         <p className="mt-8 text-center font-mono-tk text-[10px] text-muted-foreground">
           {t.subscriptionWall.footer}

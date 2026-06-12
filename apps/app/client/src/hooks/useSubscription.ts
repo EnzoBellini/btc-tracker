@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { PlanId } from "@trackion/billing";
 import { stripeLookupKey } from "@trackion/billing";
 import { getAffiliateSignupPayload, readAffiliateFromBillingHash } from "@/lib/affiliate";
@@ -26,6 +26,7 @@ export interface CheckoutSessionInfo {
   planName: string | null;
   planId: string | null;
   customerId: string | null;
+  accessGranted?: boolean;
 }
 
 export type CheckoutInput = PlanId | { planId: PlanId; lookupKey?: string };
@@ -97,6 +98,27 @@ export function useBillingPortal() {
       if (!res.ok) throw new Error(data.error ?? "Erro no portal");
       if (data.url) window.location.href = data.url;
       return data;
+    },
+  });
+}
+
+export function useBillingSync() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/billing/sync-subscription", {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Erro ao sincronizar");
+      return data as { ok: boolean; hasAccess: boolean; planId?: string };
+    },
+    onSuccess: (data) => {
+      if (data.hasAccess) {
+        void queryClient.invalidateQueries({ queryKey: ["/api/me/subscription"] });
+        void queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      }
     },
   });
 }

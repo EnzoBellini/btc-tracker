@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useHashLocation } from "wouter/use-hash-location";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCheckoutSession, useBillingPortal } from "@/hooks/useSubscription";
+import { useCheckoutSession, useBillingPortal, useBillingSync } from "@/hooks/useSubscription";
 import { useAppLocale } from "@/lib/locale-context";
 
 /** Página de sucesso pós Checkout (Stripe quickstart). */
@@ -14,6 +14,7 @@ export default function BillingSuccess() {
 
   const { data: session, isLoading, error, refetch } = useCheckoutSession(sessionId);
   const portal = useBillingPortal();
+  const sync = useBillingSync();
   const queryClient = useQueryClient();
 
   const confirmed = session?.status === "complete" && session?.paymentStatus === "paid";
@@ -23,6 +24,11 @@ export default function BillingSuccess() {
     void queryClient.invalidateQueries({ queryKey: ["/api/me/subscription"] });
     void queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
   }, [confirmed, queryClient]);
+
+  useEffect(() => {
+    if (!confirmed || session?.accessGranted !== false) return;
+    sync.mutate(undefined);
+  }, [confirmed, session?.accessGranted]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">

@@ -4,6 +4,7 @@ import { PLAN_CATALOG, stripeLookupKey } from "@trackion/billing";
 import { storage } from "../storage";
 import * as billingStorage from "./storage";
 import { handleStripeWebhookEvent } from "./webhook";
+import { fulfillCheckoutSession, syncSubscriptionFromStripe } from "./fulfillCheckout";
 
 export type BillingCurrency = "BRL" | "USD";
 
@@ -174,6 +175,8 @@ export function registerStripeRoutes(app: Express) {
         return res.status(403).json({ error: "Sessão não pertence a este usuário" });
       }
 
+      const fulfillment = await fulfillCheckoutSession(stripe, session, userId);
+
       const planId = session.metadata?.planId as PlanId | undefined;
       const plan = planId && PLAN_CATALOG[planId] ? PLAN_CATALOG[planId] : null;
 
@@ -183,6 +186,7 @@ export function registerStripeRoutes(app: Express) {
         planName: plan?.name ?? null,
         planId: plan?.id ?? null,
         customerId: typeof session.customer === "string" ? session.customer : session.customer?.id ?? null,
+        accessGranted: fulfillment.activated,
       });
     } catch (e) {
       console.error("[billing/checkout-session]", e);
@@ -233,6 +237,39 @@ export function registerStripeRoutes(app: Express) {
     } catch (e) {
       console.error("[billing/portal]", e);
       res.status(500).json({ error: "Erro ao abrir portal" });
+    }
+  });
+
+  app.post("/api/billing/sync-subscription", async (req, res) => {
+    if (!stripeCheckoutEnabled()) {
+      return res.status(503).json({ error: "Billing não configurado" });
+    }
+    const userId = req.session?.userId;
+    if (!userId) return res.status(401).json({ error: "Não autenticado" });
+
+    try {
+      const user = await storage.getUserById(userId);
+      if (!user) return res.status(404).json({ error: "Usuário não encontrado" });
+
+      const stripe = await getStripe();
+      const result = await syncSubscriptionFromStripe(stripe, userId, user.email);
+
+      if (!result.activated) {
+        return res.status(404).json({
+          error: "Não encontramos assinatura ativa no Stripe. Aguarde alguns minutos ou contate o suporte.",
+          reason: result.reason,
+        });
+      }
+
+      const resolved = await import("./subscriptionService").then((m) => m.getResolvedSubscription(userId));
+      res.json({
+        ok: true,
+        planId: result.planId,
+        hasAccess: resolved.hasAccess,
+      });
+    } catch (e) {
+      console.error("[billing/sync-subscription]", e);
+      res.status(500).json({ error: "Erro ao sincronizar assinatura" });
     }
   });
 

@@ -3,6 +3,7 @@ import type { PlanId } from "@trackion/billing";
 import { PLAN_CATALOG } from "@trackion/billing";
 import * as billingStorage from "./storage";
 import { activatePaidPlan } from "./subscriptionService";
+import { fulfillCheckoutSession } from "./fulfillCheckout";
 
 const WEBHOOK_EVENTS = [
   "checkout.session.completed",
@@ -43,42 +44,10 @@ async function resolveUserId(
 }
 
 async function handleCheckoutCompleted(stripe: Stripe, session: Stripe.Checkout.Session) {
-  const userId = parseInt(session.metadata?.userId ?? "", 10);
-  const planId = session.metadata?.planId as PlanId | undefined;
-  if (!planId || !PLAN_CATALOG[planId]) return;
-
-  const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
-  const subscriptionId =
-    typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
-
-  let periodEnd: Date | undefined;
-  if (subscriptionId) {
-    try {
-      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-      if (subscription.current_period_end) {
-        periodEnd = new Date(subscription.current_period_end * 1000);
-      }
-    } catch (e) {
-      console.warn("[billing/webhook] não foi possível ler subscription", subscriptionId, e);
-    }
+  const result = await fulfillCheckoutSession(stripe, session);
+  if (!result.activated) {
+    console.warn("[billing/webhook] checkout.session.completed sem ativação", session.id);
   }
-
-  const resolvedUserId = await resolveUserId(stripe, {
-    userId: userId || undefined,
-    customerId,
-    subscriptionId,
-  });
-  if (!resolvedUserId) {
-    console.warn("[billing/webhook] checkout.session.completed sem userId", session.id);
-    return;
-  }
-
-  await activatePaidPlan(resolvedUserId, planId, {
-    stripeCustomerId: customerId,
-    stripeSubscriptionId: subscriptionId,
-    periodEnd,
-    source: "checkout",
-  });
 }
 
 async function handleSubscriptionChange(stripe: Stripe, sub: Stripe.Subscription) {

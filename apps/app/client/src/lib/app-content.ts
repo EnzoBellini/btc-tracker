@@ -119,6 +119,8 @@ export type AppContent = {
     subscribe: string;
     footer: string;
     loading: string;
+    alreadyPaid: string;
+    syncing: string;
   };
   billing: {
     eyebrow: string;
@@ -586,6 +588,8 @@ const BR: AppContent = {
     subscribe: "Assinar",
     footer: "Pagamento seguro via Stripe · cancele quando quiser",
     loading: "Carregando planos…",
+    alreadyPaid: "Já paguei — sincronizar assinatura",
+    syncing: "Sincronizando…",
   },
   billing: {
     eyebrow: "billing · assinatura",
@@ -1102,6 +1106,8 @@ const US: AppContent = {
     subscribe: "Subscribe",
     footer: "Secure payment via Stripe · cancel anytime",
     loading: "Loading plans…",
+    alreadyPaid: "I already paid — sync subscription",
+    syncing: "Syncing…",
   },
   billing: {
     eyebrow: "billing · subscription",

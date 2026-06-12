@@ -10,6 +10,8 @@ const SUBSCRIPTION_EXEMPT = new Set([
   "GET:/api/billing/plans",
   "POST:/api/billing/checkout",
   "POST:/api/billing/portal",
+  "POST:/api/billing/sync-subscription",
+  "GET:/api/billing/checkout-session",
   "POST:/api/billing/webhook",
 ]);
 
