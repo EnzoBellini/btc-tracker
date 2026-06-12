@@ -7,6 +7,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS trader_profile TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMP;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_used_at TIMESTAMP;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS affiliate_ref TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
 
 -- Auth: tokens de verificação de e-mail
 CREATE TABLE IF NOT EXISTS email_verification_tokens (
