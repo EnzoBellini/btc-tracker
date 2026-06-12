@@ -12,6 +12,7 @@ import { registerAffiliateRoutes } from "./affiliates/routes";
 import { startSubscriptionCron } from "./billing/cron";
 import { db } from "./db";
 import { validateSecurityConfig, logEmailConfigStatus, redactForLog } from "./lib/security";
+import { ensureProductionSchema } from "./lib/ensureSchema";
 
 validateSecurityConfig();
 
@@ -150,6 +151,13 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  try {
+    await ensureProductionSchema();
+    log("Schema de produção verificado", "db");
+  } catch (err) {
+    console.error("[db] Falha ao aplicar migrações de schema:", err);
+  }
+
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {

@@ -358,6 +358,12 @@ export function registerAuthRoutes(app: Express) {
       return res.json({ status: "password_required", email: user.email });
     } catch (err: unknown) {
       console.error("[auth/enter]", err);
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("Falha ao enviar e-mail") || msg.includes("RESEND")) {
+        return res.status(503).json({
+          error: "Não foi possível enviar o e-mail. Tente novamente em instantes.",
+        });
+      }
       res.status(500).json({ error: "Erro interno" });
     }
   });
