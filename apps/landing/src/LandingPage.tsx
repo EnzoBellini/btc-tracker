@@ -9,6 +9,7 @@ import {
   LaunchOfferHighlight,
   LaunchPriceBlock,
 } from "./components/LaunchPriceBlock";
+import { MobileAppSection } from "./components/MobileAppSection";
 import { NavTrialCta } from "./components/NavTrialCta";
 import { CtaStrip } from "./components/CtaStrip";
 import { LegalInfoModal } from "./components/LegalInfoModal";
@@ -36,6 +37,8 @@ export type LandingPageProps = {
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const APP_URL =
+  (import.meta.env.VITE_APP_URL as string | undefined)?.replace(/\/$/, "") || "https://app.trackion.app";
 
 // ============================== UI HELPERS ==============================
 
@@ -550,6 +553,8 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
           onClick={() => openTrialModal()}
         />
       </section>
+
+      <MobileAppSection copy={t.mobileApp} appUrl={APP_URL} />
 
       {/* =================== INTEGRAÇÕES — BRUTALIST HEADER ===================== */}
       <section id="integracoes" className="relative z-[1] overflow-hidden bg-black py-32">
@@ -1155,9 +1160,10 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
                   <li><button type="button" onClick={() => scrollToSection("#recursos")} className="transition hover:text-white">{t.footer.links.product[0]}</button></li>
                   <li><button type="button" onClick={() => scrollToSection("#integracoes")} className="transition hover:text-white">{t.footer.links.product[1]}</button></li>
                   <li><button type="button" onClick={() => scrollToSection("#metodo")} className="transition hover:text-white">{t.footer.links.product[2]}</button></li>
-                  <li><a href="/blog" className="transition hover:text-white">{t.footer.links.product[3]}</a></li>
-                  <li><button type="button" onClick={() => scrollToSection("#duvidas")} className="transition hover:text-white">{t.footer.links.product[4]}</button></li>
-                  <li><button type="button" onClick={() => scrollToSection("#precos")} className="transition hover:text-white">{t.footer.links.product[5]}</button></li>
+                  <li><button type="button" onClick={() => scrollToSection("#mobile")} className="transition hover:text-white">{t.footer.links.product[3]}</button></li>
+                  <li><a href="/blog" className="transition hover:text-white">{t.footer.links.product[4]}</a></li>
+                  <li><button type="button" onClick={() => scrollToSection("#duvidas")} className="transition hover:text-white">{t.footer.links.product[5]}</button></li>
+                  <li><button type="button" onClick={() => scrollToSection("#precos")} className="transition hover:text-white">{t.footer.links.product[6]}</button></li>
                 </ul>
               </div>
 

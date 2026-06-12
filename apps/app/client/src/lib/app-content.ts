@@ -24,6 +24,13 @@ export type AppContent = {
     errorRetry: string;
     loadingSession: string;
     tradesImported: (count: number) => string;
+    pwaInstall: {
+      title: string;
+      subtitle: string;
+      action: string;
+      iosHint: string;
+      dismiss: string;
+    };
   };
   login: {
     features: { index: string; label: string }[];
@@ -440,6 +447,13 @@ const BR: AppContent = {
     errorRetry: "Tentar novamente",
     loadingSession: "Carregando sessão…",
     tradesImported: (n) => `${n} trade(s) importado(s)`,
+    pwaInstall: {
+      title: "Instale o Trackion no celular",
+      subtitle: "Acesso rápido como app — sem App Store, direto na tela inicial.",
+      action: "Instalar app",
+      iosHint: "No Safari: toque em Compartilhar (↑) e escolha \"Adicionar à Tela de Início\".",
+      dismiss: "Agora não",
+    },
   },
   login: {
     features: [
@@ -928,6 +942,13 @@ const US: AppContent = {
     errorRetry: "Try again",
     loadingSession: "Loading session…",
     tradesImported: (n) => `${n} trade(s) imported`,
+    pwaInstall: {
+      title: "Install Trackion on your phone",
+      subtitle: "Quick access like a native app — no App Store, straight to your home screen.",
+      action: "Install app",
+      iosHint: "In Safari: tap Share (↑) then \"Add to Home Screen\".",
+      dismiss: "Not now",
+    },
   },
   login: {
     features: [

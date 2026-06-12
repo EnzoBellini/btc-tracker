@@ -13,6 +13,7 @@ import { useSyncAllTrades } from "@/hooks/useTrades";
 import { useExchangesSummary } from "@/hooks/useExchanges";
 import { useSubscription } from "@/hooks/useSubscription";
 import TopTicker from "@/components/tk/TopTicker";
+import { InstallAppBanner } from "@/components/InstallAppBanner";
 import { MarketSelector } from "@/components/MarketSelector";
 import { useAppLocale } from "@/lib/locale-context";
 import { getT } from "@/lib/locale-runtime";
@@ -342,12 +343,13 @@ function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="min-w-0 flex-1 overflow-y-auto bg-background">
+        <main className="min-w-0 flex-1 overflow-y-auto bg-background pb-24 md:pb-0">
           <ErrorBoundary>
             <Suspense fallback={<PageSkeleton />}>{children}</Suspense>
           </ErrorBoundary>
         </main>
       </div>
+      <InstallAppBanner />
     </div>
   );
 }
@@ -395,6 +397,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
             <MarketSelector market={market} onChange={setMarket} />
           </div>
           <LoginPage />
+          <InstallAppBanner />
         </div>
       </Suspense>
     );

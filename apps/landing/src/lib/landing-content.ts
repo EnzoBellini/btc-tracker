@@ -75,6 +75,21 @@ export type LandingContent = {
     footer: string;
     items: { icon: IconType; title: string; description: string; tag: string }[];
   };
+  mobileApp: {
+    sectionLabel: string;
+    badge: string;
+    title: string;
+    subtitle: string;
+    note: string;
+    qrLabel: string;
+    qrAlt: string;
+    urlLabel: string;
+    androidTitle: string;
+    androidSteps: string[];
+    iosTitle: string;
+    iosSteps: string[];
+    cta: string;
+  };
   integrations: {
     sectionLabel: string;
     title: [string, string, string];
@@ -382,6 +397,30 @@ const BR: LandingContent = {
       },
     ],
   },
+  mobileApp: {
+    sectionLabel: "App · mobile",
+    badge: "PWA · iOS & Android",
+    title: "No celular também — instale como app",
+    subtitle:
+      "Trackion roda no browser do celular e pode ser adicionado à tela inicial. Sem App Store, sem APK — o mesmo journal, sync e PnL do desktop.",
+    note: "Escaneie o QR no PC ou abra app.trackion.app no celular. Mesma conta nos dois dispositivos.",
+    qrLabel: "Escaneie no celular",
+    qrAlt: "QR code para abrir o Trackion no celular",
+    urlLabel: "Ou acesse direto",
+    androidTitle: "Android · Chrome",
+    androidSteps: [
+      "Abra app.trackion.app no Chrome",
+      "Toque em Instalar app ou ⋮ → Adicionar à tela inicial",
+      "Abra pelo ícone na home — tela cheia, como app nativo",
+    ],
+    iosTitle: "iPhone · Safari",
+    iosSteps: [
+      "Abra app.trackion.app no Safari",
+      "Toque em Compartilhar (↑) na barra inferior",
+      "Escolha Adicionar à Tela de Início",
+    ],
+    cta: "Abrir no celular",
+  },
   integrations: {
     sectionLabel: "Integrações via API",
     title: ["Trades entram", "sozinhos.", "Você só analisa."],
@@ -513,7 +552,7 @@ const BR: LandingContent = {
     account: "Conta",
     lastSync: "Última sync",
     links: {
-      product: ["Recursos", "Integrações", "Método", "Blog", "Dúvidas", "Preços"],
+      product: ["Recursos", "Integrações", "Método", "App mobile", "Blog", "Dúvidas", "Preços"],
       account: ["Entrar", "Trial 14d", "Status"],
     },
     login: "Entrar",
@@ -823,6 +862,30 @@ const US: LandingContent = {
       },
     ],
   },
+  mobileApp: {
+    sectionLabel: "App · mobile",
+    badge: "PWA · iOS & Android",
+    title: "On your phone too — install like an app",
+    subtitle:
+      "Trackion runs in your mobile browser and can be added to your home screen. No App Store, no APK — same journal, sync, and PnL as desktop.",
+    note: "Scan the QR on desktop or open app.trackion.app on your phone. One account across both devices.",
+    qrLabel: "Scan on your phone",
+    qrAlt: "QR code to open Trackion on mobile",
+    urlLabel: "Or open directly",
+    androidTitle: "Android · Chrome",
+    androidSteps: [
+      "Open app.trackion.app in Chrome",
+      "Tap Install app or ⋮ → Add to Home screen",
+      "Launch from your home screen — full screen, like a native app",
+    ],
+    iosTitle: "iPhone · Safari",
+    iosSteps: [
+      "Open app.trackion.app in Safari",
+      "Tap Share (↑) in the bottom bar",
+      "Choose Add to Home Screen",
+    ],
+    cta: "Open on phone",
+  },
   integrations: {
     sectionLabel: "API integrations",
     title: ["Trades flow in", "automatically.", "You just analyze."],
@@ -954,7 +1017,7 @@ const US: LandingContent = {
     account: "Account",
     lastSync: "Last sync",
     links: {
-      product: ["Features", "Integrations", "Method", "Blog", "FAQ", "Pricing"],
+      product: ["Features", "Integrations", "Method", "Mobile app", "Blog", "FAQ", "Pricing"],
       account: ["Log in", "14-day trial", "Status"],
     },
     login: "Log in",

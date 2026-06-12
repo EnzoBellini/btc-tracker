@@ -312,3 +312,7 @@
 [class*="shadcn-"] {
   border-radius: 0 !important;
 }
+
+.safe-area-pb {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
