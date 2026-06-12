@@ -61,6 +61,10 @@ export async function checkDatabaseHealth(): Promise<{
   const client = await pool.connect();
   try {
     await client.query("SELECT 1");
+    await client.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS affiliate_ref TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
     const users = await client.query<{ n: number }>("SELECT COUNT(*)::int AS n FROM users");
     const tokens = await client.query<{ has_tokens: boolean }>(`
       SELECT EXISTS (
