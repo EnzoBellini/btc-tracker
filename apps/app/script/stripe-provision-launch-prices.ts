@@ -5,7 +5,7 @@
 import { config } from "dotenv";
 import { resolve } from "node:path";
 import Stripe from "stripe";
-import { PLAN_CATALOG, type PlanId } from "@trackion/billing";
+import { PLAN_CATALOG, stripeLookupKey, type PlanId } from "@trackion/billing";
 
 config({ path: resolve(import.meta.dirname, "../.env") });
 
@@ -76,6 +76,7 @@ async function main() {
         unit_amount: catalog.priceCents,
         currency,
         recurring: { interval: "month" },
+        lookup_key: stripeLookupKey(planId, currency === "usd" ? "USD" : "BRL"),
         metadata: { trackion_plan_id: planId, trackion_launch: "true" },
       });
 

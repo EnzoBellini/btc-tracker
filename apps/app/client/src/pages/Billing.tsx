@@ -1,19 +1,18 @@
 import { useHashLocation } from "wouter/use-hash-location";
-import { formatPlanPrice, PLAN_CATALOG, type PlanId } from "@trackion/billing";
-import { useSubscription, useBillingCheckout, useBillingPortal } from "@/hooks/useSubscription";
+import { Link } from "wouter";
+import { useSubscription, useBillingPortal } from "@/hooks/useSubscription";
+import CheckoutPlansPage from "@/components/CheckoutPlansPage";
 import { PageHeader, Eyebrow } from "@/components/tk";
-import { cn } from "@/lib/utils";
 import { useAppLocale } from "@/lib/locale-context";
 
 export default function Billing() {
   const { t } = useAppLocale();
   const [location] = useHashLocation();
   const params = new URLSearchParams(location.split("?")[1] ?? "");
-  const { data: sub, isLoading, refetch } = useSubscription();
-  const checkout = useBillingCheckout();
+  const { data: sub, isLoading } = useSubscription();
   const portal = useBillingPortal();
 
-  const success = params.get("success") === "1";
+  const canceled = params.get("canceled") === "1";
 
   return (
     <div className="space-y-8 p-8">
@@ -24,12 +23,13 @@ export default function Billing() {
         title={t.billing.title}
         subtitle={t.billing.subtitle}
       />
-      {success && (
-        <div className="border border-profit/40 bg-profit/10 px-4 py-3 text-sm text-profit">
-          {t.billing.paymentReceived}
-          <button type="button" className="ml-2 underline" onClick={() => refetch()}>
-            {t.billing.refresh}
-          </button>
+
+      {canceled && (
+        <div className="border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+          {t.checkout.canceled}
+          <Link href="/checkout" className="ml-2 text-primary underline">
+            {t.checkout.tryAgain}
+          </Link>
         </div>
       )}
 
@@ -49,7 +49,7 @@ export default function Billing() {
             {sub?.hasAccess && sub.status === "active" && (
               <button
                 type="button"
-                onClick={() => portal.mutate()}
+                onClick={() => portal.mutate(undefined)}
                 className="mt-4 border border-border px-4 py-2 font-mono-tk text-[11px] uppercase tracking-widest hover:border-primary"
               >
                 {t.billing.manageStripe}
@@ -59,25 +59,12 @@ export default function Billing() {
 
           <section>
             <Eyebrow>{t.billing.availablePlans}</Eyebrow>
-            <div className="mt-4 grid gap-4 md:grid-cols-3">
-              {(["starter", "pro", "elite"] as PlanId[]).map((id) => {
-                const plan = PLAN_CATALOG[id];
-                const current = sub?.effectivePlanId === id;
-                return (
-                  <div key={id} className={cn("border p-5", current ? "border-primary" : "border-border")}>
-                    <p className="font-semibold">{plan.name}</p>
-                    <p className="font-display text-lg font-bold">{formatPlanPrice(plan)}</p>
-                    <button
-                      type="button"
-                      disabled={checkout.isPending || current}
-                      onClick={() => checkout.mutate(id)}
-                      className="mt-4 w-full border border-primary px-3 py-2 font-mono-tk text-[10px] uppercase tracking-widest hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
-                    >
-                      {current ? t.billing.currentPlanBtn : t.billing.subscribe}
-                    </button>
-                  </div>
-                );
-              })}
+            <div className="mt-4">
+              <CheckoutPlansPage
+                showLaunchPricing={false}
+                compact
+                currentPlanId={sub?.effectivePlanId}
+              />
             </div>
           </section>
         </>

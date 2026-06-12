@@ -1,9 +1,9 @@
 import type { Express, Request, Response } from "express";
 import type { PlanId } from "@trackion/billing";
-import { PLAN_CATALOG } from "@trackion/billing";
+import { PLAN_CATALOG, stripeLookupKey } from "@trackion/billing";
 import { storage } from "../storage";
 import * as billingStorage from "./storage";
-import { activatePaidPlan } from "./subscriptionService";
+import { handleStripeWebhookEvent } from "./webhook";
 
 export type BillingCurrency = "BRL" | "USD";
 
@@ -46,6 +46,22 @@ function priceIdForPlan(planId: PlanId, currency: BillingCurrency): string | und
   return brl[planId];
 }
 
+async function resolvePriceId(
+  stripe: import("stripe").default,
+  planId: PlanId,
+  currency: BillingCurrency,
+  lookupKey?: string,
+): Promise<string | undefined> {
+  const key = lookupKey ?? stripeLookupKey(planId, currency);
+  try {
+    const prices = await stripe.prices.list({ lookup_keys: [key], limit: 1 });
+    if (prices.data[0]?.id) return prices.data[0].id;
+  } catch {
+    // fallback para env vars
+  }
+  return priceIdForPlan(planId, currency);
+}
+
 export function registerStripeRoutes(app: Express) {
   app.get("/api/billing/plans", (_req, res) => {
     res.json({
@@ -74,15 +90,17 @@ export function registerStripeRoutes(app: Express) {
       return res.status(400).json({ error: "Plano inválido" });
     }
     const currency = parseCheckoutCurrency(req.body);
-    const priceId = priceIdForPlan(planId, currency);
-    if (!priceId) {
-      return res.status(503).json({
-        error: `Price ID Stripe não configurado para ${planId} (${currency})`,
-      });
-    }
+    const lookupKey = typeof req.body?.lookupKey === "string" ? req.body.lookupKey : undefined;
 
     try {
       const stripe = await getStripe();
+      const priceId = await resolvePriceId(stripe, planId, currency, lookupKey);
+      if (!priceId) {
+        return res.status(503).json({
+          error: `Price ID Stripe não configurado para ${planId} (${currency})`,
+        });
+      }
+
       const user = await storage.getUserById(userId);
       if (!user) return res.status(404).json({ error: "Usuário não encontrado" });
 
@@ -104,14 +122,21 @@ export function registerStripeRoutes(app: Express) {
       const sessionParams: import("stripe").Stripe.Checkout.SessionCreateParams = {
         mode: "subscription",
         customer: customerId,
+        billing_address_collection: "auto",
         line_items: [{ price: priceId, quantity: 1 }],
-        success_url: `${appUrl}/#/billing?success=1`,
-        cancel_url: `${appUrl}/#/billing?canceled=1`,
+        success_url: `${appUrl}/#/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${appUrl}/#/checkout?canceled=1`,
         metadata: {
           userId: String(userId),
           planId,
           currency,
           ...(affiliate.refId ? { affiliateRef: affiliate.refId } : {}),
+        },
+        subscription_data: {
+          metadata: {
+            userId: String(userId),
+            planId,
+          },
         },
         allow_promotion_codes: true,
       };
@@ -129,6 +154,42 @@ export function registerStripeRoutes(app: Express) {
     }
   });
 
+  app.get("/api/billing/checkout-session", async (req, res) => {
+    if (!stripeCheckoutEnabled()) {
+      return res.status(503).json({ error: "Checkout não configurado" });
+    }
+    const userId = req.session?.userId;
+    if (!userId) return res.status(401).json({ error: "Não autenticado" });
+
+    const sessionId = req.query.session_id;
+    if (typeof sessionId !== "string" || !sessionId.startsWith("cs_")) {
+      return res.status(400).json({ error: "session_id inválido" });
+    }
+
+    try {
+      const stripe = await getStripe();
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+      if (session.metadata?.userId !== String(userId)) {
+        return res.status(403).json({ error: "Sessão não pertence a este usuário" });
+      }
+
+      const planId = session.metadata?.planId as PlanId | undefined;
+      const plan = planId && PLAN_CATALOG[planId] ? PLAN_CATALOG[planId] : null;
+
+      res.json({
+        status: session.status,
+        paymentStatus: session.payment_status,
+        planName: plan?.name ?? null,
+        planId: plan?.id ?? null,
+        customerId: typeof session.customer === "string" ? session.customer : session.customer?.id ?? null,
+      });
+    } catch (e) {
+      console.error("[billing/checkout-session]", e);
+      res.status(500).json({ error: "Erro ao carregar sessão de checkout" });
+    }
+  });
+
   app.post("/api/billing/portal", async (req, res) => {
     if (!stripeCheckoutEnabled()) {
       return res.status(503).json({ error: "Portal de cobrança não configurado" });
@@ -137,7 +198,27 @@ export function registerStripeRoutes(app: Express) {
     if (!userId) return res.status(401).json({ error: "Não autenticado" });
 
     const sub = await billingStorage.getSubscriptionByUserId(userId);
-    if (!sub?.stripeCustomerId) {
+    let customerId = sub?.stripeCustomerId ?? undefined;
+
+    const sessionId = typeof req.body?.sessionId === "string" ? req.body.sessionId : undefined;
+    if (sessionId?.startsWith("cs_")) {
+      try {
+        const stripe = await getStripe();
+        const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
+        if (checkoutSession.metadata?.userId !== String(userId)) {
+          return res.status(403).json({ error: "Sessão não pertence a este usuário" });
+        }
+        customerId =
+          typeof checkoutSession.customer === "string"
+            ? checkoutSession.customer
+            : checkoutSession.customer?.id ?? customerId;
+      } catch (e) {
+        console.error("[billing/portal/session]", e);
+        return res.status(400).json({ error: "Sessão de checkout inválida" });
+      }
+    }
+
+    if (!customerId) {
       return res.status(400).json({ error: "Nenhuma assinatura Stripe vinculada" });
     }
 
@@ -145,7 +226,7 @@ export function registerStripeRoutes(app: Express) {
       const stripe = await getStripe();
       const appUrl = process.env.APP_URL ?? "http://localhost:5000";
       const session = await stripe.billingPortal.sessions.create({
-        customer: sub.stripeCustomerId,
+        customer: customerId,
         return_url: `${appUrl}/#/billing`,
       });
       res.json({ url: session.url });
@@ -171,41 +252,7 @@ export function registerStripeRoutes(app: Express) {
         process.env.STRIPE_WEBHOOK_SECRET!,
       );
 
-      if (event.type === "checkout.session.completed") {
-        const session = event.data.object as { metadata?: { userId?: string; planId?: string }; subscription?: string };
-        const userId = parseInt(session.metadata?.userId ?? "", 10);
-        const planId = session.metadata?.planId as PlanId | undefined;
-        if (userId && planId && PLAN_CATALOG[planId]) {
-          await activatePaidPlan(userId, planId, {
-            stripeSubscriptionId: typeof session.subscription === "string" ? session.subscription : undefined,
-            source: "checkout",
-          });
-        }
-      }
-
-      if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
-        const sub = event.data.object as {
-          id: string;
-          status: string;
-          metadata?: { userId?: string; planId?: string };
-          current_period_end?: number;
-        };
-        const userId = parseInt(sub.metadata?.userId ?? "", 10);
-        if (!userId) return res.json({ received: true });
-
-        if (sub.status === "active" || sub.status === "trialing") {
-          const planId = (sub.metadata?.planId as PlanId) ?? "pro";
-          await activatePaidPlan(userId, planId, {
-            stripeSubscriptionId: sub.id,
-            periodEnd: sub.current_period_end ? new Date(sub.current_period_end * 1000) : undefined,
-            source: "checkout",
-          });
-        } else if (sub.status === "past_due") {
-          await billingStorage.updateSubscription(userId, { status: "past_due" });
-        } else {
-          await billingStorage.updateSubscription(userId, { status: "canceled" });
-        }
-      }
+      await handleStripeWebhookEvent(stripe, event);
 
       res.json({ received: true });
     } catch (e) {

@@ -35,6 +35,8 @@ const Rules = lazy(() => import("@/pages/Rules"));
 const ApiSettings = lazy(() => import("@/pages/ApiSettings"));
 const Billing = lazy(() => import("@/pages/Billing"));
 const SubscriptionWall = lazy(() => import("@/pages/SubscriptionWall"));
+const BillingSuccess = lazy(() => import("@/pages/BillingSuccess"));
+const CheckoutPage = lazy(() => import("@/pages/CheckoutPage"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // ── Sync automático: 1x ao abrir + intervalo com app visível (Pro 2min / Elite 30s) ─
@@ -441,6 +443,13 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   }
 
   if (user.subscription && !user.subscription.hasAccess) {
+    if (location.startsWith("/billing/success")) {
+      return (
+        <Suspense fallback={<div className="min-h-screen bg-background" />}>
+          <BillingSuccess />
+        </Suspense>
+      );
+    }
     return (
       <Suspense fallback={<div className="min-h-screen bg-background" />}>
         <SubscriptionWall />
@@ -470,7 +479,9 @@ export default function App() {
             <Route path="/reports"      component={() => <Layout><Reports /></Layout>} />
             <Route path="/rules"        component={() => <Layout><Rules /></Layout>} />
             <Route path="/api-settings" component={() => <Layout><ApiSettings /></Layout>} />
+            <Route path="/billing/success" component={() => <BillingSuccess />} />
             <Route path="/billing"      component={() => <Layout><Billing /></Layout>} />
+            <Route path="/checkout"    component={() => <Layout><CheckoutPage /></Layout>} />
             <Route path="/conta"        component={() => <Layout><ChangePasswordPage /></Layout>} />
             <Route path="/verify-email" component={() => <VerifyEmailPage />} />
             <Route component={() => <Layout><NotFound /></Layout>} />

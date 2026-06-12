@@ -34,6 +34,30 @@ export async function upsertSubscription(data: InsertSubscription): Promise<Subs
   return created;
 }
 
+export async function getSubscriptionByStripeCustomerId(
+  stripeCustomerId: string,
+): Promise<Subscription | undefined> {
+  if (!db) return undefined;
+  const [row] = await db
+    .select()
+    .from(subscriptions)
+    .where(eq(subscriptions.stripeCustomerId, stripeCustomerId))
+    .limit(1);
+  return row;
+}
+
+export async function getSubscriptionByStripeSubscriptionId(
+  stripeSubscriptionId: string,
+): Promise<Subscription | undefined> {
+  if (!db) return undefined;
+  const [row] = await db
+    .select()
+    .from(subscriptions)
+    .where(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId))
+    .limit(1);
+  return row;
+}
+
 export async function updateSubscription(
   userId: number,
   data: Partial<InsertSubscription>,

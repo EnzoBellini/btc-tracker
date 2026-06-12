@@ -137,6 +137,27 @@ export type AppContent = {
     currentPlanBtn: string;
     subscribe: string;
   };
+  checkout: {
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    processing: string;
+    canceled: string;
+    tryAgain: string;
+  };
+  billingSuccess: {
+    eyebrow: string;
+    title: (planName: string) => string;
+    pendingTitle: string;
+    description: string;
+    pendingDescription: string;
+    goToDashboard: string;
+    manageBilling: string;
+    backToBilling: string;
+    missingSession: string;
+    errorTitle: string;
+    loading: string;
+  };
   dashboard: {
     eyebrow: string;
     title: string;
@@ -582,6 +603,27 @@ const BR: AppContent = {
     availablePlans: "planos disponíveis",
     currentPlanBtn: "Plano atual",
     subscribe: "Assinar",
+  },
+  checkout: {
+    eyebrow: "checkout · assinatura",
+    title: "Escolha seu plano",
+    subtitle: "Você será redirecionado para o checkout seguro da Stripe.",
+    processing: "Redirecionando…",
+    canceled: "Checkout cancelado.",
+    tryAgain: "Tentar novamente",
+  },
+  billingSuccess: {
+    eyebrow: "pagamento confirmado",
+    title: (planName) => `Assinatura ${planName} ativada!`,
+    pendingTitle: "Processando pagamento…",
+    description: "Obrigado! Seu acesso ao Trackion já está sendo liberado.",
+    pendingDescription: "Aguardando confirmação do pagamento. Isso leva só alguns segundos.",
+    goToDashboard: "Ir para o dashboard",
+    manageBilling: "Gerenciar cobrança",
+    backToBilling: "Voltar para assinatura",
+    missingSession: "Sessão de checkout não encontrada.",
+    errorTitle: "Não foi possível confirmar o pagamento",
+    loading: "Confirmando pagamento…",
   },
   dashboard: {
     eyebrow: "Dashboard · overview",
@@ -1077,6 +1119,27 @@ const US: AppContent = {
     availablePlans: "available plans",
     currentPlanBtn: "Current plan",
     subscribe: "Subscribe",
+  },
+  checkout: {
+    eyebrow: "checkout · subscription",
+    title: "Choose your plan",
+    subtitle: "You'll be redirected to Stripe's secure checkout.",
+    processing: "Redirecting…",
+    canceled: "Checkout canceled.",
+    tryAgain: "Try again",
+  },
+  billingSuccess: {
+    eyebrow: "payment confirmed",
+    title: (planName) => `${planName} subscription activated!`,
+    pendingTitle: "Processing payment…",
+    description: "Thank you! Your Trackion access is being enabled.",
+    pendingDescription: "Waiting for payment confirmation. This usually takes a few seconds.",
+    goToDashboard: "Go to dashboard",
+    manageBilling: "Manage billing",
+    backToBilling: "Back to subscription",
+    missingSession: "Checkout session not found.",
+    errorTitle: "Could not confirm payment",
+    loading: "Confirming payment…",
   },
   dashboard: {
     eyebrow: "Dashboard · overview",
