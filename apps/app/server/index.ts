@@ -12,7 +12,7 @@ import { registerAffiliateRoutes } from "./affiliates/routes";
 import { startSubscriptionCron } from "./billing/cron";
 import { db } from "./db";
 import { validateSecurityConfig, logEmailConfigStatus, redactForLog } from "./lib/security";
-import { ensureProductionSchema } from "./lib/ensureSchema";
+import { ensureProductionSchema, checkDatabaseHealth } from "./lib/ensureSchema";
 
 validateSecurityConfig();
 
@@ -113,6 +113,16 @@ registerBillingRoutes(app);
 registerAdminRoutes(app);
 registerAffiliateRoutes(app);
 
+app.get("/api/health", async (_req, res) => {
+  const dbHealth = await checkDatabaseHealth();
+  res.status(dbHealth.ok ? 200 : 503).json({
+    ok: dbHealth.ok,
+    db: dbHealth,
+    stripe: Boolean(process.env.STRIPE_SECRET_KEY?.startsWith("sk_")),
+    resend: Boolean(process.env.RESEND_API_KEY?.trim()),
+  });
+});
+
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -152,8 +162,7 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    await ensureProductionSchema();
-    log("Schema de produção verificado", "db");
+    await ensureProductionSchema(log);
   } catch (err) {
     console.error("[db] Falha ao aplicar migrações de schema:", err);
   }

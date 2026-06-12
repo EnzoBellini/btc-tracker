@@ -12,7 +12,7 @@ const MIGRATION_FILES = [
 let ensured = false;
 
 /** Migrações SQL idempotentes — evita 500 no login quando o schema ficou atrás do código. */
-export async function ensureProductionSchema(): Promise<void> {
+export async function ensureProductionSchema(log?: (msg: string, source?: string) => void): Promise<void> {
   if (ensured || process.env.NODE_ENV !== "production") return;
   if (!getPgConnectionString()) return;
 
@@ -22,11 +22,53 @@ export async function ensureProductionSchema(): Promise<void> {
 
   try {
     for (const file of MIGRATION_FILES) {
-      const sqlPath = path.join(scriptDir, file);
-      const sql = readFileSync(sqlPath, "utf8");
-      await client.query(sql);
+      try {
+        const sqlPath = path.join(scriptDir, file);
+        const sql = readFileSync(sqlPath, "utf8");
+        await client.query(sql);
+        log?.(`migration ok: ${file}`, "db");
+      } catch (err) {
+        console.error(`[db] migration failed: ${file}`, err);
+      }
     }
     ensured = true;
+  } finally {
+    client.release();
+    await pool.end();
+  }
+}
+
+export async function checkDatabaseHealth(): Promise<{
+  ok: boolean;
+  users?: number;
+  emailVerificationTokens?: boolean;
+  error?: string;
+}> {
+  if (!getPgConnectionString()) {
+    return { ok: true, users: 0, emailVerificationTokens: false };
+  }
+
+  const pool = createPgPool();
+  const client = await pool.connect();
+  try {
+    await client.query("SELECT 1");
+    const users = await client.query<{ n: number }>("SELECT COUNT(*)::int AS n FROM users");
+    const tokens = await client.query<{ has_tokens: boolean }>(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'email_verification_tokens'
+      ) AS has_tokens
+    `);
+    return {
+      ok: true,
+      users: users.rows[0]?.n ?? 0,
+      emailVerificationTokens: tokens.rows[0]?.has_tokens ?? false,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
   } finally {
     client.release();
     await pool.end();
