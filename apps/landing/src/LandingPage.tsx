@@ -145,7 +145,7 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
       return;
     }
     setTrialSuccess(true);
-    setTrialEmailSent(result.emailSent ?? true);
+    setTrialEmailSent(result.emailSent === true);
     setTrialDevVerifyUrl(result.devVerifyUrl ?? null);
     setTrialDevPassword(result.devPassword ?? null);
     setFooterEmail(email);

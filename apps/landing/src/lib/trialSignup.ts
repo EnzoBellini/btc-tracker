@@ -13,6 +13,7 @@ export type TrialSignupResult = {
   ok: boolean;
   message: string;
   emailSent?: boolean;
+  existingAccount?: boolean;
   /** Só em dev quando Resend não está configurado */
   devVerifyUrl?: string;
   devPassword?: string;
@@ -48,6 +49,10 @@ export async function submitTrialSignup(
 
   if (!res.ok) {
     return { ok: false, message: data.error ?? copy.error };
+  }
+
+  if (data.existingAccount || data.emailSent === false) {
+    return { ok: false, message: data.message ?? copy.error, existingAccount: true };
   }
 
   return {

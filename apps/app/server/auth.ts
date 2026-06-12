@@ -298,6 +298,8 @@ export function registerAuthRoutes(app: Express) {
 
       return res.json({
         ok: true,
+        emailSent: false,
+        existingAccount: true,
         message: TRIAL_SIGNUP_COPY[locale].alreadyHasAccount,
       });
     } catch (err: unknown) {
