@@ -176,7 +176,7 @@ export default function Rules() {
           <Eyebrow>{t.rules.doctrineEyebrow}</Eyebrow>
           <ol className="grid grid-cols-1 gap-px overflow-hidden border border-border bg-border md:grid-cols-2">
             {displayRules.map(({ icon: Icon, title, tone, items }, i) => {
-              const t = toneClasses(tone);
+              const tc = toneClasses(tone);
               return (
                 <li key={title} className="relative bg-card p-6">
                   <div className="flex items-start justify-between gap-3 border-b border-border pb-4">
@@ -184,8 +184,8 @@ export default function Rules() {
                       <span className="font-mono-tk text-[10px] tracking-[0.28em] text-primary">
                         [{String(i + 1).padStart(2, "0")}]
                       </span>
-                      <div className={`flex h-9 w-9 items-center justify-center border ${t.border} ${t.bg}`}>
-                        <Icon className={`h-4 w-4 ${t.text}`} />
+                      <div className={`flex h-9 w-9 items-center justify-center border ${tc.border} ${tc.bg}`}>
+                        <Icon className={`h-4 w-4 ${tc.text}`} />
                       </div>
                     </div>
                     <span className="font-mono-tk text-[9px] uppercase tracking-[0.28em] text-muted-foreground">
