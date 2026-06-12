@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import {
-  Plus, Trash2, Edit2, Search, X, RefreshCw, ArrowUpRight, ArrowDownRight,
+  Plus, Trash2, Edit2, Search, X, RefreshCw, ArrowUpRight, ArrowDownRight, LineChart,
 } from "lucide-react";
+import TradeDetailDialog from "@/components/TradeDetailDialog";
 import { useTrades, useCreateTrade, useUpdateTrade, useDeleteTrade, useSyncAllTrades } from "@/hooks/useTrades";
 import { useUIStore } from "@/store/ui";
 import { fmtUsdt, pnlColor } from "@/lib/format";
@@ -202,6 +203,7 @@ export default function Trades() {
   const { t } = useAppLocale();
   const [open, setOpen] = useState(false);
   const [editTrade, setEditTrade] = useState<Trade | null>(null);
+  const [detailTrade, setDetailTrade] = useState<Trade | null>(null);
 
   const { tradesFilter, setTradesFilter, resetTradesFilter } = useUIStore();
   const { data: trades = [], isLoading } = useTrades();
@@ -369,22 +371,27 @@ export default function Trades() {
                       </p>
                     </td>
                   </tr>
-                ) : filtered.map((t, idx) => (
-                  <tr key={t.id} className="group border-b border-border/40 transition-colors hover:bg-white/[0.02]" data-testid={`row-trade-${t.id}`}>
+                ) : filtered.map((trade, idx) => (
+                  <tr
+                    key={trade.id}
+                    className="group cursor-pointer border-b border-border/40 transition-colors hover:bg-white/[0.02]"
+                    data-testid={`row-trade-${trade.id}`}
+                    onClick={() => setDetailTrade(trade)}
+                  >
                     <td className="px-4 py-3 font-mono-tk text-[10px] tracking-[0.18em] text-muted-foreground/60">
                       {String(idx + 1).padStart(3, "0")}
                     </td>
-                    <td className="num px-4 py-3 font-mono-tk text-xs text-muted-foreground whitespace-nowrap">{t.date}</td>
+                    <td className="num px-4 py-3 font-mono-tk text-xs text-muted-foreground whitespace-nowrap">{trade.date}</td>
                     <td className="px-4 py-3">
-                      <div className="font-mono-tk text-sm font-bold tracking-wide text-foreground">{t.pair}</div>
+                      <div className="font-mono-tk text-sm font-bold tracking-wide text-foreground">{trade.pair}</div>
                       <div className="mt-1 flex flex-wrap gap-1">
-                        {t.setup && (
+                        {trade.setup && (
                           <span className="font-mono-tk text-[9px] uppercase tracking-wider text-muted-foreground">
-                            {t.setup}
+                            {trade.setup}
                           </span>
                         )}
-                        {t.sourceExchange && t.sourceExchange !== "manual" && (
-                          <StatPill tone="info">{t.sourceExchange}</StatPill>
+                        {trade.sourceExchange && trade.sourceExchange !== "manual" && (
+                          <StatPill tone="info">{trade.sourceExchange}</StatPill>
                         )}
                       </div>
                     </td>
@@ -392,38 +399,47 @@ export default function Trades() {
                       <span
                         className={cn(
                           "inline-flex items-center gap-1 font-mono-tk text-[11px] font-bold uppercase tracking-[0.22em]",
-                          t.direction === "LONG" ? "text-profit" : "text-loss",
+                          trade.direction === "LONG" ? "text-profit" : "text-loss",
                         )}
                       >
-                        {t.direction === "LONG" ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                        {t.direction}
+                        {trade.direction === "LONG" ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                        {trade.direction}
                       </span>
                     </td>
-                    <td className="num px-4 py-3 font-mono-tk text-xs">{fmtUsdt(t.entryPrice)}</td>
-                    <td className="num px-4 py-3 font-mono-tk text-xs text-loss">{fmtUsdt(t.stopPrice)}</td>
-                    <td className="num px-4 py-3 font-mono-tk text-xs text-profit">{fmtUsdt(t.targetPrice)}</td>
-                    <td className="num px-4 py-3 font-mono-tk text-xs">{t.exitPrice ? fmtUsdt(t.exitPrice) : "—"}</td>
-                    <td className="num px-4 py-3 font-mono-tk text-xs text-muted-foreground">{fmtUsdt(t.positionSize)}</td>
-                    <td className={cn("num px-4 py-3 font-mono-tk text-sm font-bold", pnlColor(t.pnl ?? 0))}>
-                      {t.pnl != null ? `${t.pnl > 0 ? "+" : ""}${fmtUsdt(t.pnl)}` : "—"}
+                    <td className="num px-4 py-3 font-mono-tk text-xs">{fmtUsdt(trade.entryPrice)}</td>
+                    <td className="num px-4 py-3 font-mono-tk text-xs text-loss">{fmtUsdt(trade.stopPrice)}</td>
+                    <td className="num px-4 py-3 font-mono-tk text-xs text-profit">{fmtUsdt(trade.targetPrice)}</td>
+                    <td className="num px-4 py-3 font-mono-tk text-xs">{trade.exitPrice ? fmtUsdt(trade.exitPrice) : "—"}</td>
+                    <td className="num px-4 py-3 font-mono-tk text-xs text-muted-foreground">{fmtUsdt(trade.positionSize)}</td>
+                    <td className={cn("num px-4 py-3 font-mono-tk text-sm font-bold", pnlColor(trade.pnl ?? 0))}>
+                      {trade.pnl != null ? `${trade.pnl > 0 ? "+" : ""}${fmtUsdt(trade.pnl)}` : "—"}
                     </td>
-                    <td className="px-4 py-3"><StatusCell status={t.status} /></td>
+                    <td className="px-4 py-3"><StatusCell status={trade.status} /></td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1 opacity-50 transition-opacity group-hover:opacity-100">
                         <Button
                           variant="ghost" size="icon"
                           className="h-7 w-7 rounded-none border border-transparent text-muted-foreground hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
-                          onClick={() => setEditTrade(t)}
-                          data-testid={`button-edit-trade-${t.id}`}
+                          onClick={(e) => { e.stopPropagation(); setDetailTrade(trade); }}
+                          data-testid={`button-chart-trade-${trade.id}`}
+                          title={t.trades.viewChart}
+                        >
+                          <LineChart className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost" size="icon"
+                          className="h-7 w-7 rounded-none border border-transparent text-muted-foreground hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+                          onClick={(e) => { e.stopPropagation(); setEditTrade(trade); }}
+                          data-testid={`button-edit-trade-${trade.id}`}
                         >
                           <Edit2 className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                           variant="ghost" size="icon"
                           className="h-7 w-7 rounded-none border border-transparent text-muted-foreground hover:border-loss/40 hover:bg-loss/10 hover:text-loss"
-                          onClick={() => deleteTrade.mutate(t.id)}
+                          onClick={(e) => { e.stopPropagation(); deleteTrade.mutate(trade.id); }}
                           disabled={deleteTrade.isPending}
-                          data-testid={`button-delete-trade-${t.id}`}
+                          data-testid={`button-delete-trade-${trade.id}`}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
@@ -437,10 +453,16 @@ export default function Trades() {
         </div>
 
         <div className="flex items-center justify-between border-t border-border pt-4 font-mono-tk text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
-          <span>↳ tabela · ordem: data DESC</span>
+          <span>↳ tabela · ordem: data DESC · clique na linha para ver gráfico</span>
           <span><span className="text-foreground num">{filtered.length}</span> linhas</span>
         </div>
       </div>
+
+      <TradeDetailDialog
+        trade={detailTrade}
+        open={!!detailTrade}
+        onOpenChange={(v) => { if (!v) setDetailTrade(null); }}
+      />
     </div>
   );
 }

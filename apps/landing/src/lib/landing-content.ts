@@ -24,6 +24,14 @@ export type LandingContent = {
   navFaq: string;
   navLogin: string;
   navCta: string;
+  cta: {
+    headline: string;
+    button: string;
+    subtext: string;
+    scarcityBadge: string;
+    navPrimary: string;
+    navSubtext: string;
+  };
   blogPromo: {
     sectionLabel: string;
     title: string;
@@ -78,6 +86,9 @@ export type LandingContent = {
   };
   manifesto: {
     sectionLabel: string;
+    philosophyTitle: string;
+    philosophyLead: string;
+    philosophyBlocks: { title: string; body: string }[];
     title: [string, string];
     thesisLabel: string;
     thesis: string;
@@ -243,12 +254,20 @@ const BR: LandingContent = {
   },
   navLogin: "Entrar →",
   navCta: "Trial 14d",
+  cta: {
+    headline: "Comece agora — vagas limitadas a 100 traders",
+    button: "Iniciar trial de 14 dias",
+    subtext: "Elite grátis por 14 dias · sem cartão de crédito",
+    scarcityBadge: "100 vagas · beta privado",
+    navPrimary: "Iniciar trial 14 dias",
+    navSubtext: "Sem cartão de crédito",
+  },
   navBrandSubtitle: "— trading journal · crypto",
   heroMeta: { beta: "Beta privado", trial: "14 dias Elite grátis", noCard: "sem cartão de crédito" },
   heroEyebrow: "[00 — Journal · BTCUSDT futures]",
   heroTitle: ["DOMINE", "SEUS", "trades"],
   heroMarketPulse: "BTC · futuros USDT · stack spot",
-  heroCtaPrimary: "Começar trial 14 dias",
+  heroCtaPrimary: "Comece agora — vagas limitadas a 100 traders",
   heroCtaSecondary: "Ver recursos",
   heroPills: [
     { icon: LineChart, text: "PnL real em 30s" },
@@ -276,17 +295,17 @@ const BR: LandingContent = {
     solveTitle: "Trackion responde em segundos — não em horas de planilha.",
     solveText:
       "Sync automático via API read-only, PnL consolidado multi-exchange e métricas que você confia. Método nos dados, não no feeling.",
-    cta: "Começar trial 14 dias",
+    cta: "Iniciar trial de 14 dias",
   },
   objections: {
     sectionLabel: "Dúvidas",
-    title: "Objeções que travam — respondidas.",
+    title: "Perguntas frequentes — respondidas.",
     subtitle:
-      "Segurança, preço e compatibilidade. Sem rodeio, antes de você assinar.",
+      "Segurança, preço, PnL, contas múltiplas e suporte. Respostas diretas antes de você assinar.",
     items: [
       {
-        q: "É seguro conectar minha exchange?",
-        a: "Sim. Usamos API read-only — sem permissão de saque, sem execução de ordens. Suas chaves ficam criptografadas e você pode revogar o acesso na exchange a qualquer momento. O Trackion só lê execuções para montar seu journal.",
+        q: "Minha chave de API está segura?",
+        a: "Sim. Usamos API read-only — sem permissão de saque ou execução de ordens. Suas chaves ficam criptografadas em repouso e você pode revogar o acesso na exchange a qualquer momento. O Trackion só lê execuções para montar seu journal; nunca move fundos.",
       },
       {
         q: "Quanto custa?",
@@ -299,6 +318,30 @@ const BR: LandingContent = {
       {
         q: "Preciso de cartão para testar?",
         a: "Não. Cadastro com e-mail, trial Elite completo por 14 dias. Cartão só se você decide assinar depois do trial.",
+      },
+      {
+        q: "Posso usar várias contas ou exchanges?",
+        a: "Sim. Conecte Binance, MEXC e Bitget no mesmo dashboard — cada exchange com sua API read-only. O Trackion consolida PnL, win rate e drawdown globalmente, sem retrabalho entre contas.",
+      },
+      {
+        q: "E se eu quiser cancelar?",
+        a: "Cancele quando quiser, sem multa e sem burocracia. A assinatura segue ativa até o fim do período pago; depois você perde acesso aos recursos pagos, mas seus dados ficam disponíveis para exportação por 30 dias.",
+      },
+      {
+        q: "Vocês oferecem suporte?",
+        a: "Sim. Suporte por e-mail em support@trackion.app — resposta em até 24h úteis. Guias no blog cobrem sync de exchange, psicologia de trade e gestão de risco. Durante o trial Elite você testa tudo com suporte incluído.",
+      },
+      {
+        q: "Quão preciso é o cálculo de PnL?",
+        a: "O PnL usa execuções reais da exchange — preço de entrada/saída, quantidade, fees de maker/taker e funding em futuros. Não estimamos: sincronizamos o que a exchange registrou. Divergências raras costumam vir de trades manuais fora da API ou delay de sync (~2s).",
+      },
+      {
+        q: "Consigo importar trades antigos?",
+        a: "Sim. Ao conectar a API, o Trackion puxa o histórico disponível na exchange (geralmente 90–180 dias, conforme a corretora). Trades mais antigos podem ser importados via CSV ou cadastro manual no journal.",
+      },
+      {
+        q: "Meus dados são privados?",
+        a: "Sim. Seus trades, notas e métricas são visíveis só para você. Não vendemos dados, não compartilhamos com terceiros e não usamos suas operações para marketing. Chaves de API são criptografadas e nunca expostas no frontend.",
       },
     ],
   },
@@ -375,7 +418,28 @@ const BR: LandingContent = {
     ],
   },
   manifesto: {
-    sectionLabel: "Manifesto",
+    sectionLabel: "Método",
+    philosophyTitle: "Por que journaling funciona no trading crypto",
+    philosophyLead:
+      "Traders consistentes não confiam na memória — confiam em registro, revisão e métricas. Um trading journal transforma cada operação em dado: win rate real, expectancy, drawdown e padrões emocionais (FOMO, revenge trade, overtrading). Sem journal, você repete os mesmos erros achando que evoluiu. Com journal, a psicologia do trading vira algo mensurável — e corrigível.",
+    philosophyBlocks: [
+      {
+        title: "A memória mente — os dados não",
+        body: "Depois de 50 trades, ninguém lembra com precisão qual setup funcionou em qual horário ou quanto perdeu em revenge trades. O journal registra tudo automaticamente via sync de exchange, eliminando viés de confirmação e memória seletiva.",
+      },
+      {
+        title: "Psicologia do trading com evidência",
+        body: "Tags emocionais, limite diário de risco e revisão semanal expõem padrões invisíveis no heat of the moment: você perde mais às sextas? Dobla mão após dois losses? O journal responde com números — não com feeling.",
+      },
+      {
+        title: "Revisão sistemática vence intuição",
+        body: "Profissionais não operam mais porque 'sentem' — operam setups com expectancy positiva comprovada no histórico. Journaling cria um loop: executar → registrar → analisar → ajustar regras. Esse ciclo é o que separa método de aposta.",
+      },
+      {
+        title: "Do caos ao processo em 30 segundos",
+        body: "Planilhas quebram, fórmulas desalinham e consomem 8h/mês. Trackion sincroniza Binance, MEXC e Bitget em ~2 segundos, calcula PnL com fees reais e entrega dashboard pronto — para você gastar tempo analisando, não copiando ordens.",
+      },
+    ],
     title: ["PARE", "DE APOSTAR."],
     thesisLabel: "↳ thesis",
     thesis:
@@ -631,12 +695,20 @@ const US: LandingContent = {
   },
   navLogin: "Log in →",
   navCta: "Free 14d",
+  cta: {
+    headline: "Start now — limited to 100 traders",
+    button: "Start your 14-day trial",
+    subtext: "14-day Elite trial · no credit card required",
+    scarcityBadge: "100 spots · private beta",
+    navPrimary: "Start your 14-day trial",
+    navSubtext: "No card required",
+  },
   navBrandSubtitle: "— trading journal · crypto",
   heroMeta: { beta: "Private beta", trial: "14-day Elite trial", noCard: "no credit card" },
   heroEyebrow: "[00 — Journal · BTCUSDT futures]",
   heroTitle: ["MASTER", "YOUR", "trades"],
   heroMarketPulse: "BTC · USDT futures · spot stack",
-  heroCtaPrimary: "Start 14-day trial",
+  heroCtaPrimary: "Start now — limited to 100 traders",
   heroCtaSecondary: "See features",
   heroPills: [
     { icon: LineChart, text: "Real PnL in 30s" },
@@ -664,17 +736,17 @@ const US: LandingContent = {
     solveTitle: "Trackion answers in seconds — not hours in a spreadsheet.",
     solveText:
       "Automatic read-only API sync, multi-exchange consolidated PnL, and metrics you can trust. Method in the data, not gut feel.",
-    cta: "Start 14-day trial",
+    cta: "Start your 14-day trial",
   },
   objections: {
     sectionLabel: "FAQ",
-    title: "Objections answered upfront.",
+    title: "Frequently asked questions — answered.",
     subtitle:
-      "Security, pricing, and compatibility — straight answers before you subscribe.",
+      "Security, pricing, PnL accuracy, multiple accounts, and support — straight answers before you subscribe.",
     items: [
       {
-        q: "Is it safe to connect my exchange?",
-        a: "Yes. We use read-only API — no withdrawal or trading permissions. Keys are encrypted and you can revoke access on the exchange anytime. Trackion only reads executions to build your journal.",
+        q: "Is my API key safe?",
+        a: "Yes. We use read-only API — no withdrawal or trading permissions. Keys are encrypted at rest and you can revoke access on the exchange anytime. Trackion only reads executions to build your journal; it never moves funds.",
       },
       {
         q: "How much does it cost?",
@@ -687,6 +759,30 @@ const US: LandingContent = {
       {
         q: "Do I need a card to try it?",
         a: "No. Sign up with email, full Elite trial for 14 days. Card only if you choose to subscribe after the trial.",
+      },
+      {
+        q: "Can I use multiple accounts?",
+        a: "Yes. Connect Binance, MEXC, and Bitget in one dashboard — each exchange with its own read-only API. Trackion consolidates PnL, win rate, and drawdown globally with zero rework across accounts.",
+      },
+      {
+        q: "What if I want to cancel?",
+        a: "Cancel anytime — no penalty, no hassle. Your subscription stays active until the end of the paid period; after that you lose access to paid features, but your data remains available for export for 30 days.",
+      },
+      {
+        q: "Do you offer support?",
+        a: "Yes. Email support at support@trackion.app — response within 24 business hours. Blog guides cover exchange sync, trading psychology, and risk management. During the Elite trial you test everything with support included.",
+      },
+      {
+        q: "How accurate is the PnL calculation?",
+        a: "PnL uses real exchange executions — entry/exit price, size, maker/taker fees, and futures funding. We don't estimate: we sync what the exchange recorded. Rare discrepancies usually come from manual trades outside the API or ~2s sync delay.",
+      },
+      {
+        q: "Can I import past trades?",
+        a: "Yes. When you connect the API, Trackion pulls available exchange history (typically 90–180 days depending on the broker). Older trades can be imported via CSV or manual entry in the journal.",
+      },
+      {
+        q: "Is my data private?",
+        a: "Yes. Your trades, notes, and metrics are visible only to you. We don't sell data, share with third parties, or use your operations for marketing. API keys are encrypted and never exposed in the frontend.",
       },
     ],
   },
@@ -763,7 +859,28 @@ const US: LandingContent = {
     ],
   },
   manifesto: {
-    sectionLabel: "Manifesto",
+    sectionLabel: "Method",
+    philosophyTitle: "Why journaling works in crypto trading",
+    philosophyLead:
+      "Consistent traders don't trust memory — they trust logs, review, and metrics. A trading journal turns every operation into data: real win rate, expectancy, drawdown, and emotional patterns (FOMO, revenge trades, overtrading). Without a journal, you repeat the same mistakes thinking you've improved. With one, trading psychology becomes measurable — and fixable.",
+    philosophyBlocks: [
+      {
+        title: "Memory lies — data doesn't",
+        body: "After 50 trades, nobody accurately remembers which setup worked at which time or how much was lost on revenge trades. The journal records everything automatically via exchange sync, eliminating confirmation bias and selective memory.",
+      },
+      {
+        title: "Trading psychology with evidence",
+        body: "Emotional tags, daily risk limits, and weekly review expose patterns invisible in the heat of the moment: do you lose more on Fridays? Double down after two losses? The journal answers with numbers — not gut feel.",
+      },
+      {
+        title: "Systematic review beats intuition",
+        body: "Professionals don't trade because they 'feel it' — they trade setups with proven positive expectancy in their history. Journaling creates a loop: execute → log → analyze → adjust rules. That cycle is what separates method from gambling.",
+      },
+      {
+        title: "From chaos to process in 30 seconds",
+        body: "Spreadsheets break, formulas drift, and eat 8h/month. Trackion syncs Binance, MEXC, and Bitget in ~2 seconds, calculates PnL with real fees, and delivers a ready dashboard — so you spend time analyzing, not copying orders.",
+      },
+    ],
     title: ["STOP", "GAMBLING."],
     thesisLabel: "↳ thesis",
     thesis:

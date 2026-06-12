@@ -91,6 +91,32 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.status(204).end();
   });
 
+  app.get("/api/trades/:id/chart", async (req, res) => {
+    const userId = uid(req);
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "ID inválido" });
+
+    const trade = await storage.getTrade(userId, id);
+    if (!trade) return res.status(404).json({ error: "Trade não encontrado" });
+
+    const resolved = await getResolvedSubscription(userId);
+    const visible = filterTradesByHistory([trade], resolved.entitlements);
+    if (!visible.length) {
+      return res.status(403).json({ error: "Trade fora do histórico do seu plano." });
+    }
+
+    try {
+      const { buildTradeChart } = await import("./services/tradeChart");
+      const chart = await buildTradeChart(trade);
+      res.setHeader("Cache-Control", "private, max-age=300");
+      res.json(chart);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("[trades/chart]", id, msg);
+      res.status(502).json({ error: msg });
+    }
+  });
+
   registerExchangeRoutes(app);
 
   // ── Transfers ─────────────────────────────────────────────────────────────

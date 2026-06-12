@@ -9,6 +9,8 @@ import {
   LaunchOfferHighlight,
   LaunchPriceBlock,
 } from "./components/LaunchPriceBlock";
+import { NavTrialCta } from "./components/NavTrialCta";
+import { CtaStrip } from "./components/CtaStrip";
 import { LegalInfoModal } from "./components/LegalInfoModal";
 import { TrialCtaButton } from "./components/TrialCtaButton";
 import type { StaticPageKind } from "./lib/static-page-content";
@@ -89,6 +91,7 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [legalModal, setLegalModal] = useState<StaticPageKind | null>(null);
   const [footerEmailError, setFooterEmailError] = useState<string | null>(null);
+  const [navCtaHovered, setNavCtaHovered] = useState(false);
   const goStart = onStartClick ?? (() => {});
 
   const scrollToSection = (href: string) => {
@@ -177,9 +180,9 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
         aria-hidden
       />
 
-      {/* =================== NAV ===================== */}
-      <nav className="fixed top-0 z-50 w-full border-b border-white/[0.06] bg-black/85 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1400px] items-center gap-4 px-4 py-3 sm:px-6 lg:gap-6">
+      {/* =================== NAV + TICKER ===================== */}
+      <header className="fixed top-0 z-50 w-full border-b border-white/[0.06] bg-black/85 backdrop-blur-xl">
+        <nav className="mx-auto flex min-h-[52px] max-w-[1400px] items-center gap-4 px-4 py-3 sm:px-6 lg:gap-6">
           <a href="/" className="group flex shrink-0 items-center gap-2.5 rounded-sm p-1 sm:gap-3">
             <img
               src="/logo-trackion.webp"
@@ -192,12 +195,20 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
             <span className="text-sm font-bold tracking-[0.28em] text-white sm:text-base sm:tracking-[0.32em]">
               TRACKION
             </span>
-            <span className="hidden font-mono text-[10px] uppercase tracking-[0.22em] text-gray-500 2xl:inline">
+            <span
+              className={`hidden font-mono text-[10px] uppercase tracking-[0.22em] text-gray-500 transition-opacity duration-200 2xl:inline ${
+                navCtaHovered ? "2xl:opacity-0" : ""
+              }`}
+            >
               {t.navBrandSubtitle}
             </span>
           </a>
 
-          <div className="hidden min-w-0 flex-1 items-center justify-center gap-5 px-2 md:flex lg:gap-7 xl:gap-9">
+          <div
+            className={`hidden min-w-0 flex-1 items-center justify-center gap-5 px-2 transition-opacity duration-200 md:flex lg:gap-7 xl:gap-9 ${
+              navCtaHovered ? "md:opacity-0 md:pointer-events-none" : ""
+            }`}
+          >
             {t.nav.map((link) => (
               <button
                 key={link.href}
@@ -227,7 +238,7 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
             </button>
           </div>
 
-          <div className="ml-auto flex shrink-0 items-center gap-2.5 sm:gap-3 md:gap-4 md:pl-3 lg:pl-4 md:border-l md:border-white/[0.08]">
+          <div className="ml-auto flex shrink-0 items-center gap-2.5 sm:gap-3 md:gap-4 md:border-l md:border-white/[0.08] md:pl-3 lg:pl-4">
             <button
               type="button"
               aria-label={mobileNavOpen ? t.navMenuClose : t.navMenuOpen}
@@ -236,19 +247,30 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
             >
               {mobileNavOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
-            <MarketSelector market={market} onChange={setMarket} />
-            <button
-              type="button"
-              onClick={goStart}
-              className="hidden shrink-0 px-1 font-mono text-[11px] uppercase tracking-[0.2em] text-gray-400 transition hover:text-white lg:inline-flex"
+            <div
+              className={`flex items-center gap-2.5 transition-opacity duration-200 sm:gap-3 ${
+                navCtaHovered ? "md:opacity-0 md:pointer-events-none" : ""
+              }`}
             >
-              {t.navLogin}
-            </button>
-            <TrialCtaButton size="xs" showArrow={false} glow={false} onClick={() => openTrialModal()}>
-              {t.navCta}
-            </TrialCtaButton>
+              <MarketSelector market={market} onChange={setMarket} />
+              <button
+                type="button"
+                onClick={goStart}
+                className="hidden shrink-0 px-1 font-mono text-[11px] uppercase tracking-[0.2em] text-gray-400 transition hover:text-white lg:inline-flex"
+              >
+                {t.navLogin}
+              </button>
+            </div>
+            <NavTrialCta
+              shortLabel={t.navCta}
+              fullLabel={t.cta.navPrimary}
+              subtext={t.cta.navSubtext}
+              onHoverChange={setNavCtaHovered}
+              onClick={() => openTrialModal()}
+            />
           </div>
-        </div>
+        </nav>
+
         {mobileNavOpen && (
           <div className="border-t border-white/[0.06] bg-black/95 px-6 py-4 md:hidden">
             <div className="flex flex-col gap-3">
@@ -281,33 +303,30 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
               <button type="button" onClick={goStart} className="py-2 text-left text-sm text-gray-400">
                 {t.navLogin}
               </button>
-              <TrialCtaButton fullWidth onClick={() => openTrialModal()}>
-                {t.navCta}
+              <TrialCtaButton fullWidth ring shine subtext={t.cta.navSubtext} onClick={() => openTrialModal()}>
+                {t.cta.navPrimary}
               </TrialCtaButton>
             </div>
           </div>
         )}
-      </nav>
 
-      {affiliateBanner && (
-        <div className="fixed top-[57px] z-40 w-full border-b border-orange-500/30 bg-orange-500/10 px-4 py-2 text-center font-mono text-[11px] tracking-wide text-orange-100">
-          {t.affiliate.partner}{" "}
-          <span className="font-bold text-white">{affiliateBanner.name}</span>
-          {" · "}
-          {t.affiliate.coupon}{" "}
-          <span className="font-bold text-orange-300">{affiliateBanner.couponCode}</span>
-          {" "}({t.affiliate.discount(affiliateBanner.discountPct)})
-        </div>
-      )}
+        {affiliateBanner && (
+          <div className="border-b border-orange-500/30 bg-orange-500/10 px-4 py-2 text-center font-mono text-[11px] tracking-wide text-orange-100">
+            {t.affiliate.partner}{" "}
+            <span className="font-bold text-white">{affiliateBanner.name}</span>
+            {" · "}
+            {t.affiliate.coupon}{" "}
+            <span className="font-bold text-orange-300">{affiliateBanner.couponCode}</span>
+            {" "}({t.affiliate.discount(affiliateBanner.discountPct)})
+          </div>
+        )}
 
-      {/* TICKER abaixo do nav — z-[51] fica acima do glow do CTA (nav z-50) */}
-      <div className={`fixed z-[51] w-full ${affiliateBanner ? "top-[89px]" : "top-[57px]"}`}>
         <TickerBar />
-      </div>
+      </header>
 
       <main id="main-content">
       {/* =================== HERO ===================== */}
-      <section className={`relative z-[1] pb-24 sm:pb-32 ${affiliateBanner ? "pt-[11rem] sm:pt-[12.5rem]" : "pt-[8.5rem] sm:pt-[10rem]"}`}>
+      <section className={`relative z-[1] pb-24 sm:pb-32 ${affiliateBanner ? "pt-[12rem] sm:pt-[13rem]" : "pt-[9rem] sm:pt-[10rem]"}`}>
         {/* Onda animada no rodapé do hero */}
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[60vh] opacity-50"
@@ -337,11 +356,14 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
               </h1>
 
               {/* CTAs */}
-              <div className="tk-rise tk-rise-5 mt-10 flex flex-wrap items-center gap-3">
+              <div className="tk-rise tk-rise-5 mt-10 flex flex-col items-start gap-3">
                 <TrialCtaButton
+                  className="[&_button]:max-w-full [&_button]:whitespace-normal [&_button]:text-balance [&_button]:leading-snug"
                   size="lg"
                   ring
                   shine
+                  subtext={t.cta.subtext}
+                  subtextOnHover
                   onClick={() => openTrialModal()}
                 >
                   {t.heroCtaPrimary}
@@ -452,7 +474,14 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
                 {t.agitate.solveTitle}
               </h3>
               <p className="mt-3 text-sm leading-relaxed text-gray-400">{t.agitate.solveText}</p>
-              <TrialCtaButton className="mt-6" size="sm" onClick={() => openTrialModal()}>
+              <TrialCtaButton
+                className="mt-6"
+                size="sm"
+                ring
+                subtext={t.cta.subtext}
+                subtextOnHover
+                onClick={() => openTrialModal()}
+              >
                 {t.agitate.cta}
               </TrialCtaButton>
             </div>
@@ -512,6 +541,14 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
             </div>
           </div>
         </div>
+
+        <CtaStrip
+          headline={t.cta.headline}
+          button={t.cta.button}
+          subtext={t.cta.subtext}
+          scarcityBadge={t.cta.scarcityBadge}
+          onClick={() => openTrialModal()}
+        />
       </section>
 
       {/* =================== INTEGRAÇÕES — BRUTALIST HEADER ===================== */}
@@ -631,13 +668,20 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
         </div>
       </section>
 
-      {/* =================== MÉTODO — MANIFESTO BRUTALIST ===================== */}
-      <section id="metodo" className="relative z-[1] overflow-hidden bg-black py-32">
+      {/* =================== MÉTODO — FILOSOFIA & MANIFESTO ===================== */}
+      <section
+        id="metodo"
+        aria-labelledby="metodo-heading"
+        className="relative z-[1] overflow-hidden bg-black py-32"
+      >
         <div className="relative mx-auto max-w-[1400px] px-6">
           <SectionLabel index="03" label={t.manifesto.sectionLabel} total="06" />
 
           <div className="mt-10">
-            <h2 className="text-balance font-sans text-[15vw] font-bold leading-[0.88] tracking-[-0.04em] sm:text-[6rem] lg:text-[7.5rem] xl:text-[9.5rem] 2xl:text-[11rem]">
+            <h2
+              id="metodo-heading"
+              className="text-balance font-sans text-[15vw] font-bold leading-[0.88] tracking-[-0.04em] sm:text-[6rem] lg:text-[7.5rem] xl:text-[9.5rem] 2xl:text-[11rem]"
+            >
               <span className="block text-white">{t.manifesto.title[0]}</span>
               <span className="block">
                 {market === "us" ? (
@@ -652,22 +696,42 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
             </h2>
           </div>
 
+          <div className="mt-16 border-t border-white/[0.08] pt-12">
+            <h3 className="text-balance text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
+              {t.manifesto.philosophyTitle}
+            </h3>
+            <p className="mt-6 max-w-3xl text-base leading-relaxed text-gray-300 sm:text-lg">
+              {t.manifesto.philosophyLead}
+            </p>
+
+            <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2">
+              {t.manifesto.philosophyBlocks.map((block, i) => (
+                <article
+                  key={block.title}
+                  className="relative border border-white/10 bg-white/[0.02] p-6 transition hover:border-[#FF8C42]/30"
+                >
+                  <CornerMarks orange={i === 0} />
+                  <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-[#FF8C42]/80">
+                    [0{i + 1}]
+                  </p>
+                  <h4 className="mt-3 text-xl font-bold leading-snug tracking-tight text-white">
+                    {block.title}
+                  </h4>
+                  <p className="mt-3 text-sm leading-relaxed text-gray-400 sm:text-base">
+                    {block.body}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </div>
+
           <div className="mt-12 grid grid-cols-12 items-start gap-6 border-t border-white/[0.08] pt-10">
             <div className="col-span-12 lg:col-span-5">
               <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-[#FF8C42]">
                 {t.manifesto.thesisLabel}
               </p>
               <p className="mt-4 max-w-md text-base leading-relaxed text-gray-300 sm:text-lg">
-                {market === "us" ? (
-                  t.manifesto.thesis
-                ) : (
-                  <>
-                    Trading não é sorte. Quem opera no impulso está apostando o próprio capital.
-                    Trackion coloca{" "}
-                    <span className="text-white">processo, métricas e consistência</span> no centro —
-                    onde sempre deveriam estar.
-                  </>
-                )}
+                {t.manifesto.thesis}
               </p>
             </div>
             <div className="col-span-12 grid grid-cols-3 gap-6 lg:col-span-7">
@@ -732,7 +796,14 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
                 )}
               </p>
             </div>
-            <TrialCtaButton size="lg" onClick={() => openTrialModal()}>
+            <TrialCtaButton
+              size="lg"
+              ring
+              shine
+              subtext={t.cta.subtext}
+              subtextOnHover
+              onClick={() => openTrialModal()}
+            >
               {t.manifesto.cta}
             </TrialCtaButton>
           </div>
@@ -791,7 +862,14 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
           </div>
 
           <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
-            <TrialCtaButton size="lg" onClick={() => openTrialModal()}>
+            <TrialCtaButton
+              size="lg"
+              ring
+              shine
+              subtext={t.cta.subtext}
+              subtextOnHover
+              onClick={() => openTrialModal()}
+            >
               {t.launchPromo.cta}
             </TrialCtaButton>
             <LaunchOfferHighlight className="max-w-md !py-2 !text-[10px] !font-mono !uppercase !tracking-[0.18em] !text-[#FFB86A]/90">
@@ -813,17 +891,41 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
 
           <dl className="mt-12 divide-y divide-white/[0.08] border-y border-white/[0.08]">
             {t.objections.items.map((item, i) => (
-              <div key={i} className="grid grid-cols-1 gap-3 py-8 sm:grid-cols-[1fr_1.2fr] sm:gap-10 sm:py-10">
+              <div key={item.q} className="grid grid-cols-1 gap-3 py-8 sm:grid-cols-[1fr_1.2fr] sm:gap-10 sm:py-10">
                 <dt className="flex items-start gap-3">
-                  <span className="font-mono text-[10px] text-[#FF8C42]/80">[0{i + 1}]</span>
+                  <span className="font-mono text-[10px] text-[#FF8C42]/80" aria-hidden>
+                    [{String(i + 1).padStart(2, "0")}]
+                  </span>
                   <span className="text-lg font-bold tracking-tight text-white">{item.q}</span>
                 </dt>
                 <dd className="text-sm leading-relaxed text-gray-400 sm:text-base">{item.a}</dd>
               </div>
             ))}
           </dl>
+
+          <div className="mt-14 flex justify-center">
+            <TrialCtaButton
+              size="lg"
+              ring
+              shine
+              subtext={t.cta.subtext}
+              subtextOnHover
+              onClick={() => openTrialModal()}
+            >
+              {t.cta.button}
+            </TrialCtaButton>
+          </div>
         </div>
       </section>
+
+      <CtaStrip
+        headline={t.cta.headline}
+        button={t.cta.button}
+        subtext={t.cta.subtext}
+        scarcityBadge={t.cta.scarcityBadge}
+        onClick={() => openTrialModal()}
+        variant="accent"
+      />
 
       {/* =================== PRICING / CTA ===================== */}
       <section id="precos" className="relative z-[1] overflow-hidden bg-black py-32">
@@ -938,7 +1040,7 @@ export default function LandingPage({ onStartClick, affiliateBanner }: LandingPa
                 />
                 <span className={footerEmail ? "tk-cursor opacity-0" : "tk-cursor"} aria-hidden />
               </div>
-              <TrialCtaButton onClick={handleFooterCta}>
+              <TrialCtaButton onClick={handleFooterCta} ring subtext={t.cta.subtext} subtextOnHover>
                 {t.pricing.startTrial}
               </TrialCtaButton>
             </div>

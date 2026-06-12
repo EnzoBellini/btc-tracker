@@ -58,7 +58,7 @@ function HomeSeo({ market }: { market: ReturnType<typeof useMarket>["market"] })
         buildFaqJsonLd([...t.objections.items, ...t.seo.faq]),
       ],
     }),
-    [market, t.seo.faq],
+    [market, t.objections.items, t.seo.faq],
   );
   useSeo(meta);
   return null;

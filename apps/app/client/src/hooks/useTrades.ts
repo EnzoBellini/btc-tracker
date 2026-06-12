@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import type { Trade, InsertTrade } from "@shared/schema";
+import type { TradeChartResponse } from "@shared/tradeChart";
 import { apiRequest } from "@/lib/queryClient";
 import { getT } from "@/lib/locale-runtime";
 
@@ -8,6 +9,19 @@ export function useTrades() {
   return useQuery<Trade[]>({
     queryKey: ["/api/trades"],
     staleTime: 15_000,
+  });
+}
+
+export function useTradeChart(tradeId: number | undefined) {
+  return useQuery<TradeChartResponse>({
+    queryKey: ["/api/trades", tradeId, "chart"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/trades/${tradeId}/chart`);
+      return res.json() as Promise<TradeChartResponse>;
+    },
+    enabled: tradeId != null && tradeId > 0,
+    staleTime: 5 * 60_000,
+    retry: 1,
   });
 }
 

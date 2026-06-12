@@ -198,6 +198,10 @@ export type AppContent = {
     cancel: string;
     delete: string;
     actions: string;
+    detailTitle: string;
+    chartTitle: string;
+    chartError: string;
+    viewChart: string;
     tableHeaders: { k: string; w: string }[];
   };
   transfers: {
@@ -633,6 +637,10 @@ const BR: AppContent = {
     cancel: "Cancelar",
     delete: "Excluir",
     actions: "Ações",
+    detailTitle: "Detalhe do trade",
+    chartTitle: "Snapshot do trade",
+    chartError: "Não foi possível carregar o gráfico.",
+    viewChart: "Ver gráfico",
     tableHeaders: [
       { k: "Data", w: "w-24" },
       { k: "Par", w: "w-28" },
@@ -1117,6 +1125,10 @@ const US: AppContent = {
     cancel: "Cancel",
     delete: "Delete",
     actions: "Actions",
+    detailTitle: "Trade detail",
+    chartTitle: "Trade snapshot",
+    chartError: "Could not load chart.",
+    viewChart: "View chart",
     tableHeaders: [
       { k: "Date", w: "w-24" },
       { k: "Pair", w: "w-28" },
