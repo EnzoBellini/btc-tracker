@@ -54,6 +54,9 @@ export type AppContent = {
     enter: string;
     entering: string;
     back: string;
+    forgotPassword: string;
+    forgotSending: string;
+    forgotSent: string;
     stepFooter: string;
     toastPasswordRequired: string;
     toastCheckEmail: string;
@@ -518,6 +521,9 @@ const BR: AppContent = {
     enter: "entrar",
     entering: "entrando…",
     back: "voltar",
+    forgotPassword: "esqueci a senha",
+    forgotSending: "enviando…",
+    forgotSent: "Enviamos uma nova senha temporária para seu e-mail.",
     stepFooter: "↳ step {step} / 03 · read-only api recommended",
     toastPasswordRequired: "Informe a senha enviada ao seu e-mail",
     toastCheckEmail: "Verifique seu e-mail",
@@ -1036,6 +1042,9 @@ const US: AppContent = {
     enter: "sign in",
     entering: "signing in…",
     back: "back",
+    forgotPassword: "forgot password",
+    forgotSending: "sending…",
+    forgotSent: "We sent a new temporary password to your email.",
     stepFooter: "↳ step {step} / 03 · read-only api recommended",
     toastPasswordRequired: "Enter the password sent to your email",
     toastCheckEmail: "Check your email",

@@ -8,18 +8,19 @@ import bcrypt from "bcryptjs";
 import { storage } from "./storage";
 import { generateSecurePassword, validateNewPassword } from "./lib/password";
 import { generateToken, hashToken, verificationExpiresAt } from "./lib/tokens";
-import { sendWelcomeEmail, buildVerifyUrl, parseEmailLocale, type EmailLocale } from "./lib/email";
+import { sendWelcomeEmail, sendPasswordResetEmail, buildVerifyUrl, parseEmailLocale, type EmailLocale } from "./lib/email";
 import { toAuthUserPayload, type AuthUserPayload } from "./lib/authUser";
 import { getResolvedSubscription } from "./billing/subscriptionService";
 import { createPgPool, getPgConnectionString } from "./lib/pg";
 import { createRateLimiter } from "./lib/rateLimit";
-import { activateTrialAfterEmailVerification, startTrialForUser } from "./billing/routes";
+import { activateTrialAfterEmailVerification, startTrialForUser, hasUsedFreeTrial } from "./billing/routes";
 import { trackFpSignup } from "./affiliates/firstPromoter";
 import { mergeTraderProfile, parseAffiliateBody } from "./lib/affiliateAttribution";
 
 const authEnterLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 8, keyPrefix: "auth:enter" });
 const authLoginLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 15, keyPrefix: "auth:login" });
 const authResendLimit = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 5, keyPrefix: "auth:resend" });
+const authForgotLimit = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 5, keyPrefix: "auth:forgot" });
 const authVerifyLimit = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 30, keyPrefix: "auth:verify" });
 
 declare module "express-session" {
@@ -107,6 +108,8 @@ const TRIAL_SIGNUP_COPY = {
       "Conta criada. Configure RESEND_API_KEY para enviar e-mail — em dev use o link abaixo para confirmar.",
     alreadyHasAccount:
       "Este e-mail já possui conta. Use Entrar no app com sua senha ou recupere o acesso por e-mail.",
+    trialAlreadyUsed:
+      "Este e-mail já utilizou os 14 dias grátis. Faça login no app ou assine um plano para continuar.",
     emailFailed:
       "Conta criada, mas não foi possível enviar o e-mail. Verifique spam ou tente reenviar pelo app (Entrar).",
     termsRequired:
@@ -121,6 +124,8 @@ const TRIAL_SIGNUP_COPY = {
       "Account created. Configure RESEND_API_KEY to send email — in dev use the link below to confirm.",
     alreadyHasAccount:
       "This email already has an account. Log in to the app with your password or recover access via email.",
+    trialAlreadyUsed:
+      "This email already used the 14-day free trial. Log in to the app or subscribe to continue.",
     emailFailed:
       "Account created, but we couldn't send the email. Check spam or try resending from the app (Log in).",
     termsRequired:
@@ -237,6 +242,15 @@ export function registerAuthRoutes(app: Express) {
         privacyVersion: TERMS_VERSION,
       });
 
+      if (user && (await hasUsedFreeTrial(user.id))) {
+        return res.status(409).json({
+          ok: false,
+          trialAlreadyUsed: true,
+          existingAccount: true,
+          message: copy.trialAlreadyUsed,
+        });
+      }
+
       if (!user) {
         const plainPassword = generateSecurePassword();
         const passwordHash = await bcrypt.hash(plainPassword, 12);
@@ -287,20 +301,11 @@ export function registerAuthRoutes(app: Express) {
         return res.json(trialSignupJson(verification, locale, "sentResend"));
       }
 
-      const existingSub = user.trialUsedAt;
-      if (!existingSub) {
-        try {
-          await startTrialForUser(user.id);
-        } catch {
-          /* trial já usado ou sem DB */
-        }
-      }
-
       return res.json({
-        ok: true,
+        ok: false,
         emailSent: false,
         existingAccount: true,
-        message: TRIAL_SIGNUP_COPY[locale].alreadyHasAccount,
+        message: copy.alreadyHasAccount,
       });
     } catch (err: unknown) {
       console.error("[trial-signup]", err);
@@ -385,6 +390,48 @@ export function registerAuthRoutes(app: Express) {
       res.json({ ok: true, message: "E-mail reenviado" });
     } catch (err: unknown) {
       console.error("[auth/resend]", err);
+      res.status(500).json({ error: "Erro interno" });
+    }
+  });
+
+  app.post("/api/auth/forgot-password", authForgotLimit, async (req, res) => {
+    const genericMessage =
+      parseEmailLocale(req.body) === "en"
+        ? "If an account exists with this email, we sent instructions."
+        : "Se existir uma conta com este e-mail, enviamos instruções.";
+
+    try {
+      const email = typeof req.body.email === "string" ? req.body.email : "";
+      if (!email || !EMAIL_RE.test(normalizeEmail(email))) {
+        return res.status(400).json({ error: "E-mail inválido" });
+      }
+
+      const locale = parseEmailLocale(req.body);
+      const user = await storage.getUserByEmail(normalizeEmail(email));
+      if (!user) return res.json({ ok: true, message: genericMessage });
+
+      const plainPassword = generateSecurePassword();
+      const passwordHash = await bcrypt.hash(plainPassword, 12);
+      await storage.updateUser(user.id, { passwordHash, mustChangePassword: true });
+
+      if (!user.emailVerified) {
+        await issueVerification(user.id, user.email, plainPassword, locale);
+        return res.json({ ok: true, message: genericMessage });
+      }
+
+      await sendPasswordResetEmail({ to: user.email, password: plainPassword, locale });
+      return res.json({ ok: true, message: genericMessage });
+    } catch (err: unknown) {
+      console.error("[auth/forgot-password]", err);
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("Falha ao enviar e-mail") || msg.includes("RESEND")) {
+        return res.status(503).json({
+          error:
+            parseEmailLocale(req.body) === "en"
+              ? "Could not send email. Try again shortly."
+              : "Não foi possível enviar o e-mail. Tente novamente em instantes.",
+        });
+      }
       res.status(500).json({ error: "Erro interno" });
     }
   });

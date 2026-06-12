@@ -24,6 +24,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     "POST:/api/auth/login",
     "POST:/api/auth/enter",
     "POST:/api/auth/resend-verification",
+    "POST:/api/auth/forgot-password",
     "GET:/api/auth/verify-email",
     "GET:/api/auth/me",
     "POST:/api/trial-signup",

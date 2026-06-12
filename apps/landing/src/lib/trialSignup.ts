@@ -14,6 +14,7 @@ export type TrialSignupResult = {
   message: string;
   emailSent?: boolean;
   existingAccount?: boolean;
+  trialAlreadyUsed?: boolean;
   /** Só em dev quando Resend não está configurado */
   devVerifyUrl?: string;
   devPassword?: string;
@@ -48,11 +49,21 @@ export async function submitTrialSignup(
   const data = (await res.json().catch(() => ({}))) as TrialSignupResult & { error?: string };
 
   if (!res.ok) {
-    return { ok: false, message: data.error ?? copy.error };
+    return {
+      ok: false,
+      message: data.message ?? data.error ?? copy.error,
+      existingAccount: data.existingAccount,
+      trialAlreadyUsed: data.trialAlreadyUsed,
+    };
   }
 
   if (data.existingAccount || data.emailSent === false) {
-    return { ok: false, message: data.message ?? copy.error, existingAccount: true };
+    return {
+      ok: false,
+      message: data.message ?? copy.error,
+      existingAccount: true,
+      trialAlreadyUsed: data.trialAlreadyUsed,
+    };
   }
 
   return {

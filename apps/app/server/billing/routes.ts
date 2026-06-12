@@ -37,4 +37,4 @@ export function registerBillingRoutes(app: Express) {
   });
 }
 
-export { startTrialForUser, activateTrialAfterEmailVerification } from "./subscriptionService";
+export { startTrialForUser, activateTrialAfterEmailVerification, hasUsedFreeTrial } from "./subscriptionService";

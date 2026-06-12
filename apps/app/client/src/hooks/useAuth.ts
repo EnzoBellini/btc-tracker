@@ -107,6 +107,21 @@ export function useLogin() {
   });
 }
 
+export function useForgotPassword() {
+  return useMutation({
+    mutationFn: async ({ email }: { email: string }) => {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Erro ao recuperar senha");
+      return data as { ok: boolean; message?: string };
+    },
+  });
+}
+
 export function useChangePassword() {
   return useMutation({
     mutationFn: async ({

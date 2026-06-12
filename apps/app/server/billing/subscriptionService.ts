@@ -31,6 +31,23 @@ export async function getResolvedSubscription(userId: number): Promise<ResolvedS
   return resolveSubscription(toSubscriptionSnapshot(sub));
 }
 
+/** Trial gratuito de 14 dias já foi solicitado ou utilizado para este e-mail. */
+export async function hasUsedFreeTrial(userId: number): Promise<boolean> {
+  const user = await storage.getUserById(userId);
+  if (!user) return false;
+  if (user.trialUsedAt) return true;
+
+  const sub = await billingStorage.getSubscriptionByUserId(userId);
+  if (!sub) return false;
+
+  return (
+    sub.source === "trial_signup" ||
+    sub.status === "trialing" ||
+    sub.status === "active" ||
+    sub.status === "past_due"
+  );
+}
+
 export async function startTrialForUser(userId: number): Promise<Subscription> {
   const user = await storage.getUserById(userId);
   if (!user) throw new Error("User not found");

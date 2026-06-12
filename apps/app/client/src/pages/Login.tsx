@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Eye, EyeOff, Mail, TrendingUp, Shield, Zap } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useAuthEnter, useLogin, useResendVerification } from "@/hooks/useAuth";
+import { useAuthEnter, useLogin, useResendVerification, useForgotPassword } from "@/hooks/useAuth";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { CornerMarks, TerminalButton, Eyebrow } from "@/components/tk";
@@ -44,6 +44,7 @@ export default function LoginPage() {
   const enter = useAuthEnter();
   const login = useLogin();
   const resend = useResendVerification();
+  const forgot = useForgotPassword();
 
   const todayISO = new Date().toISOString().slice(0, 10);
 
@@ -78,6 +79,16 @@ export default function LoginPage() {
     try {
       await resend.mutateAsync({ email: email.trim() });
       toast.success(t.login.toastResent);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t.login.toastError);
+    }
+  }
+
+  async function handleForgotPassword() {
+    if (!email.trim()) return;
+    try {
+      const result = await forgot.mutateAsync({ email: email.trim() });
+      toast.success(result.message ?? t.login.forgotSent);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t.login.toastError);
     }
@@ -249,12 +260,22 @@ export default function LoginPage() {
                       user · <span className="text-foreground">{email}</span>
                     </p>
                     <div className="space-y-2">
-                      <label
-                        htmlFor="password"
-                        className="font-mono-tk text-[10px] uppercase tracking-[0.22em] text-muted-foreground"
-                      >
-                        {t.login.passwordLabel}
-                      </label>
+                      <div className="flex items-center justify-between gap-2">
+                        <label
+                          htmlFor="password"
+                          className="font-mono-tk text-[10px] uppercase tracking-[0.22em] text-muted-foreground"
+                        >
+                          {t.login.passwordLabel}
+                        </label>
+                        <button
+                          type="button"
+                          onClick={handleForgotPassword}
+                          disabled={forgot.isPending}
+                          className="font-mono-tk text-[10px] uppercase tracking-[0.18em] text-primary underline decoration-primary/40 underline-offset-2 transition hover:text-primary/80 disabled:opacity-50"
+                        >
+                          {forgot.isPending ? t.login.forgotSending : t.login.forgotPassword}
+                        </button>
+                      </div>
                       <div className="relative flex items-center gap-3 border border-border bg-background px-4 py-2.5 font-mono-tk text-sm">
                         <span className="select-none text-primary">›</span>
                         <Input
